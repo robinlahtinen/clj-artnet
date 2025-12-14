@@ -29,6 +29,7 @@ jobs:
                     output-type: "sarif"
                     output-file: "clj-holmes-results.sarif"
                     fail-on-result: "true"
+                    verbose: "false"
 
             -   name: Upload analysis results to GitHub Security tab
                 uses: github/codeql-action/upload-sarif@v4
