@@ -5,34 +5,13 @@ on:
         branches: [ "main" ]
     pull_request:
         branches: [ "main" ]
-    schedule:
-        -   cron: "24 10 * * 1"
-
-permissions:
-    contents: read
 
 jobs:
-    clj-holmes:
-        name: Run clj-holmes scanning
+    self-lint:
         runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            security-events: write
-            actions: read
         steps:
-            -   name: Checkout code
-                uses: actions/checkout@v6
-
-            -   name: Scan code
-                uses: sc00terUL/clj-holmes-action@200d2d03900917d7eb3c24fc691ab83579a87fcb
+            -   uses: actions/checkout@v6
+            -   uses: DeLaGuardo/clojure-lint-action@master
                 with:
-                    output-type: "sarif"
-                    output-file: "clj-holmes-results.sarif"
-                    fail-on-result: "true"
-                    verbose: "false"
-
-            -   name: Upload analysis results to GitHub Security tab
-                uses: github/codeql-action/upload-sarif@v4
-                with:
-                    sarif_file: ${{github.workspace}}/clj-holmes-results.sarif
-                    wait-for-processing: true
+                    clj-kondo-args: --lint src test
+                    github_token: ${{ secrets.GITHUB_TOKEN }}
