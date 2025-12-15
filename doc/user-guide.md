@@ -7,13 +7,13 @@ This guide introduces clj-artnet, a pure-Clojure Art-Net 4 implementation. We'll
 ### deps.edn (recommended)
 
 ```clojure
-{:deps {com.github.robinlahtinen/clj-artnet {:mvn/version "0.1.0-SNAPSHOT"}}}
+{:deps {com.github.robinlahtinen/clj-artnet {:mvn/version "0.1.0"}}}
 ```
 
 ### Leiningen
 
 ```clojure
-[com.github.robinlahtinen/clj-artnet "0.1.0-SNAPSHOT"]
+[com.github.robinlahtinen/clj-artnet "0.1.0"]
 ```
 
 ### Git dependency

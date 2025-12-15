@@ -1,4 +1,4 @@
-[**API**][api] | [**Docs**][docs] | Latest release: [v0.1.0-SNAPSHOT][latest-release] (upcoming)
+[**API**][api] | [**Docs**][docs] | Latest release: [v0.1.0][latest-release] (2025-12-15)
 
 [![Tests][Tests SVG]][Tests URL]
 [![Clojars][Clojars SVG]][Clojars URL]
@@ -116,7 +116,7 @@ Distributed under the [MIT License](LICENSE).
 
 [docs]: https://robinlahtinen.github.io/clj-artnet/
 
-[latest-release]: https://github.com/robinlahtinen/clj-artnet/releases/tag/v0.1.0-SNAPSHOT
+[latest-release]: https://github.com/robinlahtinen/clj-artnet/releases/tag/v0.1.0
 
 [rationale]: doc/rationale.md
 
