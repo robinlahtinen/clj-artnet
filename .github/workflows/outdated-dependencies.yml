@@ -1,5 +1,8 @@
 name: Outdated dependencies
 
+permissions:
+    contents: read
+
 on:
     push:
     schedule:
