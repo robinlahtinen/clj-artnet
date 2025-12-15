@@ -126,9 +126,9 @@ Distributed under the [MIT License](LICENSE).
 
 [reference]: doc/reference.md
 
-[Clojars SVG]: https://img.shields.io/clojars/v/io.github.robinlahtinen/clj-artnet.svg
+[Clojars SVG]: https://img.shields.io/clojars/v/com.github.robinlahtinen/clj-artnet.svg
 
-[Clojars URL]: https://clojars.org/io.github.robinlahtinen/clj-artnet
+[Clojars URL]: https://clojars.org/com.github.robinlahtinen/clj-artnet
 
 [Tests SVG]: https://github.com/robinlahtinen/clj-artnet/actions/workflows/tests.yml/badge.svg
 
