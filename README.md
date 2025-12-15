@@ -51,7 +51,7 @@ See [reference.md][reference] for the full protocol support matrix.
 ;; Start a node
 (def node (artnet/start-node! {}))
 
-;; Send DMX to port-address 1
+;; Send DMX to Port-Address 1
 (artnet/send-dmx! node
                   {:data         (byte-array 512)
                    :port-address 1
@@ -62,7 +62,7 @@ See [reference.md][reference] for the full protocol support matrix.
     (artnet/start-node!
         {:callbacks {:dmx (fn [{:keys [packet source]}]
                               (println "DMX from" source
-                                       "port-address:" (:port-address packet)
+                                       "Port-Address:" (:port-address packet)
                                        "channels:" (:length packet)))}}))
 
 ;; Stop the node
