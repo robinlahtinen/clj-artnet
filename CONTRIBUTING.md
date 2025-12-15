@@ -67,7 +67,7 @@ clojure -T:build test
 
 Follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) specification.
 
-```
+```text
 <type>[optional scope]: <description>
 
 [optional body]
@@ -91,6 +91,20 @@ notifications are missed.
 **Don't** include more than one feature or fix in a single pull request.
 
 **Don't** open a new pull request if changes are requested. Push to the same branch instead.
+
+## Releasing (maintainers)
+
+Releases are automated via GitHub Actions on tag push.
+
+1. Update `CHANGELOG.md` with release notes.
+2. Commit: `git commit -am "chore(release): prepare v0.1.0"`.
+3. Tag: `git tag v0.1.0`.
+4. Push: `git push && git push --tags`.
+
+The release workflow builds and deploys to Clojars automatically.
+
+After release, bump `version` in `build.clj` and commit:
+`git commit -am "chore(release): prepare next development cycle"`.
 
 ## Questions?
 
