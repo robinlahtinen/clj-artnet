@@ -533,8 +533,8 @@ We use Java NIO's `ByteBuffer` directly with type hints:
 
 Alternatives like `gloss` or `octet` are excellent libraries, but:
 
-- We need precise control over direct buffer lifecycle.
-- Type hints eliminate reflection.
+- We need precise control over the direct buffer lifecycle.
+- Type hints remove reflection.
 - Zero dependencies added.
 
 ---
@@ -573,7 +573,7 @@ The shell abstracts transport. Replace `DatagramChannel` with:
 ```
 src/clj_artnet/
 ├── impl/
-│   ├── protocol/                  # FUNCTIONAL CORE
+│   ├── protocol/                 # FUNCTIONAL CORE
 │   │   ├── machine.clj           # State machine (903 lines)
 │   │   ├── codec/                # Packet codec
 │   │   │   ├── compiler.clj      # Spec → functions
@@ -587,7 +587,7 @@ src/clj_artnet/
 │   │   ├── diagnostics.clj       # DiagData
 │   │   ├── effects.clj           # Effect constructors
 │   │   └── ...
-│   └── shell/                     # IMPERATIVE SHELL
+│   └── shell/                    # IMPERATIVE SHELL
 │       ├── graph.clj             # Flow graph
 │       ├── receiver.clj          # UDP receive
 │       ├── sender.clj            # UDP send
