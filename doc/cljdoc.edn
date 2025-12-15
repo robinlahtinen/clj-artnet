@@ -1,0 +1,6 @@
+{:cljdoc.doc/tree
+ [["Rationale"   {:file "doc/rationale.md"}]
+  ["User Guide"  {:file "doc/user-guide.md"}]
+  ["Reference"   {:file "doc/reference.md"}]
+  ["Design"      {:file "doc/design.md"}]
+  ["Changelog"   {:file "CHANGELOG.md"}]]}
