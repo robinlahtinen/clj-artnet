@@ -240,7 +240,7 @@
 
 (defn- artdatarequest-packet
   [{:keys [request request-type esta oem],
-    :or   {request-type :dr-poll, esta 0, oem 0xFFFF}}]
+    :or   {request-type :dr-poll, esta 0x7FF0, oem 0xFFFF}}]
   (let [packet (cond-> {:op :artdatarequest, :esta-man esta, :oem oem}
                        request (assoc :request request)
                        request-type (assoc :request-type request-type))

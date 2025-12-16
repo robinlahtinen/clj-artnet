@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **ESTA manufacturer ID default.** Changed default `:esta-man` from `0x0000` to `0x7FF0` (ESTA prototype ID) to comply
+  with ANSI E1.20 Section 5.1. A WARN-level log is emitted on startup if `:esta-man` is not explicitly configured.
+
 ## [0.1.0] - 2025-12-15
 
 Initial release of clj-artnet — a pure-Clojure implementation of Art-Net 4.

@@ -20,7 +20,7 @@
    :oem                     0xFFFF,
    :ubea-version            0,
    :status1                 0,
-   :esta-man                0,
+   :esta-man                const/esta-man-prototype-id,
    :short-name              "clj-artnet",
    :long-name               "clj-artnet node",
    :node-report             "#0001 [0001] Startup",

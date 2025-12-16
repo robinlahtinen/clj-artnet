@@ -229,3 +229,8 @@
    0x03 {:block-type :ubea-first, :transfer :ubea, :stage :first},
    0x04 {:block-type :ubea-continue, :transfer :ubea, :stage :continue},
    0x05 {:block-type :ubea-last, :transfer :ubea, :stage :last}})
+
+(def ^:const esta-man-prototype-id
+  "ESTA manufacturer ID reserved for prototyping (0x7FF0–0x7FFF range).
+   Per ESTA: 'reserved for prototyping and experimental use while waiting for an assigned ID.'"
+  0x7FF0)

@@ -6,7 +6,8 @@
 
    Provides pure functions for configuring and transforming node state,
    ensuring valid bitmasks and default values."
-  (:require [clj-artnet.impl.protocol.codec.domain.common :as common]
+  (:require [clj-artnet.impl.protocol.codec.constants :as const]
+            [clj-artnet.impl.protocol.codec.domain.common :as common]
             [clojure.string :as str]))
 
 (def ^:const status2-rdm-artaddress-bit 0x80)
@@ -142,7 +143,7 @@
        :oem                     0xFFFF,
        :ubea-version            0,
        :status1                 0,
-       :esta-man                0,
+       :esta-man                const/esta-man-prototype-id,
        :short-name              "clj-artnet",
        :long-name               "clj-artnet node",
        :node-report             "#0001 [0001] Startup",

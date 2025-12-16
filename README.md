@@ -90,6 +90,9 @@ See [user-guide.md][user-guide] for more examples.
 7. **Port-Address 0 is deprecated.** Art-Net 4 deprecates Port-Address 0 to enhance sACN compatibility. New
    implementations should start at Port-Address 1.
 
+8. **ESTA prototype ID.** The library defaults to ESTA manufacturer ID `0x7FF0` (prototype range) and logs a warning
+   on startup if `:esta-man` is not configured. Production deployments should set `:node {:esta-man 0xYOUR_ID}`.
+
 ## Documentation
 
 - [Rationale][rationale]

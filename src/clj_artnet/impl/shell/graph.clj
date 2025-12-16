@@ -155,7 +155,14 @@
                                                            :failsafe-config (:failsafe
                                                                               config)}),
                          :rdm          {:discovery {}, :transport {}}}
-             [state _] (diagnostics/refresh-state base-state (System/nanoTime))]
+             [state _] (diagnostics/refresh-state base-state (System/nanoTime))
+             _ (when-not (contains? (:node config) :esta-man)
+                 (trove/log!
+                   {:level :warn
+                    :id    ::esta-prototype-id
+                    :msg   (str "Using default ESTA prototype manufacturer ID (0x7FF0). "
+                                "Reserved for testing only. "
+                                "Production use requires a registered ID.")}))]
          {:logic-state state, :config normalized-config, :step-fn io-step}))
       ([state _transition] state)
       ([{:keys [logic-state config step-fn], :as proc-state} _ msg]
