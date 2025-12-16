@@ -60,7 +60,7 @@ Start a node, send DMX, stop:
 
 ;; Send DMX to universe 1
 (artnet/send-dmx! node
-  {:data         (byte-array [255 128 64])
+  {:data         [255 128 64]
    :port-address 1
    :target       {:host "192.168.1.100" :port 6454}})
 
