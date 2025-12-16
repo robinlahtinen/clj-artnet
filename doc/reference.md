@@ -5,25 +5,38 @@ tutorial.
 
 ## Configuration
 
+clj-artnet uses two related but distinct address configurations:
+
+| Configuration | Purpose                             | Example                                |
+|---------------|-------------------------------------|----------------------------------------|
+| `:node :ip`   | Identity advertised in ArtPollReply | `{:node {:ip [192 168 1 50]}}`         |
+| `:bind :host` | Local socket binding address        | `{:bind {:host "0.0.0.0" :port 6454}}` |
+
+Most users only need `:bind` configuration. The `:node :ip` is auto-detected and only needs explicit
+configuration when:
+
+- You have multiple network interfaces, and auto-detection selects the wrong one.
+- You want to advertise a specific IP address for NAT or proxy scenarios.
+
 ### Node configuration
 
 The `:node` key in the configuration map corresponds to ArtPollReply fields:
 
-| Key           | Type                        | Default                       | Description                |
-|---------------|-----------------------------|-------------------------------|----------------------------|
-| `:short-name` | string                      | `"clj-artnet"`                | 17-character node name     |
-| `:long-name`  | string                      | `"clj-artnet Art-Net 4 Node"` | 63-character description   |
-| `:ip`         | `[int int int int]`         | Auto-detected                 | IPv4 address               |
-| `:mac`        | `[int int int int int int]` | `[0 0 0 0 0 0]`               | MAC address                |
-| `:ports`      | vector                      | `[]`                          | Port definitions           |
-| `:style`      | keyword                     | `:st-node`                    | Node type                  |
-| `:oem`        | int                         | `0xFFFF`                      | OEM code                   |
-| `:esta-man`   | int                         | `0x0000`                      | ESTA manufacturer code     |
-| `:version-hi` | int                         | `0`                           | Firmware version high byte |
-| `:version-lo` | int                         | `1`                           | Firmware version low byte  |
-| `:status1`    | int                         | Auto                          | Status register 1          |
-| `:status2`    | int                         | Auto                          | Status register 2          |
-| `:status3`    | int                         | Auto                          | Status register 3          |
+| Key           | Type                        | Default                       | Description                 |
+|---------------|-----------------------------|-------------------------------|-----------------------------|
+| `:short-name` | string                      | `"clj-artnet"`                | 17-character node name      |
+| `:long-name`  | string                      | `"clj-artnet Art-Net 4 Node"` | 63-character description    |
+| `:ip`         | `[int int int int]`         | Auto-detected                 | IPv4 address (ArtPollReply) |
+| `:mac`        | `[int int int int int int]` | `[0 0 0 0 0 0]`               | MAC address                 |
+| `:ports`      | vector                      | `[]`                          | Port definitions            |
+| `:style`      | keyword                     | `:st-node`                    | Node type                   |
+| `:oem`        | int                         | `0xFFFF`                      | OEM code                    |
+| `:esta-man`   | int                         | `0x0000`                      | ESTA manufacturer code      |
+| `:version-hi` | int                         | `0`                           | Firmware version high byte  |
+| `:version-lo` | int                         | `1`                           | Firmware version low byte   |
+| `:status1`    | int                         | Auto                          | Status register 1           |
+| `:status2`    | int                         | Auto                          | Status register 2           |
+| `:status3`    | int                         | Auto                          | Status register 3           |
 
 ### Port configuration
 
@@ -58,12 +71,15 @@ The `:failsafe` key:
 
 ### Network configuration
 
-The `:bind` key:
+The `:bind` key controls the local socket address:
 
-| Key     | Type   | Default     | Description  |
-|---------|--------|-------------|--------------|
-| `:host` | string | `"0.0.0.0"` | Bind address |
-| `:port` | int    | `6454`      | UDP port     |
+| Key     | Type   | Default     | Description              |
+|---------|--------|-------------|--------------------------|
+| `:host` | string | `"0.0.0.0"` | Local address to bind to |
+| `:port` | int    | `6454`      | Local UDP port to bind   |
+
+> **Note**: `:bind` controls where your node listens for packets. To change what your node advertises to
+> other devices (its identity in ArtPollReply), configure `:node :ip` instead.
 
 ### Buffer pool configuration
 
