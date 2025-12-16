@@ -49,8 +49,6 @@ Please read our [code of conduct](CODE_OF_CONDUCT.md) before participating.
 
 **Don't** overuse vertical whitespace. Avoid multiple sequential blank lines.
 
-**Don't** add docstrings to private vars or functions.
-
 ## Testing
 
 Run all tests with:
