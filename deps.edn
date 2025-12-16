@@ -30,6 +30,9 @@
            :exec-args  {:name         "clj-artnet"
                         :version      "0.1.0-SNAPSHOT"
                         :description  "A high-performance Art-Net 4 protocol implementation for Clojure."
+                        :license      {:name "MIT License"
+                                       :url  "https://github.com/robinlahtinen/clj-artnet/blob/main/LICENSE"}
+                        :package      com.github.robinlahtinen/clj-artnet
                         :source-paths ["src"]
                         :output-path  "target/docs"
                         :doc-paths    ["doc"]
