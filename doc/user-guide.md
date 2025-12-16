@@ -683,6 +683,26 @@ Failsafe scene mode uses the last successfully received DMX data. Modes are:
 
 Scene recording is triggered via ArtAddress commands from controllers.
 
+### ESTA manufacturer ID for production
+
+The library defaults to ESTA manufacturer ID `0x7FF0`, a prototype ID reserved for testing. A warning is logged on
+startup if you don't configure `:esta-man`:
+
+```text
+Using default ESTA prototype manufacturer ID (0x7FF0). Reserved for testing only. Production use requires a registered ID.
+```
+
+For production usage, register a manufacturer ID with ESTA and configure your node:
+
+```clojure
+(artnet/start-node!
+    {:node {:short-name "My product"
+            :esta-man   0x1234}})  ; Your registered ESTA ID
+```
+
+Setting any `:esta-man` value silences the warning.
+See [ESTA's manufacturer registry](https://tsp.esta.org/tsp/working_groups/CP/mfctrIDs.php) to apply for an ID.
+
 ## Next steps
 
 - **Reference**: Detailed data shape specifications.
