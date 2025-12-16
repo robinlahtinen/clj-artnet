@@ -294,7 +294,7 @@ The `state` function accepts `:keys` to select which state sections to return:
 
 - **Minimum**: 0 (deprecated in Art-Net 4)
 - **Maximum**: 32,767
-- **Recommended Start**: 1 (for sACN compatibility)
+- **Recommended start**: 1 (for sACN compatibility)
 
 ### Sequence number handling
 
