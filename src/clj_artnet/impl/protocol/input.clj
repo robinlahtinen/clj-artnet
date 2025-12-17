@@ -3,8 +3,9 @@
 
 (ns clj-artnet.impl.protocol.input
   "ArtInput paging and selection logic."
-  (:require [clj-artnet.impl.protocol.node-state :as state]
-            [clj-artnet.impl.protocol.programming :as programming]))
+  (:require
+    [clj-artnet.impl.protocol.node-state :as state]
+    [clj-artnet.impl.protocol.programming :as programming]))
 
 (set! *warn-on-reflection* true)
 
@@ -40,9 +41,9 @@
   (let [node (:node state)
         base (state/node-bind-index node)]
     (vec (map-indexed (fn [idx page]
-                        {:idx       idx,
-                         :bind      (state/page-bind-index page base idx),
-                         :num-ports (clamp-num-ports (:num-ports page)),
+                        {:idx       idx
+                         :bind      (state/page-bind-index page base idx)
+                         :num-ports (clamp-num-ports (:num-ports page))
                          :page      page})
                       (state/node-port-pages node)))))
 

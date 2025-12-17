@@ -2,22 +2,24 @@
   "Unit tests for I/O layer and sender loop logic.
 
    Tests packet sending, target resolution, and delay behavior."
-  (:require [clj-artnet.fixtures.builders :as builders]
-            [clj-artnet.impl.shell.buffers :as buffers]
-            [clj-artnet.impl.shell.sender :as sender]
-            [clojure.core.async :as async]
-            [clojure.test :refer [deftest is]])
-  (:import (clojure.lang ExceptionInfo)
-           (java.net InetSocketAddress)
-           (java.nio.channels DatagramChannel)
-           (java.util.concurrent.atomic AtomicBoolean)))
+  (:require
+    [clj-artnet.fixtures.builders :as builders]
+    [clj-artnet.impl.shell.buffers :as buffers]
+    [clj-artnet.impl.shell.sender :as sender]
+    [clojure.core.async :as async]
+    [clojure.test :refer [deftest is]])
+  (:import
+    (clojure.lang ExceptionInfo)
+    (java.net InetSocketAddress)
+    (java.nio.channels DatagramChannel)
+    (java.util.concurrent.atomic AtomicBoolean)))
 
 (deftest sender-loop-stops-when-channel-closes
   (let [running? (AtomicBoolean. true)
         action-chan (async/chan)
         loop-fn @#'sender/sender-loop
-        loop-fut (future (loop-fn {:action-chan action-chan,
-                                   :running?    running?,
+        loop-fut (future (loop-fn {:action-chan action-chan
+                                   :running?    running?
                                    :state       {}})
                          :stopped)]
     (async/close! action-chan)
@@ -33,7 +35,7 @@
     (with-redefs [sender/perform-action!
                   (fn [_ action']
                     (deliver performed
-                             {:action  action',
+                             {:action  action'
                               :elapsed (/ (- (System/nanoTime) start) 1e6)}))]
       ;; io-thread is a macro, so we can't mock it. We just let it run on a
       ;; virtual thread and verify the delay behavior through the side
@@ -55,9 +57,9 @@
         channel (DatagramChannel/open)
         default-target {:host "10.0.0.1", :port 6454}
         explicit-target {:host "127.0.0.1", :port 9999}
-        state {:channel                  channel,
-               :pool                     pool,
-               :default-target           default-target,
+        state {:channel                  channel
+               :pool                     pool
+               :default-target           default-target
                :allow-limited-broadcast? false}
         observed (promise)]
     (try (with-redefs [sender/resolve-target
@@ -77,9 +79,9 @@
   (let [pool (buffers/create-pool {:count 1, :size 128, :direct? false})
         channel (DatagramChannel/open)
         default-target {:host "10.0.0.5", :port 7000}
-        state {:channel                  channel,
-               :pool                     pool,
-               :default-target           default-target,
+        state {:channel                  channel
+               :pool                     pool
+               :default-target           default-target
                :allow-limited-broadcast? false}
         observed (promise)]
     (try (with-redefs [sender/resolve-target
@@ -97,9 +99,9 @@
 (deftest send-packet-errors-when-no-target-available
   (let [pool (buffers/create-pool {:count 1, :size 128, :direct? false})
         channel (DatagramChannel/open)
-        state {:channel                  channel,
-               :pool                     pool,
-               :default-target           nil,
+        state {:channel                  channel
+               :pool                     pool
+               :default-target           nil
                :allow-limited-broadcast? false}]
     (try (let [thrown (try (#'sender/send-packet!
                              state

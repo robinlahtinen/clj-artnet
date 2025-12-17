@@ -1,10 +1,12 @@
 (ns clj-artnet.impl.protocol.helpers.rdm.transport-test
   "Unit tests for the RDM transport module."
-  (:require [clj-artnet.impl.protocol.rdm.transport :as transport]
-            [clj-artnet.support.helpers :refer [thrown-with-msg?]]
-            [clojure.test :refer [deftest is testing]])
-  (:import (clojure.lang ExceptionInfo)
-           (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.rdm.transport :as transport]
+    [clj-artnet.support.helpers :refer [thrown-with-msg?]]
+    [clojure.test :refer [deftest is testing]])
+  (:import
+    (clojure.lang ExceptionInfo)
+    (java.nio ByteBuffer)))
 
 (deftest valid-command-classes-defined
   (testing "All RDM command classes are defined"
@@ -61,22 +63,22 @@
 (deftest rdmsub-expected-data-length
   (testing "GET command has 0 data bytes"
     (is (= 0
-           (transport/expected-data-length {:command-class 0x20,
+           (transport/expected-data-length {:command-class 0x20
                                             :sub-count     5}))))
   (testing "SET_RESPONSE has 0 data bytes"
     (is (= 0
-           (transport/expected-data-length {:command-class 0x31,
+           (transport/expected-data-length {:command-class 0x31
                                             :sub-count     5}))))
   (testing "SET command has SubCount * 2 bytes"
     (is (= 10
-           (transport/expected-data-length {:command-class 0x30,
+           (transport/expected-data-length {:command-class 0x30
                                             :sub-count     5}))))
   (testing "GET_RESPONSE has SubCount * 2 bytes"
     (is (= 10
-           (transport/expected-data-length {:command-class 0x21,
+           (transport/expected-data-length {:command-class 0x21
                                             :sub-count     5}))))
   (testing "Unknown command class returns nil"
-    (is (nil? (transport/expected-data-length {:command-class 0x99,
+    (is (nil? (transport/expected-data-length {:command-class 0x99
                                                :sub-count     5})))))
 
 (deftest valid-rdmsub-packet-validation

@@ -3,7 +3,8 @@
 
 (ns clj-artnet.impl.protocol.dmx
   "Pure DMX merge and processing logic (Art-Net 4)."
-  (:import (java.nio ByteBuffer)))
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -143,11 +144,11 @@
             dmx-bytes (extract-dmx-bytes packet)
             length (or (:length packet) (alength dmx-bytes))
             prev-data (or (:data last-output) dmx-bytes)]
-        {:state            state,
-         :output-data      prev-data,
-         :output-length    (or (:length last-output) length),
-         :emit?            false,
-         :merging?         true,
+        {:state            state
+         :output-data      prev-data
+         :output-length    (or (:length last-output) length)
+         :emit?            false
+         :merging?         true
          :source-rejected? true})
       (let [dmx-bytes (extract-dmx-bytes packet)
             length (long (or (:length packet) (alength dmx-bytes)))
@@ -164,10 +165,10 @@
             state' (-> state
                        (assoc-in [:dmx :merge :ports port-address] port-entry')
                        (assoc-in [:dmx :merge :cancel-armed?] false))]
-        {:state         state',
-         :output-data   data,
-         :output-length length,
-         :emit?         true,
+        {:state         state'
+         :output-data   data
+         :output-length length
+         :emit?         true
          :merging?      merging?}))))
 
 (defn any-port-merging?

@@ -3,7 +3,8 @@
 
 (ns clj-artnet.impl.protocol.discovery
   "ArtPoll/ArtPollReply handling (Art-Net 4)."
-  (:require [clj-artnet.impl.protocol.addressing :as addressing]))
+  (:require
+    [clj-artnet.impl.protocol.addressing :as addressing]))
 
 (set! *warn-on-reflection* true)
 
@@ -20,11 +21,11 @@
 (defn parse-artpoll-flags
   "Parses TalkToMe byte into map."
   [flags]
-  {:target-enabled?  (bit-test flags 5),
-   :vlc-disable?     (bit-test flags 4),
-   :diag-unicast?    (bit-test flags 3),
-   :diag-request?    (bit-test flags 2),
-   :reply-on-change? (bit-test flags 1),
+  {:target-enabled?  (bit-test flags 5)
+   :vlc-disable?     (bit-test flags 4)
+   :diag-unicast?    (bit-test flags 3)
+   :diag-request?    (bit-test flags 2)
+   :reply-on-change? (bit-test flags 1)
    :suppress-delay?  (bit-test flags 0)})
 
 (defn parse-artpoll-packet
@@ -44,10 +45,10 @@
            (select-keys packet
                         [:target-enabled? :vlc-disable? :diag-unicast?
                          :diag-request? :reply-on-change? :suppress-delay?])
-           {:diag-priority (or (:diag-priority packet) 0),
+           {:diag-priority (or (:diag-priority packet) 0)
             :target-top    (or (:target-top packet)
                                (:target-port-address-top packet)
-                               addressing/max-port-address),
+                               addressing/max-port-address)
             :target-bottom (or (:target-bottom packet)
                                (:target-port-address-bottom packet)
                                0)})))

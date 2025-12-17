@@ -1,19 +1,21 @@
 (ns clj-artnet.codec-test
-  (:require [clj-artnet.fixtures.builders :as builders]
-            [clj-artnet.fixtures.data :as fixtures]
-            [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.domain.config :as config]
-            [clj-artnet.support.helpers :refer [thrown-with-msg?]]
-            [clojure.test :refer [deftest is]]
-            [clojure.test.check :as tc]
-            [clojure.test.check.generators :as gen]
-            [clojure.test.check.properties :as prop])
-  (:import (clojure.lang ExceptionInfo)
-           (java.nio ByteBuffer)
-           (java.nio.charset StandardCharsets)
-           (java.util Arrays)))
+  (:require
+    [clj-artnet.fixtures.builders :as builders]
+    [clj-artnet.fixtures.data :as fixtures]
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.domain.config :as config]
+    [clj-artnet.support.helpers :refer [thrown-with-msg?]]
+    [clojure.test :refer [deftest is]]
+    [clojure.test.check :as tc]
+    [clojure.test.check.generators :as gen]
+    [clojure.test.check.properties :as prop])
+  (:import
+    (clojure.lang ExceptionInfo)
+    (java.nio ByteBuffer)
+    (java.nio.charset StandardCharsets)
+    (java.util Arrays)))
 
 (def ^:private artnet-id-bytes
   (.getBytes "Art-Net\u0000" StandardCharsets/US_ASCII))
@@ -69,37 +71,37 @@
             refresh-rate gen-u16
             background-queue-policy (gen/choose 0 0x0F)]
     (->
-      {:ip                      ip,
-       :port                    port,
-       :version-hi              version-hi,
-       :version-lo              version-lo,
-       :net-switch              net-switch,
-       :sub-switch              sub-switch,
-       :oem                     oem,
-       :ubea-version            ubea-version,
-       :status1                 status1,
-       :short-name              short-name,
-       :long-name               long-name,
-       :node-report             node-report,
-       :num-ports               num-ports,
-       :port-types              port-types,
-       :good-input              good-input,
-       :good-output-a           good-output-a,
-       :good-output-b           good-output-b,
-       :sw-in                   sw-in,
-       :sw-out                  sw-out,
-       :acn-priority            acn-priority,
-       :sw-macro                sw-macro,
-       :sw-remote               sw-remote,
-       :style                   style,
-       :mac                     mac,
-       :bind-index              bind-index,
-       :status2                 status2,
-       :status3                 status3,
-       :default-responder       default-responder,
-       :user-hi                 user-hi,
-       :user-lo                 user-lo,
-       :refresh-rate            refresh-rate,
+      {:ip                      ip
+       :port                    port
+       :version-hi              version-hi
+       :version-lo              version-lo
+       :net-switch              net-switch
+       :sub-switch              sub-switch
+       :oem                     oem
+       :ubea-version            ubea-version
+       :status1                 status1
+       :short-name              short-name
+       :long-name               long-name
+       :node-report             node-report
+       :num-ports               num-ports
+       :port-types              port-types
+       :good-input              good-input
+       :good-output-a           good-output-a
+       :good-output-b           good-output-b
+       :sw-in                   sw-in
+       :sw-out                  sw-out
+       :acn-priority            acn-priority
+       :sw-macro                sw-macro
+       :sw-remote               sw-remote
+       :style                   style
+       :mac                     mac
+       :bind-index              bind-index
+       :status2                 status2
+       :status3                 status3
+       :default-responder       default-responder
+       :user-hi                 user-hi
+       :user-lo                 user-lo
+       :refresh-rate            refresh-rate
        :background-queue-policy background-queue-policy}
       (assoc :bind-ip bind-ip))))
 
@@ -153,11 +155,11 @@
             minutes (gen/choose 0 59)
             hours (gen/choose 0 23)
             type (gen/choose 0 3)]
-    {:stream-id stream-id,
-     :frames    frames,
-     :seconds   seconds,
-     :minutes   minutes,
-     :hours     hours,
+    {:stream-id stream-id
+     :frames    frames
+     :seconds   seconds
+     :minutes   minutes
+     :hours     hours
      :type      type}))
 
 (def compose-split-prop
@@ -170,12 +172,12 @@
   (prop/for-all [sequence gen-byte physical gen-byte net gen-net sub-net
                  gen-sub-net universe gen-universe payload gen-dmx-payload]
     (let [^bytes payload-bytes payload
-          packet {:op       :artdmx,
-                  :sequence sequence,
-                  :physical physical,
-                  :net      net,
-                  :sub-net  sub-net,
-                  :universe universe,
+          packet {:op       :artdmx
+                  :sequence sequence
+                  :physical physical
+                  :net      net
+                  :sub-net  sub-net
+                  :universe universe
                   :data     payload-bytes}
           buf (dispatch/encode packet)
           decoded (dispatch/decode buf)
@@ -202,12 +204,12 @@
     [sequence gen-byte start-code gen-nzs-start-code net gen-net sub-net
      gen-sub-net universe gen-universe payload gen-nzs-payload]
     (let [^bytes payload-bytes payload
-          packet {:op         :artnzs,
-                  :sequence   sequence,
-                  :start-code start-code,
-                  :net        net,
-                  :sub-net    sub-net,
-                  :universe   universe,
+          packet {:op         :artnzs
+                  :sequence   sequence
+                  :start-code start-code
+                  :net        net
+                  :sub-net    sub-net
+                  :universe   universe
                   :data       payload-bytes}
           buf (dispatch/encode packet
                                (ByteBuffer/allocate (+ const/artnzs-header-size
@@ -236,22 +238,22 @@
      beacon? gen/boolean]
     (let [{:keys [source bytes]} payload
           ^bytes payload-bytes bytes
-          packet {:op       :artvlc,
-                  :sequence sequence,
-                  :net      net,
-                  :sub-net  sub-net,
-                  :universe universe,
-                  :vlc      {:payload          source,
-                             :transaction      transaction,
-                             :slot-address     slot-address,
-                             :depth            depth,
-                             :frequency        frequency,
-                             :modulation       modulation,
-                             :payload-language payload-language,
-                             :beacon-repeat    beacon-repeat,
-                             :reserved         reserved,
-                             :ieee?            ieee?,
-                             :reply?           reply?,
+          packet {:op       :artvlc
+                  :sequence sequence
+                  :net      net
+                  :sub-net  sub-net
+                  :universe universe
+                  :vlc      {:payload          source
+                             :transaction      transaction
+                             :slot-address     slot-address
+                             :depth            depth
+                             :frequency        frequency
+                             :modulation       modulation
+                             :payload-language payload-language
+                             :beacon-repeat    beacon-repeat
+                             :reserved         reserved
+                             :ieee?            ieee?
+                             :reply?           reply?
                              :beacon?          beacon?}}
           buf (dispatch/encode packet)
           decoded (dispatch/decode buf)]
@@ -295,9 +297,9 @@
   (prop/for-all
     [bind-index gen-byte num-ports (gen/choose 0 4) disabled
      gen-artinput-disabled]
-    (let [packet {:op         :artinput,
-                  :bind-index bind-index,
-                  :num-ports  num-ports,
+    (let [packet {:op         :artinput
+                  :bind-index bind-index
+                  :num-ports  num-ports
                   :disabled   disabled}
           buf (dispatch/encode packet
                                (ByteBuffer/allocate const/artinput-length))
@@ -411,49 +413,49 @@
                  200))
 
 (def ^:private truncated-opcode-specs
-  [{:opcode   (const/keyword->opcode :artpollreply),
+  [{:opcode   (const/keyword->opcode :artpollreply)
     :required const/artpollreply-length}
    {:opcode (const/keyword->opcode :artdmx), :required const/artdmx-header-size}
    {:opcode (const/keyword->opcode :artnzs), :required const/artnzs-header-size}
    {:opcode (const/keyword->opcode :artvlc), :required const/artvlc-header-size}
    {:opcode (const/keyword->opcode :artsync), :required 14}
-   {:opcode   (const/keyword->opcode :arttimecode),
+   {:opcode   (const/keyword->opcode :arttimecode)
     :required const/arttimecode-length}
-   {:opcode   (const/keyword->opcode :artdiagdata),
+   {:opcode   (const/keyword->opcode :artdiagdata)
     :required const/artdiagdata-header-size}
    {:opcode (const/keyword->opcode :artinput), :required const/artinput-length}
-   {:opcode   (const/keyword->opcode :artaddress),
+   {:opcode   (const/keyword->opcode :artaddress)
     :required const/artaddress-length}
-   {:opcode   (const/keyword->opcode :artipprog),
+   {:opcode   (const/keyword->opcode :artipprog)
     :required const/artipprog-min-length}
-   {:opcode   (const/keyword->opcode :arttodrequest),
+   {:opcode   (const/keyword->opcode :arttodrequest)
     :required const/arttodrequest-base-length}
-   {:opcode   (const/keyword->opcode :arttoddata),
+   {:opcode   (const/keyword->opcode :arttoddata)
     :required const/arttoddata-header-size}
-   {:opcode   (const/keyword->opcode :arttodcontrol),
+   {:opcode   (const/keyword->opcode :arttodcontrol)
     :required const/arttodcontrol-length}
    {:opcode (const/keyword->opcode :artrdm), :required const/artrdm-header-size}
-   {:opcode   (const/keyword->opcode :artrdmsub),
+   {:opcode   (const/keyword->opcode :artrdmsub)
     :required const/artrdmsub-header-size}
-   {:opcode   (const/keyword->opcode :artcommand),
+   {:opcode   (const/keyword->opcode :artcommand)
     :required const/artcommand-header-size}
-   {:opcode   (const/keyword->opcode :arttrigger),
+   {:opcode   (const/keyword->opcode :arttrigger)
     :required const/arttrigger-header-size}
-   {:opcode   (const/keyword->opcode :artfirmwaremaster),
+   {:opcode   (const/keyword->opcode :artfirmwaremaster)
     :required const/artfirmwaremaster-header-size}
-   {:opcode   (const/keyword->opcode :artfirmwarereply),
+   {:opcode   (const/keyword->opcode :artfirmwarereply)
     :required const/artfirmwarereply-length}
-   {:opcode   (const/keyword->opcode :artdatarequest),
+   {:opcode   (const/keyword->opcode :artdatarequest)
     :required const/artdatarequest-length}
-   {:opcode   (const/keyword->opcode :artdatareply),
+   {:opcode   (const/keyword->opcode :artdatareply)
     :required const/artdatareply-header-size}])
 
 (def gen-truncated-frame
   (gen/let [{:keys [opcode required]} (gen/elements truncated-opcode-specs)
             limit (gen/choose 12 (dec required))]
-    {:type     :truncated,
-     :opcode   opcode,
-     :required required,
+    {:type     :truncated
+     :opcode   opcode
+     :required required
      :bytes    (base-frame opcode limit)}))
 
 (def gen-unsupported-frame
@@ -472,9 +474,9 @@
                       (bit-and (inc candidate) 0xFF)
                       candidate)]
         (put-byte! bytes position corrupt)
-        {:type     :invalid-id,
-         :opcode   opcode,
-         :position position,
+        {:type     :invalid-id
+         :opcode   opcode
+         :position position
          :bytes    bytes}))))
 
 (def gen-droppable-frame
@@ -556,7 +558,7 @@
        (mapv #(bit-and (int %) 0xFF))))
 
 (defn- build-artipprogreply-octets
-  [{:keys [ip subnet-mask gateway port dhcp?],
+  [{:keys [ip subnet-mask gateway port dhcp?]
     :or   {subnet-mask [255 0 0 0], gateway [0 0 0 0], port 0x1936}}]
   (let [ip-bytes (normalize-ip-bytes ip)
         mask-bytes (normalize-ip-bytes subnet-mask)
@@ -599,13 +601,13 @@
 
 (defn- build-arttoddata-octets
   [{:keys [rdm-version port bind-index net command-response address uid-total
-           block-count tod],
-    :or   {rdm-version      1,
-           port             1,
-           bind-index       1,
-           net              0,
-           command-response 0,
-           address          0,
+           block-count tod]
+    :or   {rdm-version      1
+           port             1
+           bind-index       1
+           net              0
+           command-response 0
+           address          0
            block-count      0}}]
   (let [uids (mapv normalize-uid-bytes (or tod []))
         uid-count (count uids)
@@ -680,7 +682,7 @@
     (doto (ByteBuffer/wrap arr) (.limit length))))
 
 (defn- artfirmwaremaster-buffer
-  [{:keys [type-code block-id firmware-length data-length],
+  [{:keys [type-code block-id firmware-length data-length]
     :or
     {type-code 0x00, block-id 0, firmware-length 0x00008212, data-length 16}}]
   (let [payload (byte-array data-length)
@@ -757,12 +759,12 @@
     (is (= (inc (.length text)) (:length decoded)))))
 
 (deftest encode-decode-artrdmsub
-  (let [packet {:op           :artrdmsub,
-                :rdm-version  2,
-                :uid          [0 1 2 3 4 5],
-                :command      :get,
-                :parameter-id 0x1234,
-                :sub-device   0x0001,
+  (let [packet {:op           :artrdmsub
+                :rdm-version  2
+                :uid          [0 1 2 3 4 5]
+                :command      :get
+                :parameter-id 0x1234
+                :sub-device   0x0001
                 :sub-count    4}
         buf (dispatch/encode packet)
         decoded (dispatch/decode buf)
@@ -778,13 +780,13 @@
     (is (zero? (:payload-length decoded)))
     (is (= 0 (.remaining payload))))
   (let [values [0x1111 0x2222 0x3333]
-        packet {:op           :artrdmsub,
-                :rdm-version  5,
-                :uid          [10 11 12 13 14 15],
-                :command      :get-response,
-                :parameter-id 0x4321,
-                :sub-device   0x0002,
-                :sub-count    (count values),
+        packet {:op           :artrdmsub
+                :rdm-version  5
+                :uid          [10 11 12 13 14 15]
+                :command      :get-response
+                :parameter-id 0x4321
+                :sub-device   0x0002
+                :sub-count    (count values)
                 :values       values}
         buf (dispatch/encode packet)
         decoded (dispatch/decode buf)
@@ -807,13 +809,13 @@
 
 (deftest encode-decode-artrdm
   (let [payload (byte-array (map #(unchecked-byte %) (range 1 30)))
-        packet {:op             :artrdm,
-                :rdm-version    2,
-                :fifo-available 3,
-                :fifo-max       5,
-                :net            7,
-                :command        0,
-                :address        0x11,
+        packet {:op             :artrdm
+                :rdm-version    2
+                :fifo-available 3
+                :fifo-max       5
+                :net            7
+                :command        0
+                :address        0x11
                 :rdm-packet     (ByteBuffer/wrap payload)}
         buf (dispatch/encode packet)
         decoded (dispatch/decode buf)
@@ -831,9 +833,9 @@
     (is (Arrays/equals payload bytes))))
 
 (deftest encode-decode-artdatarequest
-  (let [packet {:op           :artdatarequest,
-                :esta-man     0x1A2B,
-                :oem          0x3456,
+  (let [packet {:op           :artdatarequest
+                :esta-man     0x1A2B
+                :oem          0x3456
                 :request-type :dr-url-support}
         buf (dispatch/encode packet
                              (ByteBuffer/allocate const/artdatarequest-length))
@@ -846,10 +848,10 @@
 
 (deftest encode-decode-artdatareply
   (let [url "https://example.invalid/support"
-        packet {:op           :artdatareply,
-                :esta-man     0x1234,
-                :oem          0x5678,
-                :request-type :dr-url-support,
+        packet {:op           :artdatareply
+                :esta-man     0x1234
+                :oem          0x5678
+                :request-type :dr-url-support
                 :text         url}
         buf (dispatch/encode packet)
         decoded (dispatch/decode buf)
@@ -878,15 +880,15 @@
 (deftest encode-arttoddata-fixture-matches-octets
   (let [tod [[0x09 0x0A 0x0B 0x0C 0x0D 0x0E] [0xAA 0xBB 0xCC 0xDD 0xEE 0xFF]
              [0x10 0x20 0x30 0x40 0x50 0x60]]
-        packet {:op               :arttoddata,
-                :rdm-version      2,
-                :port             3,
-                :bind-index       4,
-                :net              5,
-                :command-response 0xA5,
-                :address          0x7C,
-                :uid-total        5,
-                :block-count      1,
+        packet {:op               :arttoddata
+                :rdm-version      2
+                :port             3
+                :bind-index       4
+                :net              5
+                :command-response 0xA5
+                :address          0x7C
+                :uid-total        5
+                :block-count      1
                 :tod              tod}
         buf (dispatch/encode packet
                              (ByteBuffer/allocate (+
@@ -900,10 +902,10 @@
 
 (deftest encode-decode-arttrigger
   (let [payload (byte-array [0x7F 0x00 0xAA 0x10])
-        packet {:op       :arttrigger,
-                :oem      0x1234,
-                :key-type :key-macro,
-                :sub-key  0x09,
+        packet {:op       :arttrigger
+                :oem      0x1234
+                :key-type :key-macro
+                :sub-key  0x09
                 :data     payload}
         buf (dispatch/encode packet
                              (ByteBuffer/allocate const/arttrigger-length))
@@ -940,11 +942,11 @@
       (is (= 3 (:num-ports decoded))))))
 
 (deftest decode-artpoll
-  (let [buf (artpoll-frame {:flags         0x2C,            ; target + diag request + unicast
-                            :diag          0x40,
-                            :target-top    0x0010,
-                            :target-bottom 0x0001,
-                            :esta          0x1234,
+  (let [buf (artpoll-frame {:flags         0x2C             ; target + diag request + unicast
+                            :diag          0x40
+                            :target-top    0x0010
+                            :target-bottom 0x0001
+                            :esta          0x1234
                             :oem           0x5678})
         packet (dispatch/decode buf)]
     (is (= :artpoll (:op packet)))
@@ -1087,9 +1089,9 @@
     (is (= (inc (.length text)) (:length decoded)))))
 
 (deftest encode-artdiagdata-fixture-matches-octets
-  (let [packet {:op           :artdiagdata,
-                :priority     0xCC,
-                :logical-port 0x21,
+  (let [packet {:op           :artdiagdata
+                :priority     0xCC
+                :logical-port 0x21
                 :text         "Diagnostics: PSU voltage low"}
         buf (dispatch/encode packet
                              (ByteBuffer/allocate
@@ -1123,11 +1125,11 @@
     (is (= [10 0 0 1] (:prog-gateway packet)))))
 
 (deftest encode-artipprogreply-fixture-matches-octets
-  (let [packet {:op          :artipprogreply,
-                :ip          [10 0 0 20],
-                :subnet-mask [255 255 0 0],
-                :gateway     [10 0 0 1],
-                :port        0x1357,
+  (let [packet {:op          :artipprogreply
+                :ip          [10 0 0 20]
+                :subnet-mask [255 255 0 0]
+                :gateway     [10 0 0 1]
+                :port        0x1357
                 :dhcp?       true}
         buf (dispatch/encode packet
                              (ByteBuffer/allocate const/artipprogreply-length))
@@ -1147,15 +1149,15 @@
 
 (deftest encode-decode-arttoddata
   (let [tod [[0 1 2 3 4 5] [10 11 12 13 14 15]]
-        packet {:op               :arttoddata,
-                :rdm-version      1,
-                :port             2,
-                :bind-index       3,
-                :net              4,
-                :command-response 0,
-                :address          0x56,
-                :uid-total        2,
-                :block-count      0,
+        packet {:op               :arttoddata
+                :rdm-version      1
+                :port             2
+                :bind-index       3
+                :net              4
+                :command-response 0
+                :address          0x56
+                :uid-total        2
+                :block-count      0
                 :tod              tod}
         buf (dispatch/encode packet (ByteBuffer/allocate 256))
         decoded (dispatch/decode buf)]
@@ -1190,9 +1192,9 @@
     (is (= [1 2 3 4 5] (map #(bit-and 0xFF %) bytes)))))
 
 (deftest decode-artfirmwaremaster
-  (let [buf (artfirmwaremaster-buffer {:type-code       0x00,
-                                       :block-id        0x05,
-                                       :firmware-length 0x00008212,
+  (let [buf (artfirmwaremaster-buffer {:type-code       0x00
+                                       :block-id        0x05
+                                       :firmware-length 0x00008212
                                        :data-length     32})
         packet (dispatch/decode buf)
         ^ByteBuffer data (:data packet)
@@ -1286,40 +1288,40 @@
   (assert-property :artpollreply-random encode-artpollreply-random-prop 200))
 
 (deftest encode-artpollreply-includes-goodoutputb-and-status3
-  (let [packet {:op                      :artpollreply,
-                :ip                      [2 0 0 10],
-                :bind-ip                 [10 0 0 5],
-                :port                    0x1936,
-                :version-hi              1,
-                :version-lo              2,
-                :net-switch              0x01,
-                :sub-switch              0x02,
-                :oem                     0x1234,
-                :ubea-version            3,
-                :status1                 0x04,
-                :esta-man                0x4567,
-                :short-name              "node",
-                :long-name               "Multi Port Node",
-                :node-report             "#0001 [0001] OK",
-                :num-ports               2,
-                :port-types              [0xC0 0 0 0],
-                :good-input              [0x80 0 0 0],
-                :good-output-a           [0x90 0 0 0],
-                :good-output-b           [0xAA 0x55 0xFF 0x00],
-                :sw-in                   [0x01 0 0 0],
-                :sw-out                  [0x02 0 0 0],
-                :acn-priority            120,
-                :sw-macro                0x11,
-                :sw-remote               0x22,
-                :style                   0x33,
-                :mac                     [0xDE 0xAD 0xBE 0xEF 0x00 0x01],
-                :bind-index              2,
-                :status2                 0x5A,
-                :status3                 0xA5,
-                :default-responder       [1 2 3 4 5 6],
-                :user-hi                 0x12,
-                :user-lo                 0x34,
-                :refresh-rate            0x0123,
+  (let [packet {:op                      :artpollreply
+                :ip                      [2 0 0 10]
+                :bind-ip                 [10 0 0 5]
+                :port                    0x1936
+                :version-hi              1
+                :version-lo              2
+                :net-switch              0x01
+                :sub-switch              0x02
+                :oem                     0x1234
+                :ubea-version            3
+                :status1                 0x04
+                :esta-man                0x4567
+                :short-name              "node"
+                :long-name               "Multi Port Node"
+                :node-report             "#0001 [0001] OK"
+                :num-ports               2
+                :port-types              [0xC0 0 0 0]
+                :good-input              [0x80 0 0 0]
+                :good-output-a           [0x90 0 0 0]
+                :good-output-b           [0xAA 0x55 0xFF 0x00]
+                :sw-in                   [0x01 0 0 0]
+                :sw-out                  [0x02 0 0 0]
+                :acn-priority            120
+                :sw-macro                0x11
+                :sw-remote               0x22
+                :style                   0x33
+                :mac                     [0xDE 0xAD 0xBE 0xEF 0x00 0x01]
+                :bind-index              2
+                :status2                 0x5A
+                :status3                 0xA5
+                :default-responder       [1 2 3 4 5 6]
+                :user-hi                 0x12
+                :user-lo                 0x34
+                :refresh-rate            0x0123
                 :background-queue-policy 0x07}
         buf (dispatch/encode packet
                              (ByteBuffer/allocate const/artpollreply-length))

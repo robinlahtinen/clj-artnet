@@ -8,20 +8,22 @@
    - udp-send: Sends UDP packets
 
    Part of the Imperative Shell: Orchestrates the reactive pipeline."
-  (:require [clj-artnet.impl.protocol.diagnostics :as diagnostics]
-            [clj-artnet.impl.protocol.dmx-helpers :as dmx]
-            [clj-artnet.impl.protocol.lifecycle :as lifecycle]
-            [clj-artnet.impl.protocol.machine :as machine]
-            [clj-artnet.impl.protocol.node-state :as logic-state]
-            [clj-artnet.impl.shell.buffers :as buffers]
-            [clj-artnet.impl.shell.effects :as effects]
-            [clj-artnet.impl.shell.net :as net]
-            [clj-artnet.impl.shell.receiver :as receiver]
-            [clj-artnet.impl.shell.sender :as sender]
-            [clojure.core.async :as async]
-            [clojure.core.async.flow :as flow]
-            [taoensso.trove :as trove])
-  (:import (java.util.concurrent.atomic AtomicBoolean)))
+  (:require
+    [clj-artnet.impl.protocol.diagnostics :as diagnostics]
+    [clj-artnet.impl.protocol.dmx-helpers :as dmx]
+    [clj-artnet.impl.protocol.lifecycle :as lifecycle]
+    [clj-artnet.impl.protocol.machine :as machine]
+    [clj-artnet.impl.protocol.node-state :as logic-state]
+    [clj-artnet.impl.shell.buffers :as buffers]
+    [clj-artnet.impl.shell.effects :as effects]
+    [clj-artnet.impl.shell.net :as net]
+    [clj-artnet.impl.shell.receiver :as receiver]
+    [clj-artnet.impl.shell.sender :as sender]
+    [clojure.core.async :as async]
+    [clojure.core.async.flow :as flow]
+    [taoensso.trove :as trove])
+  (:import
+    (java.util.concurrent.atomic AtomicBoolean)))
 
 (set! *warn-on-reflection* true)
 
@@ -127,9 +129,9 @@
     (fn
       ([]
        {:ins
-        {:rx "UDP frames", :commands "User commands", :ticks "Failsafe ticks"},
-        :outs     {:actions "Actions bound for IO"},
-        :params   {:config "Logic configuration"},
+        {:rx "UDP frames", :commands "User commands", :ticks "Failsafe ticks"}
+        :outs     {:actions "Actions bound for IO"}
+        :params   {:config "Logic configuration"}
         :workload :mixed})
       ([{:keys [config]}]
        (let [node (or (logic-state/normalize-node (:node config))
@@ -143,17 +145,17 @@
                                  :node node
                                  :network network
                                  :capabilities capabilities)
-             base-state {:node         node,
-                         :network      network,
-                         :diagnostics  (:diagnostics config),
-                         :programming  (:programming config),
-                         :capabilities capabilities,
-                         :peers        {},
-                         :stats        {},
-                         :callbacks    (:callbacks config),
-                         :dmx          (dmx/initial-state {:sync-config     (:sync config),
+             base-state {:node         node
+                         :network      network
+                         :diagnostics  (:diagnostics config)
+                         :programming  (:programming config)
+                         :capabilities capabilities
+                         :peers        {}
+                         :stats        {}
+                         :callbacks    (:callbacks config)
+                         :dmx          (dmx/initial-state {:sync-config     (:sync config)
                                                            :failsafe-config (:failsafe
-                                                                              config)}),
+                                                                              config)})
                          :rdm          {:discovery {}, :transport {}}}
              [state _] (diagnostics/refresh-state base-state (System/nanoTime))
              _ (when-not (contains? (:node config) :esta-man)
@@ -181,9 +183,9 @@
            (.set running? false)))
        (catch InterruptedException _ (Thread/interrupted))
        (catch Throwable t
-         (trove/log! {:level :error,
-                      :id    ::failsafe-timer-failed,
-                      :msg   "Failsafe timer loop failed",
+         (trove/log! {:level :error
+                      :id    ::failsafe-timer-failed
+                      :msg   "Failsafe timer loop failed"
                       :error t}))
        (finally (async/close! out))))
 
@@ -195,8 +197,8 @@
   (flow/process
     (fn
       ([]
-       {:outs     {:ticks "Failsafe tick events"},
-        :params   {:interval-ms "Tick interval in milliseconds"},
+       {:outs     {:ticks "Failsafe tick events"}
+        :params   {:interval-ms "Tick interval in milliseconds"}
         :workload :cpu})
       ([{:keys [interval-ms], :or {interval-ms 100}}]
        (let [interval (long (max 1 interval-ms))
@@ -205,10 +207,10 @@
              thread (async/io-thread
                       (failsafe-timer-loop
                         {:running? running?, :out out, :interval-ms interval}))]
-         {:running?        running?,
-          :out             out,
-          :interval-ms     interval,
-          :thread          thread,
+         {:running?        running?
+          :out             out
+          :interval-ms     interval
+          :thread          thread
           ::flow/out-ports {:ticks out}}))
       ([state transition]
        (when (= transition ::flow/stop)
@@ -242,22 +244,22 @@
                              (/ (:tick-interval-ns failsafe-conf) 1000000.0))))]
     (flow/create-flow
       {:procs
-       {:udp-recv {:proc (receiver/receiver-proc),
-                   :args {:channel    channel,
-                          :pool       rx-pool,
-                          :out-buffer recv-buffer,
-                          :max-packet max-packet}},
-        :failsafe {:proc (failsafe-timer-proc), :args {:interval-ms tick-ms}},
-        :logic    {:proc (logic-proc), :args {:config logic-config}},
-        :udp-send {:proc (sender/sender-proc),
-                   :args {:channel                  channel,
-                          :pool                     tx-pool,
-                          :default-target           default-target,
-                          :allow-limited-broadcast? allow-limited-broadcast?}}},
-       :chan-opts {[:logic :rx]       {:buf-or-n recv-buffer},
-                   [:logic :commands] {:buf-or-n command-buffer},
-                   [:logic :actions]  {:buf-or-n actions-buffer},
-                   [:logic :ticks]    {:buf-or-n 16}},
+       {:udp-recv {:proc (receiver/receiver-proc)
+                   :args {:channel    channel
+                          :pool       rx-pool
+                          :out-buffer recv-buffer
+                          :max-packet max-packet}}
+        :failsafe {:proc (failsafe-timer-proc), :args {:interval-ms tick-ms}}
+        :logic    {:proc (logic-proc), :args {:config logic-config}}
+        :udp-send {:proc (sender/sender-proc)
+                   :args {:channel                  channel
+                          :pool                     tx-pool
+                          :default-target           default-target
+                          :allow-limited-broadcast? allow-limited-broadcast?}}}
+       :chan-opts {[:logic :rx]       {:buf-or-n recv-buffer}
+                   [:logic :commands] {:buf-or-n command-buffer}
+                   [:logic :actions]  {:buf-or-n actions-buffer}
+                   [:logic :ticks]    {:buf-or-n 16}}
        :conns     [[[:udp-recv :rx] [:logic :rx]]
                    [[:failsafe :ticks] [:logic :ticks]]
                    [[:logic :actions] [:udp-send :actions]]]})))
@@ -270,15 +272,15 @@
   (def tx (buffers/create-pool {:count 8}))
   ;; Create graph
   (def g
-    (graph/create-graph {:channel                  ch,
-                         :rx-pool                  rx,
-                         :tx-pool                  tx,
-                         :logic-config             {:node {:short-name "MyNode"}},
-                         :max-packet               2048,
-                         :recv-buffer              16,
-                         :command-buffer           16,
-                         :actions-buffer           16,
-                         :default-target           nil,
+    (graph/create-graph {:channel                  ch
+                         :rx-pool                  rx
+                         :tx-pool                  tx
+                         :logic-config             {:node {:short-name "MyNode"}}
+                         :max-packet               2048
+                         :recv-buffer              16
+                         :command-buffer           16
+                         :actions-buffer           16
+                         :default-target           nil
                          :allow-limited-broadcast? true}))
   ;; Start flow (requires core.async.flow/start)
   ;; (flow/start g)

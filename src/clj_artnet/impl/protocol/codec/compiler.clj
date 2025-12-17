@@ -13,10 +13,12 @@
    - Direct ByteBuffer access without intermediate allocations
    - Generated encoders/decoders from spec data"
   {:skip-wiki true}
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.spec :as spec])
-  (:import (java.nio ByteBuffer)
-           (java.nio.charset StandardCharsets)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.spec :as spec])
+  (:import
+    (java.nio ByteBuffer)
+    (java.nio.charset StandardCharsets)))
 
 (set! *warn-on-reflection* true)
 
@@ -293,9 +295,9 @@
 (def ^:private variable-payload-packets
   "Packet types with variable-length payloads after the header.
    Maps op-keyword to {:length-field :header-size}"
-  {:artdmx    {:length-field :length, :header-size 18},
-   :artnzs    {:length-field :length, :header-size 18},
-   :artrdm    {:length-field nil, :header-size 24},
+  {:artdmx    {:length-field :length, :header-size 18}
+   :artnzs    {:length-field :length, :header-size 18}
+   :artrdm    {:length-field nil, :header-size 24}
    :artrdmsub {:length-field nil, :header-size 32}})
 
 (defn decode-packet
@@ -356,20 +358,20 @@
   ;; Test ArtPollReply encoding
   (def test-reply-buf (ByteBuffer/allocate 256))
   (encode-packet! test-reply-buf
-                  {:op                :artpollreply,
-                   :ip                [192 168 1 100],
-                   :short-name        "Test Node",
-                   :long-name         "Test Art-Net Node",
-                   :node-report       "#0001 [0001] OK",
-                   :num-ports         1,
-                   :port-types        [0x85 0 0 0],
-                   :good-input        [0 0 0 0],
-                   :good-output-a     [0x80 0 0 0],
-                   :sw-in             [0 0 0 0],
-                   :sw-out            [0 0 0 0],
-                   :mac               [0xDE 0xAD 0xBE 0xEF 0x00 0x01],
-                   :bind-ip           [192 168 1 100],
-                   :good-output-b     [0 0 0 0],
+                  {:op                :artpollreply
+                   :ip                [192 168 1 100]
+                   :short-name        "Test Node"
+                   :long-name         "Test Art-Net Node"
+                   :node-report       "#0001 [0001] OK"
+                   :num-ports         1
+                   :port-types        [0x85 0 0 0]
+                   :good-input        [0 0 0 0]
+                   :good-output-a     [0x80 0 0 0]
+                   :sw-in             [0 0 0 0]
+                   :sw-out            [0 0 0 0]
+                   :mac               [0xDE 0xAD 0xBE 0xEF 0x00 0x01]
+                   :bind-ip           [192 168 1 100]
+                   :good-output-b     [0 0 0 0]
                    :default-responder [0 0 0 0 0 0]})
   ;; Decode the encoded packet
   (.position test-reply-buf 0)

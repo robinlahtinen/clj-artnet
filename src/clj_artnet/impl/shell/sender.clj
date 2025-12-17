@@ -5,16 +5,18 @@
    - Encodes and sends Art-Net packets (enforcing broadcast policy)
    - Executes callback actions on virtual threads
    - Manages delayed actions (e.g. reply dispatch)"
-  (:require [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
-            [clj-artnet.impl.shell.buffers :as buffers]
-            [clj-artnet.impl.shell.net :as net]
-            [clj-artnet.impl.shell.policy :as policy]
-            [clojure.core.async :as async]
-            [clojure.core.async.flow :as flow]
-            [taoensso.trove :as trove])
-  (:import (clojure.lang ExceptionInfo)
-           (java.nio.channels DatagramChannel)
-           (java.util.concurrent.atomic AtomicBoolean)))
+  (:require
+    [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
+    [clj-artnet.impl.shell.buffers :as buffers]
+    [clj-artnet.impl.shell.net :as net]
+    [clj-artnet.impl.shell.policy :as policy]
+    [clojure.core.async :as async]
+    [clojure.core.async.flow :as flow]
+    [taoensso.trove :as trove])
+  (:import
+    (clojure.lang ExceptionInfo)
+    (java.nio.channels DatagramChannel)
+    (java.util.concurrent.atomic AtomicBoolean)))
 
 (set! *warn-on-reflection* true)
 
@@ -38,9 +40,9 @@
   (when-let [f (:fn action)]
     (async/io-thread (try (f (:payload action))
                           (catch Throwable t
-                            (trove/log! {:level :error,
-                                         :id    ::callback-failed,
-                                         :msg   "Art-Net callback failed",
+                            (trove/log! {:level :error
+                                         :id    ::callback-failed
+                                         :msg   "Art-Net callback failed"
                                          :error t}))))))
 
 (defn- send-packet!
@@ -60,10 +62,10 @@
                  socket (resolve-target target allow-limited-broadcast?)]
              (.send channel encoded socket))
            (catch Throwable t
-             (trove/log! {:level :error,
-                          :id    ::packet-send-failed,
-                          :msg   "Failed to emit Art-Net packet",
-                          :error t,
+             (trove/log! {:level :error
+                          :id    ::packet-send-failed
+                          :msg   "Failed to emit Art-Net packet"
+                          :error t
                           :data  {:action action}}))
            (finally (buffers/release! pool buf))))))
 
@@ -76,13 +78,13 @@
     :release (when-let [release (:release action)]
                (try (release)
                     (catch Throwable t
-                      (trove/log! {:level :warn,
-                                   :id    ::buffer-release-failed,
-                                   :msg   "Failed to release buffer",
+                      (trove/log! {:level :warn
+                                   :id    ::buffer-release-failed
+                                   :msg   "Failed to release buffer"
                                    :error t}))))
-    (trove/log! {:level :warn,
-                 :id    ::unknown-action,
-                 :msg   "Unknown action",
+    (trove/log! {:level :warn
+                 :id    ::unknown-action
+                 :msg   "Unknown action"
                  :data  {:action action}}))
   state)
 
@@ -94,22 +96,22 @@
       (try (Thread/sleep (long (max 0 delay)))
            (if (.get ^AtomicBoolean (:running? state))
              (perform-action! state (dissoc action :delay-ms))
-             (trove/log! {:level :debug,
-                          :id    ::delayed-action-skipped,
-                          :msg   "Skipping delayed action; sender stopped",
+             (trove/log! {:level :debug
+                          :id    ::delayed-action-skipped
+                          :msg   "Skipping delayed action; sender stopped"
                           :data  {:action (:type action)}}))
            (catch InterruptedException _ (Thread/interrupted))
            (catch Throwable t
              (let [msg (ex-message t)]
                (if (and (instance? ExceptionInfo t) (= "Buffer pool closed" msg))
-                 (trove/log! {:level :debug,
-                              :id    ::delayed-action-cancelled,
-                              :msg   "Delayed action cancelled; pool closed",
+                 (trove/log! {:level :debug
+                              :id    ::delayed-action-cancelled
+                              :msg   "Delayed action cancelled; pool closed"
                               :data  {:action (:type action)}})
-                 (trove/log! {:level :error,
-                              :id    ::delayed-action-failed,
-                              :msg   "Delayed action execution failed",
-                              :error t,
+                 (trove/log! {:level :error
+                              :id    ::delayed-action-failed
+                              :msg   "Delayed action execution failed"
+                              :error t
                               :data  {:action (:type action)}}))))))
     (perform-action! state action))
   state)
@@ -122,17 +124,17 @@
            (if-let [msg (async/<!! action-chan)]
              (do (try (execute-action! state msg)
                       (catch Throwable t
-                        (trove/log! {:level :error,
-                                     :id    ::action-execution-failed,
-                                     :msg   "Failed to execute action",
-                                     :error t,
+                        (trove/log! {:level :error
+                                     :id    ::action-execution-failed
+                                     :msg   "Failed to execute action"
+                                     :error t
                                      :data  {:action msg}})))
                  (recur))
              (.set ^AtomicBoolean running? false))))
        (catch Throwable t
-         (trove/log! {:level :error,
-                      :id    ::sender-dispatcher-failed,
-                      :msg   "UDP sender dispatcher failed",
+         (trove/log! {:level :error
+                      :id    ::sender-dispatcher-failed
+                      :msg   "UDP sender dispatcher failed"
                       :error t}))
        (finally (.set ^AtomicBoolean running? false))))
 
@@ -146,24 +148,24 @@
   (flow/process
     (fn
       ([]
-       {:ins      {:actions "Protocol output actions"},
-        :params   {:channel                  "DatagramChannel",
-                   :pool                     "Buffer pool",
-                   :default-target           "Fallback send target",
-                   :allow-limited-broadcast? "Permit 255.255.255.255 targets?"},
+       {:ins      {:actions "Protocol output actions"}
+        :params   {:channel                  "DatagramChannel"
+                   :pool                     "Buffer pool"
+                   :default-target           "Fallback send target"
+                   :allow-limited-broadcast? "Permit 255.255.255.255 targets?"}
         :workload :io})
-      ([{:keys [channel pool default-target allow-limited-broadcast?],
+      ([{:keys [channel pool default-target allow-limited-broadcast?]
          :as   _args}]
        (let [running? (AtomicBoolean. true)
              action-chan (async/chan (async/sliding-buffer 128))
-             state {:channel                  channel,
-                    :pool                     pool,
-                    :default-target           default-target,
-                    :allow-limited-broadcast? (true? allow-limited-broadcast?),
-                    :action-chan              action-chan,
+             state {:channel                  channel
+                    :pool                     pool
+                    :default-target           default-target
+                    :allow-limited-broadcast? (true? allow-limited-broadcast?)
+                    :action-chan              action-chan
                     :running?                 running?}
-             dispatcher (async/io-thread (sender-loop {:action-chan action-chan,
-                                                       :running?    running?,
+             dispatcher (async/io-thread (sender-loop {:action-chan action-chan
+                                                       :running?    running?
                                                        :state       state}))]
          (assoc state :dispatcher dispatcher)))
       ([state transition]
@@ -178,27 +180,27 @@
            (when (and ch (.isOpen ch))
              (try (.close ch)
                   (catch Exception e
-                    (trove/log! {:level :warn,
-                                 :id    ::sender-channel-close-error,
-                                 :msg   "Error closing sender channel",
+                    (trove/log! {:level :warn
+                                 :id    ::sender-channel-close-error
+                                 :msg   "Error closing sender channel"
                                  :error e}))))))
        state)
       ([state _ msg]
        (when msg
          (let [accepted? (async/offer! (:action-chan state) msg)]
            (when-not accepted?
-             (trove/log! {:level :warn,
-                          :id    ::action-dropped,
-                          :msg   "Sender action channel closed; dropping action",
+             (trove/log! {:level :warn
+                          :id    ::action-dropped
+                          :msg   "Sender action channel closed; dropping action"
                           :data  {:action (:type msg)}})
              (when (= :release (:type msg))
                (when-let [release (:release msg)]
                  (try (release)
                       (catch Throwable t
                         (trove/log!
-                          {:level :warn,
-                           :id    ::dropped-action-release-failed,
-                           :msg   "Failed to release buffer for dropped action",
+                          {:level :warn
+                           :id    ::dropped-action-release-failed
+                           :msg   "Failed to release buffer for dropped action"
                            :error t}))))))))
        [state {}]))))
 

@@ -3,8 +3,9 @@
 
    Provides blocking access to remote node state via flow injection and
    promise synchronization, and non-blocking state updates."
-  (:require [clj-artnet.impl.shell.commands :as commands]
-            [clojure.core.async.flow :as flow]))
+  (:require
+    [clj-artnet.impl.shell.commands :as commands]
+    [clojure.core.async.flow :as flow]))
 
 (set! *warn-on-reflection* true)
 
@@ -18,8 +19,8 @@
     (when-not the-flow
       (throw (ex-info "Node missing flow context" {:node node})))
     (let [result (promise)
-          msg {:type  :snapshot,
-               :keys  (or (seq keys) default-keys),
+          msg {:type  :snapshot
+               :keys  (or (seq keys) default-keys)
                :reply (fn [snapshot] (deliver result snapshot))}
           timeout (long (or timeout-ms 1000))]
       (flow/inject the-flow [:logic :commands] [msg])

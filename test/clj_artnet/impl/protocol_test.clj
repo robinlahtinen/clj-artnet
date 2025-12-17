@@ -2,15 +2,17 @@
   "Tests for the new protocol layer modules.
 
    These tests verify the pure protocol logic extracted from step.clj."
-  (:require [clj-artnet.impl.protocol.addressing :as addressing]
-            [clj-artnet.impl.protocol.discovery :as discovery]
-            [clj-artnet.impl.protocol.dmx :as dmx]
-            [clj-artnet.impl.protocol.effects :as effects]
-            [clj-artnet.impl.protocol.state :as state]
-            [clj-artnet.impl.protocol.sync :as sync]
-            [clj-artnet.support.helpers :refer [thrown-with-msg?]]
-            [clojure.test :refer [deftest is testing]])
-  (:import (clojure.lang ExceptionInfo)))
+  (:require
+    [clj-artnet.impl.protocol.addressing :as addressing]
+    [clj-artnet.impl.protocol.discovery :as discovery]
+    [clj-artnet.impl.protocol.dmx :as dmx]
+    [clj-artnet.impl.protocol.effects :as effects]
+    [clj-artnet.impl.protocol.state :as state]
+    [clj-artnet.impl.protocol.sync :as sync]
+    [clj-artnet.support.helpers :refer [thrown-with-msg?]]
+    [clojure.test :refer [deftest is testing]])
+  (:import
+    (clojure.lang ExceptionInfo)))
 
 (deftest port-address-composition
   (testing "compose-port-address creates 15-bit address"
@@ -83,16 +85,16 @@
   (testing "tx-packet creates transmission effect"
     (is (= {:effect :tx-packet, :op :artdmx, :data {:foo :bar}}
            (effects/tx-packet :artdmx {:foo :bar})))
-    (is (= {:effect :tx-packet,
-            :op     :artdmx,
-            :data   {:foo :bar},
+    (is (= {:effect :tx-packet
+            :op     :artdmx
+            :data   {:foo :bar}
             :target {:host "1.2.3.4"}}
            (effects/tx-packet :artdmx {:foo :bar} {:host "1.2.3.4"}))))
   (testing "tx-reply creates reply effect"
-    (is (= {:effect :tx-packet,
-            :op     :artpollreply,
-            :data   {},
-            :target {:host "1.2.3.4"},
+    (is (= {:effect :tx-packet
+            :op     :artpollreply
+            :data   {}
+            :target {:host "1.2.3.4"}
             :reply? true}
            (effects/tx-reply :artpollreply {} {:host "1.2.3.4"}))))
   (testing "tx-broadcast creates broadcast effect"
@@ -136,7 +138,7 @@
 
 (deftest dmx-source-limit
   (testing "at-source-limit? enforces 2 source limit"
-    (let [sources {"a" {:data (byte-array 3), :length 3, :last-updated 1},
+    (let [sources {"a" {:data (byte-array 3), :length 3, :last-updated 1}
                    "b" {:data (byte-array 3), :length 3, :last-updated 2}}]
       (is (true? (dmx/at-source-limit? sources "c")))
       (is (false? (dmx/at-source-limit? sources "a"))))))
@@ -213,9 +215,9 @@
     (is (false? (sync/configured-art-sync? {:dmx {:sync {:mode :immediate}}}))))
   (testing "current-sync-mode returns effective mode"
     (is (= :art-sync
-           (sync/current-sync-mode {:dmx {:sync {:mode        :art-sync,
+           (sync/current-sync-mode {:dmx {:sync {:mode        :art-sync
                                                  :active-mode nil}}})))
     (is (= :immediate
-           (sync/current-sync-mode {:dmx {:sync {:mode        :art-sync,
+           (sync/current-sync-mode {:dmx {:sync {:mode        :art-sync
                                                  :active-mode :immediate}}}))
         "Active mode overrides configured mode")))

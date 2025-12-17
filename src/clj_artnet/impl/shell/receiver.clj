@@ -5,15 +5,17 @@
    - Reads datagrams from the channel into pooled buffers
    - Decodes Art-Net packets (discarding malformed ones)
    - Emits valid packets to the flow graph"
-  (:require [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
-            [clj-artnet.impl.shell.buffers :as buffers]
-            [clj-artnet.impl.shell.net :as net]
-            [clojure.core.async :as async]
-            [clojure.core.async.flow :as flow]
-            [taoensso.trove :as trove])
-  (:import (java.nio ByteBuffer)
-           (java.nio.channels ClosedChannelException DatagramChannel)
-           (java.util.concurrent.atomic AtomicBoolean)))
+  (:require
+    [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
+    [clj-artnet.impl.shell.buffers :as buffers]
+    [clj-artnet.impl.shell.net :as net]
+    [clojure.core.async :as async]
+    [clojure.core.async.flow :as flow]
+    [taoensso.trove :as trove])
+  (:import
+    (java.nio ByteBuffer)
+    (java.nio.channels ClosedChannelException DatagramChannel)
+    (java.util.concurrent.atomic AtomicBoolean)))
 
 (set! *warn-on-reflection* true)
 
@@ -27,7 +29,7 @@
            (.clear buf)
            (when (> max-packet-bytes (.capacity buf))
              (throw (ex-info "Buffer too small for configured packet size"
-                             {:capacity (.capacity buf),
+                             {:capacity (.capacity buf)
                               :required max-packet-bytes})))
            (let [remote (.receive channel buf)]
              (if (nil? remote)
@@ -36,26 +38,25 @@
                    (let [view (.duplicate buf)]
                      (try (let [packet (dispatch/decode view)
                                 sender (net/sender-from-socket remote)
-                                message {:type    :rx,
-                                         :packet  packet,
-                                         :sender  sender,
+                                message {:type    :rx
+                                         :packet  packet
+                                         :sender  sender
                                          :release #(buffers/release! pool buf)}]
                             (if (async/>!! out-chan message)
                               nil
                               (do (buffers/release! pool buf)
                                   (.set running? false))))
                           (catch Throwable t
-                            (trove/log! {:level :warn,
-                                         :id    ::malformed-udp-payload,
-                                         :msg
-                                         "Discarding malformed UDP payload",
+                            (trove/log! {:level :warn
+                                         :id    ::malformed-udp-payload
+                                         :msg   "Discarding malformed UDP payload"
                                          :error t})
                             (buffers/release! pool buf)))))))))
        (catch ClosedChannelException _)
        (catch Throwable t
-         (trove/log! {:level :error,
-                      :id    ::udp-receiver-failed,
-                      :msg   "UDP receiver failed",
+         (trove/log! {:level :error
+                      :id    ::udp-receiver-failed
+                      :msg   "UDP receiver failed"
                       :error t}))
        (finally (async/close! out-chan) (.set running? false))))
 
@@ -65,9 +66,9 @@
   (when (.compareAndSet running? true false)
     (try (.close channel)
          (catch Exception e
-           (trove/log! {:level :warn,
-                        :id    ::receiver-channel-close-error,
-                        :msg   "Error closing receiver channel",
+           (trove/log! {:level :warn
+                        :id    ::receiver-channel-close-error
+                        :msg   "Error closing receiver channel"
                         :error e})))))
 
 (defn receiver-proc
@@ -80,27 +81,27 @@
   (flow/process
     (fn
       ([]
-       {:outs     {:rx "Decoded Art-Net frames"},
-        :params   {:channel    "DatagramChannel",
-                   :pool       "Buffer pool",
-                   :out-buffer "Output channel buffer size",
-                   :max-packet "Maximum bytes per datagram"},
+       {:outs     {:rx "Decoded Art-Net frames"}
+        :params   {:channel    "DatagramChannel"
+                   :pool       "Buffer pool"
+                   :out-buffer "Output channel buffer size"
+                   :max-packet "Maximum bytes per datagram"}
         :workload :io})
-      ([{:keys [channel pool out-buffer max-packet],
+      ([{:keys [channel pool out-buffer max-packet]
          :or   {out-buffer 32, max-packet 2048}}]
        (let [running? (AtomicBoolean. true)
              out (async/chan out-buffer)
-             thread (async/io-thread (receiver-loop {:channel  channel,
-                                                     :pool     pool,
-                                                     :running? running?,
-                                                     :out-chan out,
+             thread (async/io-thread (receiver-loop {:channel  channel
+                                                     :pool     pool
+                                                     :running? running?
+                                                     :out-chan out
                                                      :max-packet-bytes
                                                      max-packet}))]
-         {:channel         channel,
-          :pool            pool,
-          :running?        running?,
-          :out             out,
-          :thread          thread,
+         {:channel         channel
+          :pool            pool
+          :running?        running?
+          :out             out
+          :thread          thread
           ::flow/out-ports {:rx out}}))
       ([state transition]
        (when (= transition ::flow/stop)

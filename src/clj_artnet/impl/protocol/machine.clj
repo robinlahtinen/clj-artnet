@@ -3,24 +3,26 @@
 
 (ns clj-artnet.impl.protocol.machine
   "Pure Art-Net protocol state machine."
-  (:require [clj-artnet.impl.protocol.addressing :as proto.addressing]
-            [clj-artnet.impl.protocol.diagnostics :as diagnostics]
-            [clj-artnet.impl.protocol.discovery :as proto.discovery]
-            [clj-artnet.impl.protocol.dmx :as proto.dmx]
-            [clj-artnet.impl.protocol.dmx-helpers :as dmx-helpers]
-            [clj-artnet.impl.protocol.firmware :as firmware]
-            [clj-artnet.impl.protocol.input :as input-helpers]
-            [clj-artnet.impl.protocol.lifecycle :as lifecycle]
-            [clj-artnet.impl.protocol.node-state :as node-state]
-            [clj-artnet.impl.protocol.poll :as poll-helpers]
-            [clj-artnet.impl.protocol.programming :as programming]
-            [clj-artnet.impl.protocol.rdm.discovery :as rdm.discovery]
-            [clj-artnet.impl.protocol.rdm.transport :as rdm.transport]
-            [clj-artnet.impl.protocol.state :as proto.state]
-            [clj-artnet.impl.protocol.sync :as proto.sync]
-            [clj-artnet.impl.protocol.timing :as timing]
-            [clj-artnet.impl.protocol.triggers :as triggers])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.addressing :as proto.addressing]
+    [clj-artnet.impl.protocol.diagnostics :as diagnostics]
+    [clj-artnet.impl.protocol.discovery :as proto.discovery]
+    [clj-artnet.impl.protocol.dmx :as proto.dmx]
+    [clj-artnet.impl.protocol.dmx-helpers :as dmx-helpers]
+    [clj-artnet.impl.protocol.firmware :as firmware]
+    [clj-artnet.impl.protocol.input :as input-helpers]
+    [clj-artnet.impl.protocol.lifecycle :as lifecycle]
+    [clj-artnet.impl.protocol.node-state :as node-state]
+    [clj-artnet.impl.protocol.poll :as poll-helpers]
+    [clj-artnet.impl.protocol.programming :as programming]
+    [clj-artnet.impl.protocol.rdm.discovery :as rdm.discovery]
+    [clj-artnet.impl.protocol.rdm.transport :as rdm.transport]
+    [clj-artnet.impl.protocol.state :as proto.state]
+    [clj-artnet.impl.protocol.sync :as proto.sync]
+    [clj-artnet.impl.protocol.timing :as timing]
+    [clj-artnet.impl.protocol.triggers :as triggers])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -62,10 +64,10 @@
 (defn dmx-frame
   "Effect: output DMX."
   [port-address sequence data length]
-  {:effect       :dmx-frame,
-   :port-address port-address,
-   :sequence     sequence,
-   :data         data,
+  {:effect       :dmx-frame
+   :port-address port-address
+   :sequence     sequence
+   :data         data
    :length       length})
 
 (defn initial-state
@@ -101,15 +103,15 @@
             (let [{:keys [data length]} last-output
                   {:keys [net sub-net universe]}
                   (proto.addressing/split-port-address port-address)]
-              {:effect     :tx-packet,
-               :op         :artdmx,
-               :data       {:net          net,
-                            :sub-uni      (bit-or (bit-shift-left sub-net 4) universe),
-                            :port-address port-address,
-                            :length       length,
-                            :data         data,
-                            :sequence     0},
-               :broadcast? true,
+              {:effect     :tx-packet
+               :op         :artdmx
+               :data       {:net          net
+                            :sub-uni      (bit-or (bit-shift-left sub-net 4) universe)
+                            :port-address port-address
+                            :length       length
+                            :data         data
+                            :sequence     0}
+               :broadcast? true
                :keepalive? true}))
           stale-ports)))
 
@@ -136,9 +138,9 @@
           [(:rdm state4) nil])
         state5 (assoc state4 :rdm rdm-state1)
         queue-effect (when queue-evt
-                       {:effect  :callback,
-                        :key     :rdm,
-                        :payload {:event            :background-queue,
+                       {:effect  :callback
+                        :key     :rdm
+                        :payload {:event            :background-queue
                                   :background-queue queue-evt}})
         [rdm-state2 disc-evt] (if rdm-state1
                                 (rdm.discovery/run-discovery rdm-state1
@@ -146,8 +148,8 @@
                                 [rdm-state1 nil])
         state6 (assoc state5 :rdm rdm-state2)
         disc-effect (when disc-evt
-                      {:effect  :callback,
-                       :key     :rdm,
+                      {:effect  :callback
+                       :key     :rdm
                        :payload {:event :discovery, :discovery disc-evt}})
         all-effects (-> fs-effects
                         (into ka-effects)
@@ -166,10 +168,10 @@
 (defmethod handle-command :send-poll-reply
   [state {:keys [target data]}]
   (result state
-          [{:effect :tx-packet,
-            :op     :artpollreply,
-            :data   data,
-            :target target,
+          [{:effect :tx-packet
+            :op     :artpollreply
+            :data   data
+            :target target
             :reply? true}]))
 
 (defmethod handle-command :snapshot
@@ -203,7 +205,7 @@
       (when (and (some? command-class)
                  (not (rdm.transport/valid-command-class? command-class)))
         (throw (ex-info "Unsupported RDM command class"
-                        {:command-class command-class,
+                        {:command-class command-class
                          :valid-classes rdm.transport/valid-command-classes}))))
     (let [len (cond (instance? ByteBuffer rdm-packet) (.limit ^ByteBuffer
                                                               rdm-packet)
@@ -294,9 +296,9 @@
                                  page
                                  nil
                                  node-state/page-port-addresses)]
-                           {:effect :tx-packet,
-                            :op     :artpollreply,
-                            :data   page,
+                           {:effect :tx-packet
+                            :op     :artpollreply
+                            :data   page
                             :target target})))
                   [])]
     (result state''' effects)))
@@ -342,9 +344,9 @@
       (let [state'''
             (proto.sync/stage-sync-frame state'' packet sender timestamp)]
         (result state''' []))
-      (let [{merge-state   :state,
-             output-data   :output-data,
-             output-length :output-length,
+      (let [{merge-state   :state
+             output-data   :output-data
+             output-length :output-length
              merging?      :merging?}
             (proto.dmx/process-artdmx-merge state'' packet sender timestamp)
             good-output-a (vec (or (get-in merge-state [:node :good-output-a])
@@ -368,10 +370,10 @@
                                        port-address)
                             state-with-merge)
             effects (cond-> [(callback :dmx
-                                       {:packet       packet,
-                                        :sender       sender,
-                                        :port-address port-address,
-                                        :data         output-data,
+                                       {:packet       packet
+                                        :sender       sender
+                                        :port-address port-address
+                                        :data         output-data
                                         :length       output-length})
                              (dmx-frame port-address
                                         (or (:sequence packet) 0)
@@ -380,7 +382,7 @@
                             was-in-failsafe? (conj (log-msg :info
                                                             "Failsafe cleared"
                                                             {:port-address
-                                                             port-address,
+                                                             port-address
                                                              :reason :dmx-resumed})))]
         (result state-cleared effects)))))
 
@@ -404,9 +406,9 @@
       (result
         state'
         [(callback :sync
-                   {:packet   packet,
-                    :sender   sender,
-                    :ignored? true,
+                   {:packet   packet
+                    :sender   sender
+                    :ignored? true
                     :reason   :sender-mismatch})
          (log-msg :debug "ArtSync ignored - sender mismatch" {:sender sender})])
       :else (let [{:keys [state frames-data]}
@@ -414,18 +416,18 @@
                   sync-effects (mapcat (fn [{:keys [packet sender port-address
                                                     output-data output-length]}]
                                          [(callback :dmx
-                                                    {:packet       packet,
-                                                     :sender       sender,
-                                                     :port-address port-address,
-                                                     :data         output-data,
-                                                     :length       output-length,
+                                                    {:packet       packet
+                                                     :sender       sender
+                                                     :port-address port-address
+                                                     :data         output-data
+                                                     :length       output-length
                                                      :synced?      true})
                                           (dmx-frame port-address
                                                      (or (:sequence packet) 0)
                                                      output-data
                                                      output-length)])
                                        frames-data)]
-              {:state   state,
+              {:state   state
                :effects (into [(callback :sync
                                          {:packet packet, :sender sender})]
                               sync-effects)}))))
@@ -462,11 +464,11 @@
     (if allowed?
       (result state''
               [(callback :dmx
-                         {:packet       packet,
-                          :sender       sender,
-                          :port-address port-address,
-                          :start-code   start-code,
-                          :data         data,
+                         {:packet       packet
+                          :sender       sender
+                          :port-address port-address
+                          :start-code   start-code
+                          :data         data
                           :length       length})])
       (result state''))))
 
@@ -481,11 +483,11 @@
                    (proto.state/remember-peer sender timestamp))]
     (result state'
             [(callback :dmx
-                       {:packet       packet,
-                        :sender       sender,
-                        :port-address port-address,
-                        :start-code   start-code,
-                        :data         data,
+                       {:packet       packet
+                        :sender       sender
+                        :port-address port-address
+                        :start-code   start-code
+                        :data         data
                         :length       length})])))
 
 (defmethod handle-packet :arttimecode
@@ -497,12 +499,12 @@
                    (proto.state/remember-peer sender timestamp))]
     (result state'
             [(callback :arttimecode
-                       {:packet packet,
-                        :sender sender,
-                        :time   {:frames  frames,
-                                 :seconds seconds,
-                                 :minutes minutes,
-                                 :hours   hours,
+                       {:packet packet
+                        :sender sender
+                        :time   {:frames  frames
+                                 :seconds seconds
+                                 :minutes minutes
+                                 :hours   hours
                                  :type    type}})])))
 
 (defmethod handle-packet :artdiagdata
@@ -534,15 +536,15 @@
                    (proto.state/remember-peer sender timestamp)
                    (update-in [:peers peer-key*]
                               merge
-                              {:short-name short-name,
-                               :long-name  long-name,
-                               :oem        oem,
-                               :esta-man   esta-man,
-                               :bind-index (or bind-index 1),
-                               :net-switch net-switch,
-                               :sub-switch sub-switch,
-                               :sw-in      sw-in,
-                               :sw-out     sw-out,
+                              {:short-name short-name
+                               :long-name  long-name
+                               :oem        oem
+                               :esta-man   esta-man
+                               :bind-index (or bind-index 1)
+                               :net-switch net-switch
+                               :sub-switch sub-switch
+                               :sw-in      sw-in
+                               :sw-out     sw-out
                                :port-types port-types}))]
     (result state'
             [(callback :artpollreply {:packet packet, :sender sender})])))
@@ -558,10 +560,10 @@
                    (proto.state/remember-peer sender timestamp))]
     (result state'
             [(callback :arttoddata
-                       {:packet       packet,
-                        :sender       sender,
-                        :port-address port-address,
-                        :uid-total    uid-total,
+                       {:packet       packet
+                        :sender       sender
+                        :port-address port-address
+                        :uid-total    uid-total
                         :uid-count    uid-count})])))
 
 (defmethod handle-packet :artipprogreply
@@ -573,11 +575,11 @@
                    (proto.state/remember-peer sender timestamp))]
     (result state'
             [(callback :artipprogreply
-                       {:packet        packet,
-                        :sender        sender,
-                        :ip            prog-ip,
-                        :subnet-mask   prog-sm,
-                        :gateway       prog-gateway,
+                       {:packet        packet
+                        :sender        sender
+                        :ip            prog-ip
+                        :subnet-mask   prog-sm
+                        :gateway       prog-gateway
                         :dhcp-enabled? (bit-test (or status 0) 6)})])))
 
 (defmethod handle-packet :artpoll
@@ -630,10 +632,10 @@
             (cond-> send-diag? (assoc-in [:peers peer-key* :diag-unicast?]
                                          unicast-diag?))
             (cond-> send-diag? (assoc-in [:diagnostics :subscribers peer-key*]
-                                         {:host       (:host sender),
-                                          :port       (or (:port sender) 0x1936),
-                                          :priority   diag-priority,
-                                          :unicast?   unicast-diag?,
+                                         {:host       (:host sender)
+                                          :port       (or (:port sender) 0x1936)
+                                          :priority   diag-priority
+                                          :unicast?   unicast-diag?
                                           :updated-at timestamp})))
         state'' (poll-helpers/enforce-reply-on-change-limit state')
         random-delay-fn (:random-delay-fn state)
@@ -653,16 +655,16 @@
                       matched-pages))
         (result state''
                 (mapv #(schedule delay-ms
-                                 {:type   :command,
-                                  :cmd    :send-poll-reply,
-                                  :target sender,
+                                 {:type   :command
+                                  :cmd    :send-poll-reply
+                                  :target sender
                                   :data   (proto.discovery/page-reply-data %)})
                       matched-pages)))
       (result state''))))
 
 (defn- datarequest-node-identifiers
   [state]
-  {:esta (bit-and (int (get-in state [:node :esta-man] 0)) 0xFFFF),
+  {:esta (bit-and (int (get-in state [:node :esta-man] 0)) 0xFFFF)
    :oem  (bit-and (int (get-in state [:node :oem] 0xFFFF)) 0xFFFF)})
 
 (defn- datarequest-targets-node?
@@ -796,10 +798,10 @@
             phase (if (contains? #{:get-response :set-response} command)
                     :response
                     :request)
-            payload {:packet           packet,
-                     :sender           sender,
-                     :sub-device-range sub-range,
-                     :entries          entries,
+            payload {:packet           packet
+                     :sender           sender
+                     :sub-device-range sub-range
+                     :entries          entries
                      :proxy            {:type :rdm-sub, :phase phase}}]
         (result state'
                 [(callback :rdm-sub payload) (callback :rdm payload)])))))
@@ -832,24 +834,24 @@
                                       (or (:sub-key info) 0)
                                       min-interval-ms)]
             (result state-throttled
-                    [{:effect :tx-packet,
-                      :op     :artdiagdata,
-                      :data   {:text debounce-text, :priority 0x10},
+                    [{:effect :tx-packet
+                      :op     :artdiagdata
+                      :data   {:text debounce-text, :priority 0x10}
                       :target sender}]))
           (let [helper-cb (triggers/helper-action state'' info packet sender)
                 [state''' reply-act]
                 (triggers/reply-action state'' packet sender)
                 reply-effect (when reply-act
-                               {:effect :tx-packet,
-                                :op     (get-in reply-act [:packet :op]),
-                                :data   (dissoc (:packet reply-act) :op),
+                               {:effect :tx-packet
+                                :op     (get-in reply-act [:packet :op])
+                                :data   (dissoc (:packet reply-act) :op)
                                 :target (:target reply-act)})
                 ack (:ack info)
                 diag-effect (when ack
-                              {:effect :tx-packet,
-                               :op     :artdiagdata,
-                               :data   {:priority (:priority ack),
-                                        :text     (:text ack)},
+                              {:effect :tx-packet
+                               :op     :artdiagdata
+                               :data   {:priority (:priority ack)
+                                        :text     (:text ack)}
                                :target sender})
                 cb-effect (callback
                             :trigger
@@ -878,26 +880,26 @@
                       state)
             diag-effects (mapv #(tx-reply
                                   :artdiagdata
-                                  {:op   :artdiagdata,
+                                  {:op   :artdiagdata
                                    :priority
-                                   (bit-and (int (or (:priority %) 0x10)) 0xFF),
+                                   (bit-and (int (or (:priority %) 0x10)) 0xFF)
                                    :logical-port
-                                   (bit-and (int (or (:logical-port %) 0)) 0xFF),
+                                   (bit-and (int (or (:logical-port %) 0)) 0xFF)
                                    :text (or (:text %) "")}
                                   sender)
                                (filter #(seq (:text %)) acks))
             cb-effect (callback :command
-                                {:packet           packet,
-                                 :sender           sender,
-                                 :directives       directives,
-                                 :changes          changes,
-                                 :command-labels   (:command-labels state''),
+                                {:packet           packet
+                                 :sender           sender
+                                 :directives       directives
+                                 :changes          changes
+                                 :command-labels   (:command-labels state'')
                                  :acknowledgements acks})
             prog-effect (when (seq (:command-labels changes))
-                          {:effect  :callback,
-                           :key     :programming,
-                           :payload {:event      :artcommand,
-                                     :changes    changes,
+                          {:effect  :callback
+                           :key     :programming
+                           :payload {:event      :artcommand
+                                     :changes    changes
                                      :directives directives}})]
         (result state''
                 (cond-> (into diag-effects [cb-effect])
@@ -963,10 +965,10 @@
                    (proto.state/remember-peer sender timestamp))]
     (result state'
             [(callback :artfiletnmaster
-                       {:packet   packet,
-                        :sender   sender,
-                        :type     type,
-                        :block-id block-id,
+                       {:packet   packet
+                        :sender   sender
+                        :type     type
+                        :block-id block-id
                         :filename name})])))
 
 (defmethod handle-packet :artfilefnmaster
@@ -1045,9 +1047,9 @@
                    (proto.state/remember-peer sender timestamp))]
     (result state'
             [(callback :artdirectory
-                       {:packet    packet,
-                        :sender    sender,
-                        :command   command,
+                       {:packet    packet
+                        :sender    sender
+                        :command   command
                         :file-type file-type})])))
 
 (defmethod handle-packet :artdirectoryreply
@@ -1059,11 +1061,11 @@
                    (proto.state/remember-peer sender timestamp))]
     (result state'
             [(callback :artdirectoryreply
-                       {:packet      packet,
-                        :sender      sender,
-                        :last-entry? (bit-test (or flags 0) 0),
-                        :file-type   file-type,
-                        :filename    name,
+                       {:packet      packet
+                        :sender      sender
+                        :last-entry? (bit-test (or flags 0) 0)
+                        :file-type   file-type
+                        :filename    name
                         :description description})])))
 
 (defmethod handle-packet :artfirmwaremaster
@@ -1073,7 +1075,7 @@
                    (proto.state/inc-stat :firmware-requests)
                    (proto.state/remember-peer sender timestamp))
         fw-state (or (:firmware state')
-                     {:sessions  {},
+                     {:sessions  {}
                       :callbacks (select-keys (:callbacks state')
                                               [:on-chunk :on-complete])})
         node (:node state')
@@ -1082,15 +1084,15 @@
         actions (:actions fw-result)
         fw-effects (keep (fn [a]
                            (when (= (:type a) :send)
-                             {:effect :tx-packet,
-                              :op     (get-in a [:packet :op]),
-                              :data   (dissoc (:packet a) :op),
+                             {:effect :tx-packet
+                              :op     (get-in a [:packet :op])
+                              :data   (dissoc (:packet a) :op)
                               :target (:target a)}))
                          actions)
         callback-effect (callback :firmware
-                                  {:packet packet,
-                                   :sender sender,
-                                   :status (:status fw-result),
+                                  {:packet packet
+                                   :sender sender
+                                   :status (:status fw-result)
                                    :error  (:error fw-result)})
         all-effects (conj (vec fw-effects) callback-effect)]
     (result (assoc state' :firmware next-fw-state) all-effects)))
@@ -1105,19 +1107,19 @@
         current-network (:network state')
         network-defaults (:network-defaults state')
         {:keys [node network changes reply]}
-        (programming/apply-artipprog {:node             current-node,
-                                      :network          current-network,
-                                      :network-defaults network-defaults,
+        (programming/apply-artipprog {:node             current-node
+                                      :network          current-network
+                                      :network-defaults network-defaults
                                       :packet           packet})
         state'' (cond-> state'
                         (seq changes) (assoc :node node :network network))
         reply-effect (tx-reply :artipprogreply reply sender)
         callback-effect (when (seq changes)
                           (callback :ipprog
-                                    {:event   :artipprog,
-                                     :packet  packet,
-                                     :sender  sender,
-                                     :changes changes,
+                                    {:event   :artipprog
+                                     :packet  packet
+                                     :sender  sender
+                                     :changes changes
                                      :reply   reply}))
         effects (filterv some? [reply-effect callback-effect])]
     (result state'' effects)))
@@ -1159,7 +1161,7 @@
             state'' (-> state'
                         (assoc-in [:inputs :last-bind-index] applied)
                         (assoc-in [:inputs :per-page applied]
-                                  {:disabled   disabled,
+                                  {:disabled   disabled
                                    :good-input next-good-input})
                         (cond-> applied-to-base?
                                 (-> (assoc :node node)
@@ -1180,9 +1182,9 @@
                 (assoc :bind-index applied :good-input next-good-input))
             reply-effect (tx-reply :artpollreply reply-data sender)
             callback-effect (callback :input
-                                      {:packet   packet,
-                                       :sender   sender,
-                                       :changes  changes,
+                                      {:packet   packet
+                                       :sender   sender
+                                       :changes  changes
                                        :disabled disabled})
             roc-effects (when (and applied-to-base? (seq changes))
                           (poll-helpers/reply-on-change-effects
@@ -1253,10 +1255,10 @@
                                  :bind-index :acn-priority])
         reply-effect (tx-reply :artpollreply reply-data sender)
         callback-effect (callback :address
-                                  {:event        :artaddress,
-                                   :packet       packet,
-                                   :sender       sender,
-                                   :changes      changes,
+                                  {:event        :artaddress
+                                   :packet       packet
+                                   :sender       sender
+                                   :changes      changes
                                    :command-info command-info})
         roc-effects (when (and matches-bind? (seq changes))
                       (let [pages (node-state/node-port-pages updated-node)
@@ -1268,9 +1270,9 @@
                                      page
                                      exclude-key
                                      node-state/page-port-addresses)]
-                               {:effect :tx-packet,
-                                :op     :artpollreply,
-                                :data   page,
+                               {:effect :tx-packet
+                                :op     :artpollreply
+                                :data   page
                                 :target target}))))
         log-effects (when (and matches-bind? (= failsafe-directive :record))
                       [(log-msg :info
@@ -1290,7 +1292,7 @@
   (def test-state (machine/initial-state {:node {:short-name "Test"}}))
   (machine/step test-state {:type :tick, :timestamp (System/nanoTime)})
   (machine/step test-state
-                {:type   :rx-packet,
-                 :packet {:op :unknown-op},
+                {:type   :rx-packet
+                 :packet {:op :unknown-op}
                  :sender {:host "192.168.1.100", :port 6454}})
   :rcf)

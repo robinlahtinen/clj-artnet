@@ -3,7 +3,8 @@
 
    Provides pure functions to validate compliance, specifically regarding
    broadcast restrictions for certain opcodes."
-  (:require [clj-artnet.impl.shell.net :as net]))
+  (:require
+    [clj-artnet.impl.shell.net :as net]))
 
 (set! *warn-on-reflection* true)
 

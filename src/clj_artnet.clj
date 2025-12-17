@@ -18,12 +18,13 @@
     state             - snapshot of node state
     diagnostics       - snapshot of diagnostics
     apply-state!      - updates node configuration"
-  (:require [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.shell.commands :as commands]
-            [clj-artnet.impl.shell.graph :as graph]
-            [clj-artnet.impl.shell.lifecycle :as lifecycle]
-            [clj-artnet.impl.shell.state :as state]
-            [clojure.core.async.flow :as flow]))
+  (:require
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.shell.commands :as commands]
+    [clj-artnet.impl.shell.graph :as graph]
+    [clj-artnet.impl.shell.lifecycle :as lifecycle]
+    [clj-artnet.impl.shell.state :as state]
+    [clojure.core.async.flow :as flow]))
 
 (set! *warn-on-reflection* true)
 
@@ -47,37 +48,37 @@
     :report-chan - flow report channel"
   ([] (start-node! {}))
   ([{:keys [default-target max-packet recv-buffer command-buffer actions-buffer
-            allow-limited-broadcast?],
-     :as   config,
+            allow-limited-broadcast?]
+     :as   config
      :or
      {max-packet 2048, recv-buffer 64, command-buffer 32, actions-buffer 32}}]
    (let [logic-config (lifecycle/build-logic-config config)
          {:keys [rx-pool tx-pool]} (lifecycle/create-resource-pools config)
          channel (lifecycle/open-network-channel config)
-         the-flow (graph/create-graph {:channel        channel,
-                                       :rx-pool        rx-pool,
-                                       :tx-pool        tx-pool,
-                                       :logic-config   logic-config,
-                                       :max-packet     max-packet,
-                                       :recv-buffer    recv-buffer,
-                                       :command-buffer command-buffer,
-                                       :actions-buffer actions-buffer,
-                                       :default-target default-target,
+         the-flow (graph/create-graph {:channel        channel
+                                       :rx-pool        rx-pool
+                                       :tx-pool        tx-pool
+                                       :logic-config   logic-config
+                                       :max-packet     max-packet
+                                       :recv-buffer    recv-buffer
+                                       :command-buffer command-buffer
+                                       :actions-buffer actions-buffer
+                                       :default-target default-target
                                        :allow-limited-broadcast?
                                        allow-limited-broadcast?})]
      (try (let [start-result (flow/start the-flow)]
             (flow/resume the-flow)
-            (let [stop-fn (lifecycle/make-stop-fn {:flow    the-flow,
-                                                   :rx-pool rx-pool,
-                                                   :tx-pool tx-pool,
+            (let [stop-fn (lifecycle/make-stop-fn {:flow    the-flow
+                                                   :rx-pool rx-pool
+                                                   :tx-pool tx-pool
                                                    :channel channel})]
-              {:flow           the-flow,
-               :report-chan    (:report-chan start-result),
-               :error-chan     (:error-chan start-result),
-               :stop!          stop-fn,
-               :pause!         #(flow/pause the-flow),
-               :resume!        #(flow/resume the-flow),
-               :config         logic-config,
+              {:flow           the-flow
+               :report-chan    (:report-chan start-result)
+               :error-chan     (:error-chan start-result)
+               :stop!          stop-fn
+               :pause!         #(flow/pause the-flow)
+               :resume!        #(flow/resume the-flow)
+               :config         logic-config
                :default-target default-target}))
           (catch Throwable t
             (lifecycle/close-quietly rx-pool)

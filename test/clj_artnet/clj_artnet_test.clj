@@ -1,7 +1,9 @@
 (ns clj-artnet.clj-artnet-test
-  (:require [clj-artnet :as core]
-            [clojure.test :refer [deftest is]])
-  (:import (java.util.concurrent Future)))
+  (:require
+    [clj-artnet :as core]
+    [clojure.test :refer [deftest is]])
+  (:import
+    (java.util.concurrent Future)))
 
 (def ^:private default-node-config
   {:bind {:host "127.0.0.1", :port 0}, :random-delay-fn (constantly 0)})
@@ -27,7 +29,7 @@
   (is (fn? core/start-node!) "Expected public start-node! to exist"))
 
 (deftest diagnostics-exposes-summary
-  (let [node (core/start-node! {:bind        {:host "127.0.0.1", :port 0},
+  (let [node (core/start-node! {:bind        {:host "127.0.0.1", :port 0}
                                 :diagnostics {:subscriber-warning-threshold
                                               1}})]
     (try (Thread/sleep 200)
@@ -60,7 +62,7 @@
   (let [node (start-test-node {:node {:short-name "Baseline"}})]
     (try (let [snapshot (core/state node)]
            (core/apply-state! node
-                              {:node    {:short-name "Restored", :style 1},
+                              {:node    {:short-name "Restored", :style 1}
                                :network {:dhcp? true}})
            (let [updated (wait-for-state node
                                          #(= "Restored"
@@ -77,9 +79,9 @@
 
 (deftest enqueue-command-processes-apply-state-command
   (let [node (start-test-node {:node {:short-name "Queue Baseline"}})]
-    (try (let [command {:type    :command,
-                        :command :apply-state,
-                        :state   {:node {:short-name              "Queued Name",
+    (try (let [command {:type    :command
+                        :command :apply-state
+                        :state   {:node {:short-name              "Queued Name"
                                          :background-queue-policy 0xAA}}}
                future (core/enqueue-command! node command)
                updated (wait-for-state node

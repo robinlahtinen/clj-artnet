@@ -3,11 +3,13 @@
 
 (ns clj-artnet.impl.protocol.codec.domain.data
   "Encode/decode for Data family packets: ArtDataRequest, ArtDataReply."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.primitives :as prim])
-  (:import (java.nio ByteBuffer)
-           (java.nio.charset StandardCharsets)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.primitives :as prim])
+  (:import
+    (java.nio ByteBuffer)
+    (java.nio.charset StandardCharsets)))
 
 (set! *warn-on-reflection* true)
 
@@ -20,7 +22,7 @@
               length (alength ascii)
               _ (when (> (inc length) const/artdatareply-max-bytes)
                   (throw (ex-info "ArtDataReply text exceeds maximum length"
-                                  {:max    (dec const/artdatareply-max-bytes),
+                                  {:max    (dec const/artdatareply-max-bytes)
                                    :length length})))
               dest (byte-array (inc length))]
           (System/arraycopy ascii 0 dest 0 length)
@@ -30,7 +32,7 @@
                    _ (when (> (alength bytes) const/artdatareply-max-bytes)
                        (throw (ex-info
                                 "ArtDataReply payload exceeds maximum length"
-                                {:max    const/artdatareply-max-bytes,
+                                {:max    const/artdatareply-max-bytes
                                  :length (alength bytes)})))]
                (prim/ensure-null-terminated bytes const/artdatareply-max-bytes))
         :else (byte-array 1)))
@@ -63,11 +65,11 @@
         esta (prim/safe-uint16-be buf 12)
         oem (prim/safe-uint16-be buf 14)
         request (prim/safe-uint16-be buf 16)]
-    {:op               :artdatarequest,
-     :protocol-version protocol,
-     :esta-man         esta,
-     :oem              oem,
-     :request          request,
+    {:op               :artdatarequest
+     :protocol-version protocol
+     :esta-man         esta
+     :oem              oem
+     :request          request
      :request-type     (common/datarequest-type request)}))
 
 (defn encode-artdatareply!
@@ -105,7 +107,7 @@
         payload-length (prim/safe-uint16-be buf 18)
         _ (when (> payload-length const/artdatareply-max-bytes)
             (throw (ex-info "ArtDataReply payload exceeds maximum length"
-                            {:length payload-length,
+                            {:length payload-length
                              :max    const/artdatareply-max-bytes})))
         required (+ const/artdatareply-header-size payload-length)
         limit (.limit buf)
@@ -126,12 +128,12 @@
                           0
                           (int text-length)
                           StandardCharsets/US_ASCII)]
-        {:op               :artdatareply,
-         :protocol-version protocol,
-         :esta-man         esta,
-         :oem              oem,
-         :request          request,
-         :request-type     (common/datarequest-type request),
-         :payload-length   payload-length,
-         :text             text,
+        {:op               :artdatareply
+         :protocol-version protocol
+         :esta-man         esta
+         :oem              oem
+         :request          request
+         :request-type     (common/datarequest-type request)
+         :payload-length   payload-length
+         :text             text
          :data             payload}))))

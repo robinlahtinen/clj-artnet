@@ -1,22 +1,24 @@
 (ns clj-artnet.logic-test
-  (:require [clj-artnet.fixtures.builders :as builders]
-            [clj-artnet.fixtures.data :as fixtures]
-            [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.types :as types]
-            [clj-artnet.impl.protocol.diagnostics :as diagnostics]
-            [clj-artnet.impl.protocol.dmx-helpers :as dmx]
-            [clj-artnet.impl.protocol.firmware :as firmware]
-            [clj-artnet.impl.protocol.lifecycle :as lifecycle]
-            [clj-artnet.impl.protocol.machine :as machine]
-            [clj-artnet.impl.protocol.node-state :as state]
-            [clj-artnet.impl.protocol.rdm.discovery :as rdm.discovery]
-            [clj-artnet.support.helpers :refer [thrown-with-msg?]]
-            [clojure.test :refer [deftest is testing]])
-  (:import (clojure.lang ExceptionInfo)
-           (java.net InetAddress)
-           (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.fixtures.builders :as builders]
+    [clj-artnet.fixtures.data :as fixtures]
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.types :as types]
+    [clj-artnet.impl.protocol.diagnostics :as diagnostics]
+    [clj-artnet.impl.protocol.dmx-helpers :as dmx]
+    [clj-artnet.impl.protocol.firmware :as firmware]
+    [clj-artnet.impl.protocol.lifecycle :as lifecycle]
+    [clj-artnet.impl.protocol.machine :as machine]
+    [clj-artnet.impl.protocol.node-state :as state]
+    [clj-artnet.impl.protocol.rdm.discovery :as rdm.discovery]
+    [clj-artnet.support.helpers :refer [thrown-with-msg?]]
+    [clojure.test :refer [deftest is testing]])
+  (:import
+    (clojure.lang ExceptionInfo)
+    (java.net InetAddress)
+    (java.nio ByteBuffer)))
 
 (defn- normalize-payload
   "Ensures payload data is exposed as a ReadOnly ByteBuffer for test assertions."
@@ -80,9 +82,9 @@
                 {:keys [cmd target data]} event]
             (if (= :send-poll-reply cmd)
               (conj acc
-                    {:type     :send,
-                     :delay-ms delay-ms,
-                     :packet   (assoc data :op :artpollreply),
+                    {:type     :send
+                     :delay-ms delay-ms
+                     :packet   (assoc data :op :artpollreply)
                      :target   target})
               (conj acc {:type :schedule, :delay-ms delay-ms, :event event})))
           ;; Default: ignore unknown effects
@@ -122,8 +124,8 @@
 
 (def base-config
   {:node
-   {:net-switch 0, :sub-switch 0, :port-types [0xC0 0 0 0], :sw-out [1 0 0 0]},
-   :diagnostics     {:broadcast-target {:host "10.0.0.255", :port 6454}},
+   {:net-switch 0, :sub-switch 0, :port-types [0xC0 0 0 0], :sw-out [1 0 0 0]}
+   :diagnostics     {:broadcast-target {:host "10.0.0.255", :port 6454}}
    :random-delay-fn (constantly 0)})
 
 (def artpollreply-config
@@ -134,12 +136,12 @@
 (defn- artdmx-packet
   [bytes]
   (let [payload (byte-array bytes)
-        buf (dispatch/encode {:op       :artdmx,
-                              :sequence 1,
-                              :physical 0,
-                              :net      0,
-                              :sub-net  0,
-                              :universe 0,
+        buf (dispatch/encode {:op       :artdmx
+                              :sequence 1
+                              :physical 0
+                              :net      0
+                              :sub-net  0
+                              :universe 0
                               :data     payload}
                              (ByteBuffer/allocate 1024))]
     (dispatch/decode buf)))
@@ -147,12 +149,12 @@
 (defn- artnzs-packet
   [start-code bytes]
   (let [payload (byte-array bytes)
-        buf (dispatch/encode {:op         :artnzs,
-                              :sequence   7,
-                              :start-code start-code,
-                              :net        0,
-                              :sub-net    0,
-                              :universe   0,
+        buf (dispatch/encode {:op         :artnzs
+                              :sequence   7
+                              :start-code start-code
+                              :net        0
+                              :sub-net    0
+                              :universe   0
                               :data       payload}
                              (ByteBuffer/allocate 1024))]
     (dispatch/decode buf)))
@@ -163,8 +165,8 @@
         (if (map? disabled-or-opts)
           disabled-or-opts
           {:disabled disabled-or-opts})
-        packet (cond-> {:op         :artinput,
-                        :bind-index (or bind-index 1),
+        packet (cond-> {:op         :artinput
+                        :bind-index (or bind-index 1)
                         :num-ports  (or num-ports 4)}
                        (some? disabled) (assoc :disabled disabled)
                        (some? inputs) (assoc :inputs inputs))
@@ -175,31 +177,31 @@
 (defn- artvlc-packet
   [bytes]
   (let [payload (byte-array bytes)
-        buf (dispatch/encode {:op       :artvlc,
-                              :sequence 9,
-                              :net      0,
-                              :sub-net  0,
-                              :universe 0,
-                              :vlc      {:payload          payload,
-                                         :transaction      0x1201,
-                                         :slot-address     0,
-                                         :depth            42,
-                                         :frequency        1000,
-                                         :modulation       3,
-                                         :payload-language 0x0001,
-                                         :beacon-repeat    0,
+        buf (dispatch/encode {:op       :artvlc
+                              :sequence 9
+                              :net      0
+                              :sub-net  0
+                              :universe 0
+                              :vlc      {:payload          payload
+                                         :transaction      0x1201
+                                         :slot-address     0
+                                         :depth            42
+                                         :frequency        1000
+                                         :modulation       3
+                                         :payload-language 0x0001
+                                         :beacon-repeat    0
                                          :ieee?            true}}
                              (ByteBuffer/allocate 1024))]
     (dispatch/decode buf)))
 
 (defn- arttrigger-packet
-  [{:keys [oem key sub-key data key-type],
+  [{:keys [oem key sub-key data key-type]
     :or   {oem 0xFFFF, key-type :key-macro, sub-key 0, data (byte-array 0)}}]
-  (let [packet {:op       :arttrigger,
-                :oem      oem,
-                :key      key,
-                :key-type key-type,
-                :sub-key  sub-key,
+  (let [packet {:op       :arttrigger
+                :oem      oem
+                :key      key
+                :key-type key-type
+                :sub-key  sub-key
                 :data     data}
         buf (dispatch/encode packet
                              (ByteBuffer/allocate const/arttrigger-length))]
@@ -215,15 +217,15 @@
     (dispatch/decode buf)))
 
 (defn- artrdmsub-packet
-  [{:keys [command values sub-count uid parameter-id sub-device],
+  [{:keys [command values sub-count uid parameter-id sub-device]
     :or   {command :get, uid [0 1 2 3 4 5], parameter-id 0x1234, sub-device 0}}]
   (let [resolved-count (or sub-count (if (seq values) (count values) 1))
-        packet (cond-> {:op           :artrdmsub,
-                        :rdm-version  1,
-                        :uid          uid,
-                        :command      command,
-                        :parameter-id parameter-id,
-                        :sub-device   sub-device,
+        packet (cond-> {:op           :artrdmsub
+                        :rdm-version  1
+                        :uid          uid
+                        :command      command
+                        :parameter-id parameter-id
+                        :sub-device   sub-device
                         :sub-count    resolved-count}
                        (seq values) (assoc :values values))
         buf (dispatch/encode packet)]
@@ -239,7 +241,7 @@
      (ByteBuffer/wrap bytes))))
 
 (defn- artdatarequest-packet
-  [{:keys [request request-type esta oem],
+  [{:keys [request request-type esta oem]
     :or   {request-type :dr-poll, esta 0x7FF0, oem 0xFFFF}}]
   (let [packet (cond-> {:op :artdatarequest, :esta-man esta, :oem oem}
                        request (assoc :request request)
@@ -258,34 +260,34 @@
 (def multi-bind-config
   (assoc base-config
     :node
-    {:net-switch 0,
-     :sub-switch 0,
-     :port-pages [{:bind-index    1,
-                   :port-types    [0xC0 0 0 0],
-                   :sw-out        [0x01 0 0 0],
+    {:net-switch 0
+     :sub-switch 0
+     :port-pages [{:bind-index    1
+                   :port-types    [0xC0 0 0 0]
+                   :sw-out        [0x01 0 0 0]
                    :good-output-a [0x80 0 0 0]}
-                  {:bind-index    2,
-                   :port-types    [0xC0 0 0 0],
-                   :sw-out        [0x02 0 0 0],
+                  {:bind-index    2
+                   :port-types    [0xC0 0 0 0]
+                   :sw-out        [0x02 0 0 0]
                    :good-output-a [0x40 0 0 0]}]}))
 
 (def auto-ports-config
   (assoc base-config
     :node
-    {:ports [{:port-address  (common/compose-port-address 0 0 1),
-              :port-type     0xC0,
+    {:ports [{:port-address  (common/compose-port-address 0 0 1)
+              :port-type     0xC0
               :good-output-a 0x80}
-             {:port-address  (common/compose-port-address 0 0 2),
-              :port-type     0xC0,
+             {:port-address  (common/compose-port-address 0 0 2)
+              :port-type     0xC0
               :good-output-a 0x40}
-             {:port-address  (common/compose-port-address 0 1 1),
-              :port-type     0xC0,
+             {:port-address  (common/compose-port-address 0 1 1)
+              :port-type     0xC0
               :good-output-a 0x20}
-             {:port-address  (common/compose-port-address 0 1 2),
-              :port-type     0xC0,
+             {:port-address  (common/compose-port-address 0 1 2)
+              :port-type     0xC0
               :good-output-a 0x10}
-             {:port-address  (common/compose-port-address 1 0 1),
-              :port-type     0xC0,
+             {:port-address  (common/compose-port-address 1 0 1)
+              :port-type     0xC0
               :good-output-a 0x08}]}))
 
 (def multi-bind-good-input-config
@@ -358,14 +360,14 @@
 
 (defn- artpoll-message
   [sender packet-overrides]
-  {:type   :rx,
-   :sender sender,
-   :packet (merge {:op               :artpoll,
-                   :flags            0,
-                   :talk-to-me       0,
-                   :reply-on-change? false,
-                   :diag-priority    (diagnostics/priority-code :dp-low),
-                   :diag-request?    false,
+  {:type   :rx
+   :sender sender
+   :packet (merge {:op               :artpoll
+                   :flags            0
+                   :talk-to-me       0
+                   :reply-on-change? false
+                   :diag-priority    (diagnostics/priority-code :dp-low)
+                   :diag-request?    false
                    :diag-unicast?    false}
                   packet-overrides)})
 
@@ -404,17 +406,17 @@
                                 state/status3-background-queue-bit))))))
 
 (deftest status-bit-automation-preserves-user-node-values
-  (let [state (lifecycle/initial-state {:node      {:status2 0xAA, :status3 0x55},
+  (let [state (lifecycle/initial-state {:node      {:status2 0xAA, :status3 0x55}
                                         :callbacks {:rdm (constantly nil)}})
         node (:node state)]
     (is (= 0xAA (:status2 node)))
     (is (= 0x55 (:status3 node)))))
 
 (deftest status-bit-capability-overrides-adjust-derived-values
-  (let [state (lifecycle/initial-state {:callbacks {:dmx (constantly nil)},
+  (let [state (lifecycle/initial-state {:callbacks {:dmx (constantly nil)}
                                         :capabilities
-                                        {:status2 {:set   [:dhcp-active],
-                                                   :clear [:extended-port]},
+                                        {:status2 {:set   [:dhcp-active]
+                                                   :clear [:extended-port]}
                                          :status3 {:override 0xA5}}})
         node (:node state)
         status2 (:status2 node)
@@ -425,8 +427,8 @@
                    state/status2-dhcp-active-bit)
            status2))
     (is (= 0xA5 status3))
-    (is (= {:status2 {:set   state/status2-dhcp-active-bit,
-                      :clear state/status2-extended-port-bit},
+    (is (= {:status2 {:set   state/status2-dhcp-active-bit
+                      :clear state/status2-extended-port-bit}
             :status3 {:override 0xA5}}
            caps))))
 
@@ -460,9 +462,9 @@
   (let [sender {:host (InetAddress/getByName "10.0.0.10"), :port 6454}
         config (assoc base-config
                  :callbacks {:rdm (fn [_])}
-                 :rdm {:ports     {0x0001 {:uids []}},
-                       :discovery {:batch-size       1,
-                                   :step-delay-ms    1,
+                 :rdm {:ports     {0x0001 {:uids []}}
+                       :discovery {:batch-size       1
+                                   :step-delay-ms    1
                                    :initial-delay-ms 0}})
         packet {:op :arttodcontrol, :net 0, :command 0x01, :address 0x01}]
     (with-redefs [rdm.discovery/now-ns (constantly 0)]
@@ -490,8 +492,8 @@
   (testing "top-level sync overrides"
     (let [state (lifecycle/initial-state base-config)
           ttl-ms 300
-          msg {:type    :command,
-               :command :apply-state,
+          msg {:type    :command
+               :command :apply-state
                :state   {:sync {:mode :art-sync, :buffer-ttl-ms ttl-ms}}}
           [next _] (logic-step state base-config msg)
           expected-ttl (long (* ttl-ms 1000000))]
@@ -499,8 +501,8 @@
       (is (= expected-ttl (get-in next [:dmx :sync :buffer-ttl-ns])))))
   (testing "nested dmx sync overrides"
     (let [state (lifecycle/initial-state base-config)
-          msg {:type    :command,
-               :command :apply-state,
+          msg {:type    :command
+               :command :apply-state
                :state   {:dmx {:sync {:mode :art-sync}}}}
           [next _] (logic-step state base-config msg)]
       (is (= :art-sync (get-in next [:dmx :sync :mode]))))))
@@ -518,8 +520,8 @@
     (release! actions)
     (is (seq (get-in state [:dmx :sync-buffer]))
         "Expect staged frames when ArtSync active")
-    (let [msg {:type    :command,
-               :command :apply-state,
+    (let [msg {:type    :command
+               :command :apply-state
                :state   {:sync {:mode :immediate}}}
           [next _] (logic-step state config msg)]
       (is (= :immediate (get-in next [:dmx :sync :mode])))
@@ -531,8 +533,8 @@
 (deftest apply-state-updates-background-queue-policy
   (let [config (assoc base-config :rdm {:background {:supported? true}})
         state (lifecycle/initial-state config)
-        msg {:type    :command,
-             :command :apply-state,
+        msg {:type    :command
+             :command :apply-state
              :state   {:node {:background-queue-policy 2}}}
         [next _] (logic-step state config msg)]
     (is (= 2 (get-in next [:node :background-queue-policy])))
@@ -540,8 +542,8 @@
 
 (deftest apply-state-background-queue-policy-persists-when-unsupported
   (let [state (lifecycle/initial-state base-config)
-        msg {:type    :command,
-             :command :apply-state,
+        msg {:type    :command
+             :command :apply-state
              :state   {:node {:background-queue-policy 5}}}
         [next _] (logic-step state base-config msg)]
     (is (= 5 (get-in next [:node :background-queue-policy])))
@@ -551,9 +553,9 @@
   (testing "top-level failsafe overrides"
     (let [state (lifecycle/initial-state base-config)
           timeout-ms 250
-          msg {:type    :command,
-               :command :apply-state,
-               :state   {:failsafe {:enabled?        false,
+          msg {:type    :command
+               :command :apply-state
+               :state   {:failsafe {:enabled?        false
                                     :idle-timeout-ms timeout-ms}}}
           [next _] (logic-step state base-config msg)
           expected-timeout (long (* timeout-ms 1000000))]
@@ -562,8 +564,8 @@
              (get-in next [:dmx :failsafe :config :idle-timeout-ns])))))
   (testing "nested dmx failsafe overrides"
     (let [state (lifecycle/initial-state base-config)
-          msg {:type    :command,
-               :command :apply-state,
+          msg {:type    :command
+               :command :apply-state
                :state   {:dmx {:failsafe {:enabled? true, :tick-interval-ms 50}}}}
           [next _] (logic-step state base-config msg)]
       (is (true? (get-in next [:dmx :failsafe :config :enabled?])))
@@ -632,8 +634,8 @@
         [dhcp-state _] (logic-step state base-config enable)
         status2 (get-in dhcp-state [:node :status2])]
     (is (pos? (bit-and status2 state/status2-dhcp-active-bit)))
-    (let [disable {:type    :command,
-                   :command :apply-state,
+    (let [disable {:type    :command
+                   :command :apply-state
                    :state   {:network {:dhcp? false}}}
           [final _] (logic-step dhcp-state base-config disable)
           status2' (get-in final [:node :status2])]
@@ -645,8 +647,8 @@
 (deftest artpollreply-logic-produces-fixture-packets
   (let [sender {:host (InetAddress/getByName "192.168.0.99"), :port 6454}
         poll
-        {:type   :rx,
-         :sender sender,
+        {:type   :rx
+         :sender sender
          :packet
          {:op :artpoll, :flags 0, :diag-request? false, :diag-unicast? false}}
         [_ actions] (logic-step nil artpollreply-config poll)
@@ -659,8 +661,8 @@
 (deftest artpollreply-logic-encodes-fixture-bytes
   (let [sender {:host (InetAddress/getByName "192.168.0.99"), :port 6454}
         poll
-        {:type   :rx,
-         :sender sender,
+        {:type   :rx
+         :sender sender
          :packet
          {:op :artpoll, :flags 0, :diag-request? false, :diag-unicast? false}}
         [_ actions] (logic-step nil artpollreply-config poll)
@@ -708,8 +710,8 @@
     (is (= [0xC0 0x80 0x90 0x00] (:port-types subset-reply)))
     (is (= [0xBA 0xBB 0xFC default-good-output-b]
            (:good-output-b subset-reply)))
-    (let [restore {:type    :command,
-                   :command :apply-state,
+    (let [restore {:type    :command
+                   :command :apply-state
                    :state   {:node {:ports
                                     fixtures/artpollreply-port-descriptors}}}
           [restored _] (logic-step subset-state artpollreply-config restore)
@@ -720,27 +722,27 @@
 
 (deftest artpoll-targeted-mode-controls-replies
   (let [sender {:host (InetAddress/getByName "192.168.0.10"), :port 6454}
-        miss {:type   :rx,
-              :sender sender,
-              :packet {:op              :artpoll,
-                       :flags           0x20,
-                       :target-enabled? true,
-                       :target-top      0x0004,
-                       :target-bottom   0x0004,
-                       :diag-priority   0x10,
-                       :diag-request?   false,
+        miss {:type   :rx
+              :sender sender
+              :packet {:op              :artpoll
+                       :flags           0x20
+                       :target-enabled? true
+                       :target-top      0x0004
+                       :target-bottom   0x0004
+                       :diag-priority   0x10
+                       :diag-request?   false
                        :diag-unicast?   false}}
         [state-no-reply actions] (step* nil miss)]
     (is (empty? actions))
-    (let [hit {:type   :rx,
-               :sender sender,
-               :packet {:op              :artpoll,
-                        :flags           0x20,
-                        :target-enabled? true,
-                        :target-top      0x0001,
-                        :target-bottom   0x0001,
-                        :diag-priority   0x10,
-                        :diag-request?   false,
+    (let [hit {:type   :rx
+               :sender sender
+               :packet {:op              :artpoll
+                        :flags           0x20
+                        :target-enabled? true
+                        :target-top      0x0001
+                        :target-bottom   0x0001
+                        :diag-priority   0x10
+                        :diag-request?   false
                         :diag-unicast?   false}}
           [_ actions2] (step* state-no-reply hit)
           reply (first actions2)]
@@ -752,8 +754,8 @@
 (deftest artpoll-multi-bind-sends-each-page
   (let [sender {:host (InetAddress/getByName "192.168.0.50"), :port 6454}
         poll
-        {:type   :rx,
-         :sender sender,
+        {:type   :rx
+         :sender sender
          :packet
          {:op :artpoll, :flags 0, :diag-request? false, :diag-unicast? false}}
         [_ actions] (logic-step nil multi-bind-config poll)
@@ -763,14 +765,14 @@
 
 (deftest artpoll-targeted-mode-filters-pages
   (let [sender {:host (InetAddress/getByName "192.168.0.51"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op              :artpoll,
-                       :flags           0x20,
-                       :target-enabled? true,
-                       :target-top      0x0002,
-                       :target-bottom   0x0002,
-                       :diag-request?   false,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op              :artpoll
+                       :flags           0x20
+                       :target-enabled? true
+                       :target-top      0x0002
+                       :target-bottom   0x0002
+                       :diag-request?   false
                        :diag-unicast?   false}}
         [_ actions] (logic-step nil multi-bind-config poll)
         reply (first actions)]
@@ -780,8 +782,8 @@
 (deftest artpoll-ports-config-builds-pages-automatically
   (let [sender {:host (InetAddress/getByName "192.168.0.52"), :port 6454}
         poll
-        {:type   :rx,
-         :sender sender,
+        {:type   :rx
+         :sender sender
          :packet
          {:op :artpoll, :flags 0, :diag-request? false, :diag-unicast? false}}
         [_ actions] (logic-step nil auto-ports-config poll)
@@ -799,14 +801,14 @@
 (deftest targeted-mode-works-with-ports-config
   (let [sender {:host (InetAddress/getByName "192.168.0.53"), :port 6454}
         target (common/compose-port-address 1 0 1)
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op              :artpoll,
-                       :flags           0x20,
-                       :target-enabled? true,
-                       :target-top      target,
-                       :target-bottom   target,
-                       :diag-request?   false,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op              :artpoll
+                       :flags           0x20
+                       :target-enabled? true
+                       :target-top      target
+                       :target-bottom   target
+                       :diag-request?   false
                        :diag-unicast?   false}}
         [_ actions] (logic-step nil auto-ports-config poll)
         reply (first actions)]
@@ -816,18 +818,18 @@
 
 (deftest talk-to-me-reply-on-change-triggers-updates
   (let [sender {:host (InetAddress/getByName "192.168.0.20"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op               :artpoll,
-                       :flags            0x02,
-                       :talk-to-me       0x02,
-                       :reply-on-change? true,
-                       :diag-priority    0x10,
-                       :diag-request?    false,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op               :artpoll
+                       :flags            0x02
+                       :talk-to-me       0x02
+                       :reply-on-change? true
+                       :diag-priority    0x10
+                       :diag-request?    false
                        :diag-unicast?    false}}
         [state _] (step* nil poll)
-        change {:type    :command,
-                :command :apply-state,
+        change {:type    :command
+                :command :apply-state
                 :state   {:node {:short-name "auto"}}}
         [_ actions] (step* state change)
         reply (first actions)]
@@ -838,26 +840,26 @@
 (deftest talk-to-me-only-notifies-subscribers
   (let [c1 {:host (InetAddress/getByName "192.168.0.30"), :port 6454}
         c2 {:host (InetAddress/getByName "192.168.0.31"), :port 6454}
-        poll-rxc {:type   :rx,
-                  :packet {:op               :artpoll,
-                           :flags            0x02,
-                           :talk-to-me       0x02,
-                           :reply-on-change? true,
-                           :diag-priority    0x10,
-                           :diag-request?    false,
+        poll-rxc {:type   :rx
+                  :packet {:op               :artpoll
+                           :flags            0x02
+                           :talk-to-me       0x02
+                           :reply-on-change? true
+                           :diag-priority    0x10
+                           :diag-request?    false
                            :diag-unicast?    false}}
-        poll-passive {:type   :rx,
-                      :packet {:op               :artpoll,
-                               :flags            0x00,
-                               :talk-to-me       0x00,
-                               :reply-on-change? false,
-                               :diag-priority    0x10,
-                               :diag-request?    false,
+        poll-passive {:type   :rx
+                      :packet {:op               :artpoll
+                               :flags            0x00
+                               :talk-to-me       0x00
+                               :reply-on-change? false
+                               :diag-priority    0x10
+                               :diag-request?    false
                                :diag-unicast?    false}}
         [state _] (step* nil (assoc poll-rxc :sender c1))
         [state _] (step* state (assoc poll-passive :sender c2))
-        change {:type    :command,
-                :command :apply-state,
+        change {:type    :command
+                :command :apply-state
                 :state   {:node {:long-name "change"}}}
         [_ actions] (step* state change)
         reply (first actions)]
@@ -866,18 +868,18 @@
 
 (deftest talk-to-me-reply-on-change-sends-all-pages
   (let [sender {:host (InetAddress/getByName "192.168.0.98"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op               :artpoll,
-                       :flags            0x02,
-                       :talk-to-me       0x02,
-                       :reply-on-change? true,
-                       :diag-priority    0x10,
-                       :diag-request?    false,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op               :artpoll
+                       :flags            0x02
+                       :talk-to-me       0x02
+                       :reply-on-change? true
+                       :diag-priority    0x10
+                       :diag-request?    false
                        :diag-unicast?    false}}
         [state _] (logic-step nil artpollreply-config poll)
-        change {:type    :command,
-                :command :apply-state,
+        change {:type    :command
+                :command :apply-state
                 :state   {:node {:long-name "updated"}}}
         [_ actions] (logic-step state artpollreply-config change)
         packets (map :packet actions)
@@ -893,21 +895,21 @@
 (deftest talk-to-me-bit-controls-random-delay
   (let [sender {:host (InetAddress/getByName "192.168.0.40"), :port 6454}
         config (assoc base-config :random-delay-fn (constantly 1500))
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x00,
-                       :talk-to-me    0x00,
-                       :diag-request? false,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x00
+                       :talk-to-me    0x00
+                       :diag-request? false
                        :diag-unicast? false}}
         [state actions] (logic-step nil config poll)
         delayed (first actions)
-        fast {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x01,
-                       :talk-to-me    0x01,
-                       :diag-request? false,
+        fast {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x01
+                       :talk-to-me    0x01
+                       :diag-request? false
                        :diag-unicast? false}}
         [_ fast-actions] (logic-step state config fast)
         immediate (first fast-actions)]
@@ -929,20 +931,20 @@
         hit-sender {:host (InetAddress/getByName "192.168.0.78"), :port 6454}
         targeted-poll (fn [sender target]
                         (artpoll-message sender
-                                         {:flags            0x22,
-                                          :talk-to-me       0x02,
-                                          :reply-on-change? true,
-                                          :target-enabled?  true,
-                                          :target-top       target,
-                                          :target-bottom    target,
-                                          :diag-priority    0x10,
-                                          :diag-request?    false,
+                                         {:flags            0x22
+                                          :talk-to-me       0x02
+                                          :reply-on-change? true
+                                          :target-enabled?  true
+                                          :target-top       target
+                                          :target-bottom    target
+                                          :diag-priority    0x10
+                                          :diag-request?    false
                                           :diag-unicast?    false}))
         change (fn [state label]
                  (logic-step state
                              config
-                             {:type    :command,
-                              :command :apply-state,
+                             {:type    :command
+                              :command :apply-state
                               :state   {:node {:long-name label}}}))
         [state _]
         (logic-step nil config (targeted-poll miss-sender invalid-target))
@@ -956,24 +958,24 @@
 (deftest controller-default-poll-clears-reply-on-change
   (let [sender {:host (InetAddress/getByName "192.168.0.79"), :port 6454}
         subscribe (artpoll-message sender
-                                   {:flags            0x02,
-                                    :talk-to-me       0x02,
-                                    :reply-on-change? true,
-                                    :diag-priority    0x10,
-                                    :diag-request?    false,
+                                   {:flags            0x02
+                                    :talk-to-me       0x02
+                                    :reply-on-change? true
+                                    :diag-priority    0x10
+                                    :diag-request?    false
                                     :diag-unicast?    false})
         default-poll (artpoll-message sender
-                                      {:flags            0x00,
-                                       :talk-to-me       0x00,
-                                       :reply-on-change? false,
-                                       :diag-priority    0x10,
-                                       :diag-request?    false,
+                                      {:flags            0x00
+                                       :talk-to-me       0x00
+                                       :reply-on-change? false
+                                       :diag-priority    0x10
+                                       :diag-request?    false
                                        :diag-unicast?    false})
         change (fn [state label]
                  (logic-step state
                              base-config
-                             {:type    :command,
-                              :command :apply-state,
+                             {:type    :command
+                              :command :apply-state
                               :state   {:node {:long-name label}}}))
         [state _] (logic-step nil base-config subscribe)
         [state subscribed-actions] (change state "default-a")
@@ -985,7 +987,7 @@
 (deftest reply-on-change-churn-respects-limit-during-default-polls
   (let [config (assoc base-config
                  :discovery
-                 {:reply-on-change-limit  2,
+                 {:reply-on-change-limit  2
                   :reply-on-change-policy :prefer-latest})
         c1 {:host (InetAddress/getByName "192.168.0.80"), :port 6454}
         c2 {:host (InetAddress/getByName "192.168.0.81"), :port 6454}
@@ -995,27 +997,27 @@
                     (logic-step state
                                 config
                                 (artpoll-message sender
-                                                 {:flags            0x02,
-                                                  :talk-to-me       0x02,
-                                                  :reply-on-change? true,
-                                                  :diag-priority    0x10,
-                                                  :diag-request?    false,
+                                                 {:flags            0x02
+                                                  :talk-to-me       0x02
+                                                  :reply-on-change? true
+                                                  :diag-priority    0x10
+                                                  :diag-request?    false
                                                   :diag-unicast?    false})))
         default-poll (fn [state sender]
                        (logic-step state
                                    config
                                    (artpoll-message sender
-                                                    {:flags            0x00,
-                                                     :talk-to-me       0x00,
-                                                     :reply-on-change? false,
-                                                     :diag-priority    0x10,
-                                                     :diag-request?    false,
+                                                    {:flags            0x00
+                                                     :talk-to-me       0x00
+                                                     :reply-on-change? false
+                                                     :diag-priority    0x10
+                                                     :diag-request?    false
                                                      :diag-unicast?    false})))
         announce (fn [state label]
                    (logic-step state
                                config
-                               {:type    :command,
-                                :command :apply-state,
+                               {:type    :command
+                                :command :apply-state
                                 :state   {:node {:long-name label}}}))
         [state _] (subscribe nil c1)
         [state _] (subscribe state c2)
@@ -1032,24 +1034,24 @@
 (deftest reply-on-change-limit-prefers-existing-when-configured
   (let [config (assoc base-config
                  :discovery
-                 {:reply-on-change-limit  1,
+                 {:reply-on-change-limit  1
                   :reply-on-change-policy :prefer-existing})
         c1 {:host (InetAddress/getByName "192.168.0.70"), :port 6454}
         c2 {:host (InetAddress/getByName "192.168.0.71"), :port 6454}
         poll (fn [sender]
-               {:type   :rx,
-                :sender sender,
-                :packet {:op               :artpoll,
-                         :flags            0x02,
-                         :talk-to-me       0x02,
-                         :reply-on-change? true,
-                         :diag-priority    0x10,
-                         :diag-request?    false,
+               {:type   :rx
+                :sender sender
+                :packet {:op               :artpoll
+                         :flags            0x02
+                         :talk-to-me       0x02
+                         :reply-on-change? true
+                         :diag-priority    0x10
+                         :diag-request?    false
                          :diag-unicast?    false}})
         [state _] (logic-step nil config (poll c1))
         [state _] (logic-step state config (poll c2))
-        change {:type    :command,
-                :command :apply-state,
+        change {:type    :command
+                :command :apply-state
                 :state   {:node {:short-name "prefers-existing"}}}
         [_ actions] (logic-step state config change)
         replies (filter #(and (= :send (:type %))
@@ -1061,24 +1063,24 @@
 (deftest reply-on-change-limit-can-prefer-latest
   (let [config (assoc base-config
                  :discovery
-                 {:reply-on-change-limit  1,
+                 {:reply-on-change-limit  1
                   :reply-on-change-policy :prefer-latest})
         c1 {:host (InetAddress/getByName "192.168.0.72"), :port 6454}
         c2 {:host (InetAddress/getByName "192.168.0.73"), :port 6454}
         poll (fn [sender]
-               {:type   :rx,
-                :sender sender,
-                :packet {:op               :artpoll,
-                         :flags            0x02,
-                         :talk-to-me       0x02,
-                         :reply-on-change? true,
-                         :diag-priority    0x10,
-                         :diag-request?    false,
+               {:type   :rx
+                :sender sender
+                :packet {:op               :artpoll
+                         :flags            0x02
+                         :talk-to-me       0x02
+                         :reply-on-change? true
+                         :diag-priority    0x10
+                         :diag-request?    false
                          :diag-unicast?    false}})
         [state _] (logic-step nil config (poll c1))
         [state _] (logic-step state config (poll c2))
-        change {:type    :command,
-                :command :apply-state,
+        change {:type    :command
+                :command :apply-state
                 :state   {:node {:long-name "prefers-latest"}}}
         [_ actions] (logic-step state config change)
         replies (filter #(and (= :send (:type %))
@@ -1094,9 +1096,9 @@
         released (promise)
         [_ actions] (logic-step nil
                                 config
-                                {:type    :rx,
-                                 :packet  packet,
-                                 :sender  sender,
+                                {:type    :rx
+                                 :packet  packet
+                                 :sender  sender
                                  :release #(deliver released true)})
         callback (some #(when (= :callback (:type %)) %) actions)
         release-action (some #(when (= :release (:type %)) %) actions)
@@ -1186,18 +1188,18 @@
         clock (atom 0)
         advance! (fn [delta] (swap! clock + delta))
         dmx-msg (fn []
-                  {:type      :rx,
-                   :sender    sender,
-                   :packet    (artdmx-packet [1 2 3]),
+                  {:type      :rx
+                   :sender    sender
+                   :packet    (artdmx-packet [1 2 3])
                    :timestamp @clock})
         [state _] (logic-step nil config (dmx-msg))]
     (is (= 1 (count (get-in state [:dmx :sync-buffer]))))
     (advance! (+ ttl 1000))
     (let [[state' actions] (logic-step state
                                        config
-                                       {:type      :rx,
-                                        :sender    sender,
-                                        :packet    {:op :artsync},
+                                       {:type      :rx
+                                        :sender    sender
+                                        :packet    {:op :artsync}
                                         :timestamp @clock})
           callbacks (filter #(= :callback (:type %)) actions)]
       (is (empty? callbacks))
@@ -1275,7 +1277,7 @@
         send-action (some #(when (= :send (:type %)) %) actions)]
     (is (= [true false true false] (:disabled packet)))
     (is (= [true false true false] (get-in state [:inputs :disabled])))
-    (is (= {:disabled   [true false true false],
+    (is (= {:disabled   [true false true false]
             :good-input [0x10 0x00 0x10 0x00]}
            (get-in state [:inputs :per-page 1])))
     (is (= 1 (get-in state [:inputs :last-bind-index])))
@@ -1287,7 +1289,7 @@
     (is (= :artpollreply (get-in send-action [:packet :op])))))
 
 (deftest artinput-targets-specific-bind-index
-  (let [packet (artinput-packet {:disabled   [false true false true],
+  (let [packet (artinput-packet {:disabled   [false true false true]
                                  :bind-index 2})
         sender {:host (InetAddress/getByName "192.168.60.41"), :port 6454}
         [state actions] (logic-step nil
@@ -1297,7 +1299,7 @@
         page-entry (get-in state [:inputs :per-page 2])]
     (is (nil? (get-in state [:inputs :per-page 1])))
     (is (= [0 0 0 0] (get-in state [:node :good-input])))
-    (is (= {:disabled   [false true false true],
+    (is (= {:disabled   [false true false true]
             :good-input [0x00 0x10 0x00 0x10]}
            page-entry))
     (is (= 2 (get-in state [:inputs :last-bind-index])))
@@ -1305,7 +1307,7 @@
     (is (= [0x00 0x10 0x00 0x10] (get-in send-action [:packet :good-input])))))
 
 (deftest artinput-auto-ports-bind-index-selection
-  (let [packet (artinput-packet {:disabled   [true true false false],
+  (let [packet (artinput-packet {:disabled   [true true false false]
                                  :bind-index 3})
         sender {:host (InetAddress/getByName "192.168.60.42"), :port 6454}
         [state actions] (logic-step nil
@@ -1314,15 +1316,15 @@
         send-action (some #(when (= :send (:type %)) %) actions)]
     (is (seq (state/node-port-pages (:node state))))
     (is (= 3 (get-in state [:inputs :last-bind-index])))
-    (is (= {:disabled   [true true false false],
+    (is (= {:disabled   [true true false false]
             :good-input [0x10 0x10 0x00 0x00]}
            (get-in state [:inputs :per-page 3])))
     (is (= 3 (get-in send-action [:packet :bind-index])))
     (is (= [0x10 0x10 0x00 0x00] (get-in send-action [:packet :good-input])))))
 
 (deftest artinput-num-ports-selects-matching-page
-  (let [packet (artinput-packet {:disabled   [true false false false],
-                                 :bind-index 0,
+  (let [packet (artinput-packet {:disabled   [true false false false]
+                                 :bind-index 0
                                  :num-ports  1})
         sender {:host (InetAddress/getByName "192.168.60.43"), :port 6454}
         [state actions] (logic-step nil
@@ -1330,15 +1332,15 @@
                                     {:type :rx, :packet packet, :sender sender})
         send-action (some #(when (= :send (:type %)) %) actions)]
     (is (= 3 (get-in state [:inputs :last-bind-index])))
-    (is (= {:disabled   [true false false false],
+    (is (= {:disabled   [true false false false]
             :good-input [0x10 0x00 0x00 0x00]}
            (get-in state [:inputs :per-page 3])))
     (is (= 3 (get-in send-action [:packet :bind-index])))
     (is (= [0x10 0x00 0x00 0x00] (get-in send-action [:packet :good-input])))))
 
 (deftest artinput-preserves-existing-good-input-flags
-  (let [packet (artinput-packet {:disabled   [false true false false],
-                                 :bind-index 2,
+  (let [packet (artinput-packet {:disabled   [false true false false]
+                                 :bind-index 2
                                  :num-ports  1})
         sender {:host (InetAddress/getByName "192.168.60.44"), :port 6454}
         [state actions] (logic-step nil
@@ -1354,9 +1356,9 @@
         config (-> base-config
                    (assoc-in [:node :oem] 0x2222)
                    (assoc :callbacks {:trigger (fn [ctx] (deliver cb ctx))}))
-        packet (arttrigger-packet {:oem      0x2222,
-                                   :key-type :key-show,
-                                   :sub-key  0x05,
+        packet (arttrigger-packet {:oem      0x2222
+                                   :key-type :key-show
+                                   :sub-key  0x05
                                    :data     (byte-array [0x42])})
         sender {:host (InetAddress/getByName "192.168.60.41"), :port 6454}
         [state actions]
@@ -1556,10 +1558,10 @@
   (let [config (assoc base-config
                  :data
                  {:responses {:dr-url-support
-                              "https://example.invalid/support",
+                              "https://example.invalid/support"
                               0x0003 "http://ignored.invalid"}})
         sender {:host (InetAddress/getByName "192.168.0.65"), :port 6454}
-        packet (artdatarequest-packet {:request-type :dr-url-support,
+        packet (artdatarequest-packet {:request-type :dr-url-support
                                        :request      0x0003})
         [state actions]
         (logic-step nil config {:type :rx, :sender sender, :packet packet})
@@ -1654,7 +1656,7 @@
                    (assoc-in [:node :esta-man] 0x1357)
                    (assoc :programming
                           {:on-change (fn [evt] (deliver event evt))}))
-        packet (artcommand-packet {:esta 0x1357,
+        packet (artcommand-packet {:esta 0x1357
                                    :text "SwoutText=SceneA&SwinText=SceneB&"})
         sender {:host (InetAddress/getByName "192.168.60.46"), :port 6454}
         [state actions]
@@ -1679,8 +1681,8 @@
 
 (deftest apply-state-updates-command-labels
   (let [state (lifecycle/initial-state base-config)
-        msg {:type    :command,
-             :command :apply-state,
+        msg {:type    :command
+             :command :apply-state
              :state   {:command-labels {:swout "Playback"}}}
         [next-state _] (logic-step state base-config msg)]
     (is (= "Playback" (get-in next-state [:command-labels :swout])))
@@ -1751,11 +1753,11 @@
     (is (= 1 (get-in state [:stats :rx-artvideosetup])))))
 
 (deftest send-dmx-validates-payload-length
-  (let [msg {:type     :command,
-             :command  :send-dmx,
-             :data     (byte-array (repeat 513 0)),
-             :net      0,
-             :sub-net  0,
+  (let [msg {:type     :command
+             :command  :send-dmx
+             :data     (byte-array (repeat 513 0))
+             :net      0
+             :sub-net  0
              :universe 0}]
     (is (thrown-with-msg? ExceptionInfo
                           #"DMX payload exceeds"
@@ -1763,17 +1765,17 @@
 
 (deftest reply-on-change-multi-bind-emits-all-pages
   (let [sender {:host (InetAddress/getByName "192.168.0.41"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op               :artpoll,
-                       :flags            0x03,
-                       :talk-to-me       0x03,
-                       :reply-on-change? true,
-                       :diag-request?    false,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op               :artpoll
+                       :flags            0x03
+                       :talk-to-me       0x03
+                       :reply-on-change? true
+                       :diag-request?    false
                        :diag-unicast?    false}}
         [state _] (logic-step nil multi-bind-config poll)
-        change {:type    :command,
-                :command :apply-state,
+        change {:type    :command
+                :command :apply-state
                 :state   {:node {:long-name "multi"}}}
         [_ actions] (logic-step state multi-bind-config change)]
     (is (= 2 (count actions)))
@@ -1794,29 +1796,29 @@
 (deftest diagnostics-subscriptions-govern-ArtDiagData
   (let [c1 {:host (InetAddress/getByName "192.168.1.50"), :port 6454}
         c2 {:host (InetAddress/getByName "192.168.1.60"), :port 6454}
-        poll {:type   :rx,
-              :sender c1,
-              :packet {:op            :artpoll,
-                       :flags         0x0C,                 ; diag request + unicast
-                       :diag-priority 0x40,
-                       :diag-request? true,
+        poll {:type   :rx
+              :sender c1
+              :packet {:op            :artpoll
+                       :flags         0x0C                  ; diag request + unicast
+                       :diag-priority 0x40
+                       :diag-request? true
                        :diag-unicast? true}}
         [state _] (step* nil poll)
-        diag-command {:type     :command,
-                      :command  :diagnostic,
-                      :priority :dp-high,
+        diag-command {:type     :command
+                      :command  :diagnostic
+                      :priority :dp-high
                       :text     "Subsystem ready"}
         [state' actions] (step* state diag-command)
         diag-action (first actions)]
     (is (= 1 (count actions)))
     (is (= :artdiagdata (get-in diag-action [:packet :op])))
     (is (= c1 (:target diag-action)))
-    (let [poll2 {:type   :rx,
-                 :sender c2,
-                 :packet {:op            :artpoll,
-                          :flags         0x04,              ; diag request broadcast
-                          :diag-priority 0x10,
-                          :diag-request? true,
+    (let [poll2 {:type   :rx
+                 :sender c2
+                 :packet {:op            :artpoll
+                          :flags         0x04               ; diag request broadcast
+                          :diag-priority 0x10
+                          :diag-request? true
                           :diag-unicast? false}}
           [state'' _] (step* state' poll2)
           [_ actions2] (step* state'' diag-command)
@@ -1829,16 +1831,16 @@
   (let [c1 {:host (InetAddress/getByName "192.168.2.10"), :port 6454}
         c2 {:host (InetAddress/getByName "192.168.2.11"), :port 6454}
         poll-common
-        {:type   :rx,
+        {:type   :rx
          :packet
-         {:op :artpoll, :flags 0x0C, :diag-request? true, :diag-unicast? false},
+         {:op :artpoll, :flags 0x0C, :diag-request? true, :diag-unicast? false}
          :sender c1}
         poll-second (assoc poll-common :sender c2)
         [state _] (step* nil poll-common)
         [state _] (step* state poll-second)
-        cmd {:type     :command,
-             :command  :diagnostic,
-             :priority :dp-high,
+        cmd {:type     :command
+             :command  :diagnostic
+             :priority :dp-high
              :text     "Broadcast diag"}
         [_ actions] (step* state cmd)
         diag-action (first actions)]
@@ -1847,17 +1849,17 @@
 
 (deftest diagnostic-command-updates-stats
   (let [sender {:host (InetAddress/getByName "192.168.3.10"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x0C,
-                       :diag-request? true,
-                       :diag-unicast? true,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x0C
+                       :diag-request? true
+                       :diag-unicast? true
                        :diag-priority (diagnostics/priority-code :dp-med)}}
         [state _] (step* nil poll)
-        cmd {:type     :command,
-             :command  :diagnostic,
-             :priority :dp-med,
+        cmd {:type     :command
+             :command  :diagnostic
+             :priority :dp-med
              :text     "Stat bump"}
         [state' actions] (step* state cmd)
         stats (lifecycle/snapshot state' [:stats])]
@@ -1875,12 +1877,12 @@
 
 (deftest diagnostic-snapshot-reflects-subscriber-count
   (let [sender {:host (InetAddress/getByName "192.168.7.10"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x0C,
-                       :diag-request? true,
-                       :diag-unicast? true,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x0C
+                       :diag-request? true
+                       :diag-unicast? true
                        :diag-priority (diagnostics/priority-code :dp-high)}}
         [state _] (step* nil poll)
         snap (lifecycle/snapshot state [:diagnostics])
@@ -1895,9 +1897,9 @@
         (-> (lifecycle/initial-state base-config)
             (assoc-in
               [:dmx :merge :ports port]
-              {:sources              {["10.0.0.1" 0] {:length 12, :last-updated 111}},
-               :exclusive-owner      ["10.0.0.1" 0],
-               :exclusive-updated-at 222,
+              {:sources              {["10.0.0.1" 0] {:length 12, :last-updated 111}}
+               :exclusive-owner      ["10.0.0.1" 0]
+               :exclusive-updated-at 222
                :last-output          {:length 12, :updated-at 333, :data (byte-array 1)}})
             (assoc-in [:dmx :merge :per-port 0] {:mode :htp, :protocol :artnet})
             (assoc-in [:dmx :failsafe :playback port]
@@ -1920,16 +1922,16 @@
 
 (deftest diagnostic-warning-threshold-logs-and-flags
   (let [sender {:host (InetAddress/getByName "192.168.8.10"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x0C,                 ; diag request + unicast
-                       :diag-request? true,
-                       :diag-unicast? true,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x0C                  ; diag request + unicast
+                       :diag-request? true
+                       :diag-unicast? true
                        :diag-priority (diagnostics/priority-code :dp-med)}}
         config (assoc base-config
                  :diagnostics
-                 {:broadcast-target             {:host "10.0.0.255", :port 6454},
+                 {:broadcast-target             {:host "10.0.0.255", :port 6454}
                   :subscriber-warning-threshold 0})
         [state _] (logic-step nil config poll)
         summary (get-in (lifecycle/snapshot state [:diagnostics])
@@ -1939,12 +1941,12 @@
 
 (deftest diagnostic-subscriber-expires-without-refresh
   (let [sender {:host (InetAddress/getByName "192.168.4.10"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x0C,
-                       :diag-request? true,
-                       :diag-unicast? true,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x0C
+                       :diag-request? true
+                       :diag-unicast? true
                        :diag-priority 0x40}}
         [state _] (step* nil poll)
         ttl (get-in state [:diagnostics :subscriber-ttl-ns])
@@ -1957,9 +1959,9 @@
                                 (map (fn [[k v]]
                                        [k (assoc v :updated-at stale-time)]))
                                 subs)))
-        cmd {:type     :command,
-             :command  :diagnostic,
-             :priority :dp-high,
+        cmd {:type     :command
+             :command  :diagnostic
+             :priority :dp-high
              :text     "no receivers"}
         [_ actions] (step* expired-state cmd)]
     (is (empty? actions))))
@@ -1967,22 +1969,22 @@
 (deftest diagnostic-rate-limit-throttles-rapid-messages
   (let [config (assoc base-config
                  :diagnostics
-                 {:broadcast-target {:host "10.0.0.255", :port 6454},
+                 {:broadcast-target {:host "10.0.0.255", :port 6454}
                   :rate-limit-hz    10.0})
         sender {:host (InetAddress/getByName "192.168.5.50"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x0C,
-                       :diag-request? true,
-                       :diag-unicast? true,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x0C
+                       :diag-request? true
+                       :diag-unicast? true
                        :diag-priority (diagnostics/priority-code :dp-low)}}
         [state _] (logic-step nil config poll)
         interval (long (/ dmx/nanos-per-second 10))
-        cmd {:type     :command,
-             :command  :diagnostic,
-             :priority :dp-high,
-             :text     "first",
+        cmd {:type     :command
+             :command  :diagnostic
+             :priority :dp-high
+             :text     "first"
              :now      0}
         [state' actions] (logic-step state config cmd)]
     (is (= 1 (count actions)))
@@ -1997,17 +1999,17 @@
 
 (deftest diagnostic-priority-filtering-respects-thresholds
   (let [sender {:host (InetAddress/getByName "192.168.5.10"), :port 6454}
-        poll {:type   :rx,
-              :sender sender,
-              :packet {:op            :artpoll,
-                       :flags         0x0C,
-                       :diag-request? true,
-                       :diag-unicast? true,
+        poll {:type   :rx
+              :sender sender
+              :packet {:op            :artpoll
+                       :flags         0x0C
+                       :diag-request? true
+                       :diag-unicast? true
                        :diag-priority 0x40}}
         [state _] (step* nil poll)
-        high {:type     :command,
-              :command  :diagnostic,
-              :priority :dp-high,
+        high {:type     :command
+              :command  :diagnostic
+              :priority :dp-high
               :text     "deliver"}
         low
         {:type :command, :command :diagnostic, :priority :dp-low, :text "drop"}
@@ -2017,10 +2019,10 @@
     (is (empty? actions-low))))
 
 (deftest apply-state-command-updates-node-and-network
-  (let [state-command {:type    :command,
-                       :command :apply-state,
+  (let [state-command {:type    :command
+                       :command :apply-state
                        :state
-                       {:node    {:short-name "restored", :sw-out [5 0 0 0]},
+                       {:node    {:short-name "restored", :sw-out [5 0 0 0]}
                         :network {:ip [10 0 0 99], :subnet-mask [255 0 0 0]}}}
         [state _] (logic-step nil base-config state-command)
         snap (lifecycle/snapshot state [:node :network])]
@@ -2029,12 +2031,12 @@
     (is (= [10 0 0 99] (get-in snap [:network :ip])))))
 
 (deftest apply-state-supports-partial-updates
-  (let [initial {:type    :command,
-                 :command :apply-state,
+  (let [initial {:type    :command
+                 :command :apply-state
                  :state   {:node {:short-name "one"}}}
         [state _] (logic-step nil base-config initial)
-        partial {:type    :command,
-                 :command :apply-state,
+        partial {:type    :command
+                 :command :apply-state
                  :state   {:network {:ip [1 2 3 4]}}}
         [state' _] (logic-step state base-config partial)]
     (is (= "one" (get-in state' [:node :short-name]))
@@ -2044,18 +2046,18 @@
 (deftest diagnostic-fanout-reverts-to-unicast-after-expiry
   (let [c1 {:host (InetAddress/getByName "192.168.6.10"), :port 6454}
         c2 {:host (InetAddress/getByName "192.168.6.11"), :port 6454}
-        poll-template {:type   :rx,
-                       :packet {:op            :artpoll,
-                                :flags         0x0C,
-                                :diag-request? true,
-                                :diag-unicast? true,
+        poll-template {:type   :rx
+                       :packet {:op            :artpoll
+                                :flags         0x0C
+                                :diag-request? true
+                                :diag-unicast? true
                                 :diag-priority (diagnostics/priority-code
                                                  :dp-med)}}
         [state _] (step* nil (assoc poll-template :sender c1))
         [state _] (step* state (assoc poll-template :sender c2))
-        cmd {:type     :command,
-             :command  :diagnostic,
-             :priority :dp-med,
+        cmd {:type     :command
+             :command  :diagnostic
+             :priority :dp-med
              :text     "fanout"}
         [state actions] (step* state cmd)]
     (is (= 2 (count actions)))
@@ -2073,34 +2075,34 @@
           "With one subscriber remaining, diagnostics revert to unicast"))))
 
 (deftest diagnostic-priority-honors-per-subscriber-thresholds
-  (let [broadcast-subscriber {:host (InetAddress/getByName "192.168.30.10"),
+  (let [broadcast-subscriber {:host (InetAddress/getByName "192.168.30.10")
                               :port 6454}
-        unicast-subscriber {:host (InetAddress/getByName "192.168.30.11"),
+        unicast-subscriber {:host (InetAddress/getByName "192.168.30.11")
                             :port 6454}
-        broadcast-request {:type   :rx,
-                           :sender broadcast-subscriber,
-                           :packet {:op            :artpoll,
-                                    :flags         0x0C,
-                                    :diag-request? true,
-                                    :diag-unicast? false,
+        broadcast-request {:type   :rx
+                           :sender broadcast-subscriber
+                           :packet {:op            :artpoll
+                                    :flags         0x0C
+                                    :diag-request? true
+                                    :diag-unicast? false
                                     :diag-priority (diagnostics/priority-code
                                                      :dp-low)}}
         [state _] (logic-step nil base-config broadcast-request)
-        unicast-request {:type   :rx,
-                         :sender unicast-subscriber,
-                         :packet {:op            :artpoll,
-                                  :flags         0x0C,
-                                  :diag-request? true,
-                                  :diag-unicast? true,
+        unicast-request {:type   :rx
+                         :sender unicast-subscriber
+                         :packet {:op            :artpoll
+                                  :flags         0x0C
+                                  :diag-request? true
+                                  :diag-unicast? true
                                   :diag-priority (diagnostics/priority-code
                                                    :dp-critical)}}
         [state _] (logic-step state base-config unicast-request)
         low
         {:type :command, :command :diagnostic, :priority :dp-med, :text "low"}
         [state low-actions] (logic-step state base-config low)
-        high {:type     :command,
-              :command  :diagnostic,
-              :priority :dp-volatile,
+        high {:type     :command
+              :command  :diagnostic
+              :priority :dp-volatile
               :text     "high"}
         [_ high-actions] (logic-step state base-config high)
         broadcast-target (get-in base-config [:diagnostics :broadcast-target])]
@@ -2118,13 +2120,13 @@
                  :programming
                  {:on-change (fn [event] (deliver persist event))})
         sender {:host (InetAddress/getByName "10.0.0.5"), :port 6454}
-        packet {:op           :artaddress,
-                :short-name   "Desk",
-                :long-name    "Front Of House",
-                :net-switch   0x81,
-                :sub-switch   0x82,
-                :sw-out       [0x81 0 0 0],
-                :acn-priority 120,
+        packet {:op           :artaddress
+                :short-name   "Desk"
+                :long-name    "Front Of House"
+                :net-switch   0x81
+                :sub-switch   0x82
+                :sw-out       [0x81 0 0 0]
+                :acn-priority 120
                 :command      0x02}
         [state actions]
         (logic-step nil config {:type :rx, :sender sender, :packet packet})]
@@ -2145,21 +2147,21 @@
 (deftest artaddress-reply-on-change-updates-multi-page-node
   (let [subscriber {:host (InetAddress/getByName "10.0.0.21"), :port 6454}
         controller {:host (InetAddress/getByName "10.0.0.22"), :port 6454}
-        poll {:type   :rx,
-              :sender subscriber,
-              :packet {:op               :artpoll,
-                       :flags            0x02,
-                       :talk-to-me       0x02,
-                       :reply-on-change? true,
-                       :diag-priority    0x10,
-                       :diag-request?    false,
+        poll {:type   :rx
+              :sender subscriber
+              :packet {:op               :artpoll
+                       :flags            0x02
+                       :talk-to-me       0x02
+                       :reply-on-change? true
+                       :diag-priority    0x10
+                       :diag-request?    false
                        :diag-unicast?    false}}
         [state _] (logic-step nil artpollreply-config poll)
-        artaddress {:type   :rx,
-                    :sender controller,
-                    :packet {:op         :artaddress,
-                             :short-name "PGM",
-                             :long-name  "Programmed Node",
+        artaddress {:type   :rx
+                    :sender controller
+                    :packet {:op         :artaddress
+                             :short-name "PGM"
+                             :long-name  "Programmed Node"
                              :command    0x02}}
         [state' actions] (logic-step state artpollreply-config artaddress)
         diag (some #(when (and (= controller (:target %))
@@ -2200,9 +2202,9 @@
 (deftest artaddress-input-command-flushes-sync-buffer
   (let [config (assoc base-config :sync {:mode :art-sync})
         sender {:host (InetAddress/getByName "10.0.0.7"), :port 6454}
-        dmxtx {:type    :rx,
-               :sender  sender,
-               :packet  (artdmx-packet [9 9 9]),
+        dmxtx {:type    :rx
+               :sender  sender
+               :packet  (artdmx-packet [9 9 9])
                :release (fn [] nil)}
         [state-after-dmx actions] (logic-step nil config dmxtx)
         _ (doseq [action actions
@@ -2259,8 +2261,8 @@
         base-state (lifecycle/initial-state config)
         state (assoc-in base-state
                         [:dmx :merge]
-                        {:ports {port {:last-output {:data       (byte-array [5 4 3]),
-                                                     :length     3,
+                        {:ports {port {:last-output {:data       (byte-array [5 4 3])
+                                                     :length     3
                                                      :updated-at 0}}}})
         [next actions] (logic-step state config {:type :tick, :now 2000000})
         callback (some #(when (= :callback (:type %)) %) actions)
@@ -2287,8 +2289,8 @@
         state (-> base-state
                   (assoc-in [:dmx :merge]
                             {:ports {port {:last-output {:data       (byte-array [1 2
-                                                                                  3]),
-                                                         :length     4,
+                                                                                  3])
+                                                         :length     4
                                                          :updated-at 0}}}})
                   (assoc-in [:dmx :failsafe :scene port]
                             {:data scene-bytes, :length 4, :updated-at 0}))
@@ -2312,8 +2314,8 @@
         base-state (lifecycle/initial-state config)
         state (assoc-in base-state
                         [:dmx :merge]
-                        {:ports {port {:last-output {:data       (byte-array [1 2 3]),
-                                                     :length     3,
+                        {:ports {port {:last-output {:data       (byte-array [1 2 3])
+                                                     :length     3
                                                      :updated-at 0}}}})
         [next actions] (logic-step state config {:type :tick, :now 4000000})
         callback (some #(when (= :callback (:type %)) %) actions)
@@ -2338,8 +2340,8 @@
                             {:mode :zero, :engaged-at 0, :length 3})
                   (assoc-in [:dmx :merge]
                             {:ports {port {:last-output {:data       (byte-array [1 1
-                                                                                  1]),
-                                                         :length     3,
+                                                                                  1])
+                                                         :length     3
                                                          :updated-at 0}}}}))
         packet (merge-rx sender [1 2 3])
         [next actions] (logic-step state config packet)]
@@ -2359,8 +2361,8 @@
         state (-> base-state
                   (assoc-in [:dmx :merge]
                             {:ports {port {:last-output {:data       (byte-array [1 1
-                                                                                  1]),
-                                                         :length     3,
+                                                                                  1])
+                                                         :length     3
                                                          :updated-at 0}}}})
                   (assoc-in [:dmx :failsafe :playback port] playback-entry))
         [next actions] (logic-step state config {:type :tick, :now 5000000})]
@@ -2510,14 +2512,14 @@
   (let [persist (promise)
         config (assoc base-config
                  :programming
-                 {:network   {:subnet-mask [255 0 0 0]},
+                 {:network   {:subnet-mask [255 0 0 0]}
                   :on-change (fn [event] (deliver persist event))})
         sender {:host (InetAddress/getByName "10.0.0.5"), :port 6454}
-        packet {:op           :artipprog,
-                :command      0x97,                         ; enable + program IP/mask/gateway/port
-                :prog-ip      [10 0 0 50],
-                :prog-sm      [255 255 0 0],
-                :prog-port    0x2468,
+        packet {:op           :artipprog
+                :command      0x97                          ; enable + program IP/mask/gateway/port
+                :prog-ip      [10 0 0 50]
+                :prog-sm      [255 255 0 0]
+                :prog-port    0x2468
                 :prog-gateway [10 0 0 1]}
         [state actions]
         (logic-step nil config {:type :rx, :sender sender, :packet packet})]
@@ -2540,27 +2542,27 @@
     (let [event (deref persist 100 nil)]
       (is event)
       (is (= :artipprog (:event event)))
-      (is (= {:ip          [10 0 0 50],
-              :subnet-mask [255 255 0 0],
-              :gateway     [10 0 0 1],
+      (is (= {:ip          [10 0 0 50]
+              :subnet-mask [255 255 0 0]
+              :gateway     [10 0 0 1]
               :port        0x2468}
              (:changes event))))))
 
 (deftest artipprog-reset-restores-network-defaults
   (let [events (atom [])
-        defaults {:ip          [2 2 2 2],
-                  :subnet-mask [255 0 0 0],
-                  :gateway     [2 2 2 1],
+        defaults {:ip          [2 2 2 2]
+                  :subnet-mask [255 0 0 0]
+                  :gateway     [2 2 2 1]
                   :port        0x2222}
         config (assoc base-config
                  :programming
                  {:network defaults, :on-change #(swap! events conj %)})
         sender {:host (InetAddress/getByName "10.0.0.6"), :port 6454}
-        program {:op           :artipprog,
-                 :command      0x97,
-                 :prog-ip      [3 3 3 3],
-                 :prog-sm      [255 255 0 0],
-                 :prog-port    0x3333,
+        program {:op           :artipprog
+                 :command      0x97
+                 :prog-ip      [3 3 3 3]
+                 :prog-sm      [255 255 0 0]
+                 :prog-port    0x3333
                  :prog-gateway [3 3 3 1]}
         reset {:op :artipprog, :command 0x88}
         [state-after-program _]
@@ -2581,9 +2583,9 @@
     (is (= 0x2222 (get-in reply [:packet :port])))
     (let [event (last @events)]
       (is (= :artipprog (:event event)))
-      (is (= {:ip          [2 2 2 2],
-              :subnet-mask [255 0 0 0],
-              :gateway     [2 2 2 1],
+      (is (= {:ip          [2 2 2 2]
+              :subnet-mask [255 0 0 0]
+              :gateway     [2 2 2 1]
               :port        0x2222}
              (:changes event))))))
 
@@ -2591,17 +2593,17 @@
   (let [events (atom [])
         config (assoc base-config
                  :programming
-                 {:network   {:ip          [5 5 5 5],
-                              :subnet-mask [255 0 0 0],
-                              :gateway     [5 5 5 1],
-                              :port        0x5555},
+                 {:network   {:ip          [5 5 5 5]
+                              :subnet-mask [255 0 0 0]
+                              :gateway     [5 5 5 1]
+                              :port        0x5555}
                   :on-change #(swap! events conj %)})
         sender {:host (InetAddress/getByName "10.0.0.7"), :port 6454}
-        packet {:op           :artipprog,
-                :command      0xC4,
-                :prog-ip      [1 1 1 1],
-                :prog-sm      [255 255 0 0],
-                :prog-port    0x1111,
+        packet {:op           :artipprog
+                :command      0xC4
+                :prog-ip      [1 1 1 1]
+                :prog-sm      [255 255 0 0]
+                :prog-port    0x1111
                 :prog-gateway [1 1 1 1]}
         [state actions]
         (logic-step nil config {:type :rx, :sender sender, :packet packet})
@@ -2624,17 +2626,17 @@
   (let [events (atom [])
         config (assoc base-config
                  :programming
-                 {:network   {:ip          [6 6 6 6],
-                              :subnet-mask [255 0 0 0],
-                              :gateway     [6 6 6 1],
-                              :port        0x6666},
+                 {:network   {:ip          [6 6 6 6]
+                              :subnet-mask [255 0 0 0]
+                              :gateway     [6 6 6 1]
+                              :port        0x6666}
                   :on-change #(swap! events conj %)})
         sender {:host (InetAddress/getByName "10.0.0.9"), :port 6454}
-        packet {:op           :artipprog,
-                :command      0x40,
-                :prog-ip      [1 1 1 1],
-                :prog-sm      [255 255 0 0],
-                :prog-port    0x1111,
+        packet {:op           :artipprog
+                :command      0x40
+                :prog-ip      [1 1 1 1]
+                :prog-sm      [255 255 0 0]
+                :prog-port    0x1111
                 :prog-gateway [1 1 1 1]}
         [state actions]
         (logic-step nil config {:type :rx, :sender sender, :packet packet})
@@ -2654,17 +2656,17 @@
   (let [events (atom [])
         config (assoc base-config
                  :programming
-                 {:network   {:ip          [9 9 9 9],
-                              :subnet-mask [255 0 0 0],
-                              :gateway     [9 9 9 1],
-                              :port        0x9999},
+                 {:network   {:ip          [9 9 9 9]
+                              :subnet-mask [255 0 0 0]
+                              :gateway     [9 9 9 1]
+                              :port        0x9999}
                   :on-change #(swap! events conj %)})
         sender {:host (InetAddress/getByName "10.0.0.8"), :port 6454}
-        packet {:op           :artipprog,
-                :command      0x04,
-                :prog-ip      [1 2 3 4],
-                :prog-sm      [255 255 0 0],
-                :prog-port    0x1234,
+        packet {:op           :artipprog
+                :command      0x04
+                :prog-ip      [1 2 3 4]
+                :prog-sm      [255 255 0 0]
+                :prog-port    0x1234
                 :prog-gateway [1 1 1 1]}
         [state actions]
         (logic-step nil config {:type :rx, :sender sender, :packet packet})
@@ -2692,21 +2694,21 @@
 
 (defn- tod-request
   [sender addresses]
-  {:type   :rx,
-   :sender sender,
-   :packet {:op        :arttodrequest,
-            :net       0,
-            :add-count (count addresses),
+  {:type   :rx
+   :sender sender
+   :packet {:op        :arttodrequest
+            :net       0
+            :add-count (count addresses)
             :addresses addresses}})
 
 (defn- tod-control
   [sender address]
-  {:type   :rx,
-   :sender sender,
+  {:type   :rx
+   :sender sender
    :packet {:op :arttodcontrol, :net 0, :command 0x01, :address address}})
 
 (defn- firmware-packet
-  [{:keys [stage block-id bytes buffer firmware-length transfer],
+  [{:keys [stage block-id bytes buffer firmware-length transfer]
     :or   {stage :first, block-id 0, transfer :firmware}}]
   (let [payload (cond buffer (let [dup (.duplicate ^ByteBuffer buffer)]
                                (doto (.slice dup) (.clear)))
@@ -2717,13 +2719,13 @@
                      :first :firmware-first
                      :last :firmware-last
                      :firmware-continue)]
-    {:op              :artfirmwaremaster,
-     :stage           stage,
-     :transfer        transfer,
-     :block-type      block-type,
-     :block-id        block-id,
-     :firmware-length (or firmware-length 0x0010),
-     :data-length     (.remaining view),
+    {:op              :artfirmwaremaster
+     :stage           stage
+     :transfer        transfer
+     :block-type      block-type
+     :block-id        block-id
+     :firmware-length (or firmware-length 0x0010)
+     :data-length     (.remaining view)
      :data            view}))
 
 (def ^:const firmware-header-bytes 1060)
@@ -2796,9 +2798,9 @@
                         file-bytes
                         firmware-header-bytes
                         payload-length)
-      {:firmware-length words,
-       :total-bytes     total,
-       :bytes           file-bytes,
+      {:firmware-length words
+       :total-bytes     total
+       :bytes           file-bytes
        :buffers         (chunk-byte-array file-bytes chunk-sizes)})))
 
 (deftest arttodrequest-returns-todnak-when-empty
@@ -2862,7 +2864,7 @@
         sub-cb (promise)
         config (assoc base-config
                  :callbacks
-                 {:rdm     (fn [ctx] (deliver rdm-cb ctx)),
+                 {:rdm     (fn [ctx] (deliver rdm-cb ctx))
                   :rdm-sub (fn [ctx] (deliver sub-cb ctx))})
         sender {:host (InetAddress/getByName "192.168.20.15"), :port 6454}
         packet
@@ -2895,13 +2897,13 @@
         config (-> rdm-test-config
                    (assoc :callbacks {:rdm (fn [ctx] (deliver cb ctx))}))
         sender {:host (InetAddress/getByName "192.168.20.10"), :port 6454}
-        packet {:op             :artrdm,
-                :rdm-version    1,
-                :fifo-available 8,
-                :fifo-max       16,
-                :net            0,
-                :command        0,
-                :address        0x01,
+        packet {:op             :artrdm
+                :rdm-version    1
+                :fifo-available 8
+                :fifo-max       16
+                :net            0
+                :command        0
+                :address        0x01
                 :payload        payload}
         [_ actions]
         (logic-step nil config {:type :rx, :sender sender, :packet packet})
@@ -2925,13 +2927,13 @@
                   (.flip buf)
                   buf)
         sender {:host (InetAddress/getByName "192.168.20.13"), :port 6454}
-        packet {:op             :artrdm,
-                :rdm-version    1,
-                :fifo-available 4,
-                :fifo-max       16,
-                :net            0,
-                :command        0,
-                :address        0x01,
+        packet {:op             :artrdm
+                :rdm-version    1
+                :fifo-available 4
+                :fifo-max       16
+                :net            0
+                :command        0
+                :address        0x01
                 :payload        payload}
         [state actions] (logic-step
                           nil
@@ -2947,13 +2949,13 @@
           (assoc base-config :callbacks {:rdm (fn [ctx] (deliver cb ctx))})
           sender {:host (InetAddress/getByName "192.168.20.33"), :port 6454}
           payload (rdm-payload-buffer command-class)
-          packet {:op             :artrdm,
-                  :rdm-version    1,
-                  :fifo-available 2,
-                  :fifo-max       4,
-                  :net            0,
-                  :command        0,
-                  :address        0x01,
+          packet {:op             :artrdm
+                  :rdm-version    1
+                  :fifo-available 2
+                  :fifo-max       4
+                  :net            0
+                  :command        0
+                  :address        0x01
                   :payload        payload}
           [_ actions]
           (logic-step nil config {:type :rx, :sender sender, :packet packet})
@@ -2969,10 +2971,10 @@
 
 (deftest send-rdm-produces-artnet-action
   (let [target {:host "127.0.0.1", :port 6454}
-        command {:type         :command,
-                 :command      :send-rdm,
-                 :target       target,
-                 :port-address (common/compose-port-address 0 0 2),
+        command {:type         :command
+                 :command      :send-rdm
+                 :target       target
+                 :port-address (common/compose-port-address 0 0 2)
                  :rdm-packet   (rdm-payload-buffer 0x30)}
         [state actions] (logic-step nil base-config command)
         action (first actions)
@@ -2989,26 +2991,26 @@
     (is (= 1 (get-in state [:stats :tx-artrdm])))))
 
 (deftest send-rdm-requires-target
-  (let [command {:type    :command,
-                 :command :send-rdm,
+  (let [command {:type    :command
+                 :command :send-rdm
                  :payload (rdm-payload-buffer 0x20)}]
     (is (thrown-with-msg? ExceptionInfo
                           #"requires :target"
                           (logic-step nil base-config command)))))
 
 (deftest send-rdm-validates-length
-  (let [command {:type       :command,
-                 :command    :send-rdm,
-                 :target     {:host "127.0.0.1", :port 6454},
+  (let [command {:type       :command
+                 :command    :send-rdm
+                 :target     {:host "127.0.0.1", :port 6454}
                  :rdm-packet (rdm-payload-buffer 0x20 22)}]
     (is (thrown-with-msg? ExceptionInfo
                           #"shorter"
                           (logic-step nil base-config command)))))
 
 (deftest send-rdm-validates-command-class
-  (let [command {:type       :command,
-                 :command    :send-rdm,
-                 :target     {:host "127.0.0.1", :port 6454},
+  (let [command {:type       :command
+                 :command    :send-rdm
+                 :target     {:host "127.0.0.1", :port 6454}
                  :rdm-packet (rdm-payload-buffer 0x10)}]
     (is (thrown-with-msg? ExceptionInfo
                           #"Unsupported RDM command class"
@@ -3071,13 +3073,13 @@
         config (assoc base-config
                  :firmware
                  {:on-chunk (fn [evt]
-                              (swap! chunk-stages conj (:stage evt))),
+                              (swap! chunk-stages conj (:stage evt)))
                   :on-complete
                   (fn [evt] (swap! complete-calls conj (:stage evt)))})
         sender {:host (InetAddress/getByName "192.168.30.5"), :port 6454}
-        first-packet (firmware-packet {:stage           :first,
-                                       :block-id        0,
-                                       :buffer          first-buffer,
+        first-packet (firmware-packet {:stage           :first
+                                       :block-id        0
+                                       :buffer          first-buffer
                                        :firmware-length firmware-length})
         [state actions] (logic-step
                           nil
@@ -3089,9 +3091,9 @@
     (is (= 1 (get-in state [:stats :firmware-requests])))
     (is (= [:first] @chunk-stages))
     (is (empty? @complete-calls))
-    (let [last-packet (firmware-packet {:stage           :last,
-                                        :block-id        1,
-                                        :buffer          last-buffer,
+    (let [last-packet (firmware-packet {:stage           :last
+                                        :block-id        1
+                                        :buffer          last-buffer
                                         :firmware-length firmware-length})
           [state' actions2] (logic-step
                               state
@@ -3109,16 +3111,16 @@
         [first-block second-block & _] buffers
         sender {:host (InetAddress/getByName "192.168.30.6"), :port 6454}
         config base-config
-        first-packet (firmware-packet {:stage           :first,
-                                       :block-id        0,
-                                       :buffer          first-block,
+        first-packet (firmware-packet {:stage           :first
+                                       :block-id        0
+                                       :buffer          first-block
                                        :firmware-length firmware-length})
         [state _] (logic-step nil
                               config
                               {:type :rx, :sender sender, :packet first-packet})
-        premature-last (firmware-packet {:stage           :last,
-                                         :block-id        1,
-                                         :buffer          second-block,
+        premature-last (firmware-packet {:stage           :last
+                                         :block-id        1
+                                         :buffer          second-block
                                          :firmware-length firmware-length})
         [failed-state actions]
         (logic-step state
@@ -3139,23 +3141,23 @@
         [first-block second-block third-block] buffers
         sender {:host (InetAddress/getByName "192.168.30.7"), :port 6454}
         config base-config
-        first-packet (firmware-packet {:stage           :first,
-                                       :block-id        0,
-                                       :buffer          first-block,
+        first-packet (firmware-packet {:stage           :first
+                                       :block-id        0
+                                       :buffer          first-block
                                        :firmware-length firmware-length})
         [state _] (logic-step nil
                               config
                               {:type :rx, :sender sender, :packet first-packet})
-        mid-packet (firmware-packet {:stage           :firmware-continue,
-                                     :block-id        1,
-                                     :buffer          second-block,
+        mid-packet (firmware-packet {:stage           :firmware-continue
+                                     :block-id        1
+                                     :buffer          second-block
                                      :firmware-length firmware-length})
         [state' _] (logic-step state
                                config
                                {:type :rx, :sender sender, :packet mid-packet})
-        final-packet (firmware-packet {:stage           :last,
-                                       :block-id        2,
-                                       :buffer          third-block,
+        final-packet (firmware-packet {:stage           :last
+                                       :block-id        2
+                                       :buffer          third-block
                                        :firmware-length firmware-length})
         [final-state actions]
         (logic-step state'

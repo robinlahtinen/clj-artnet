@@ -84,8 +84,8 @@
    {:name :op-code, :type :u16le, :value op-poll}
    {:name :prot-ver-hi, :type :u8, :value 0}
    {:name :prot-ver-lo, :type :u8, :value protocol-version}
-   {:name :flags,
-    :type :u8,
+   {:name :flags
+    :type :u8
     :doc
     "TalkToMe field: bit 0=VLC, 1=reply-on-change, 2=diag, 3=unicast, 5=targeted"}
    {:name :diag-priority, :type :u8}
@@ -129,8 +129,8 @@
    {:name :op-code, :type :u16le, :value op-dmx}
    {:name :prot-ver-hi, :type :u8, :value 0}
    {:name :prot-ver-lo, :type :u8, :value protocol-version}
-   {:name :sequence,
-    :type :u8,
+   {:name :sequence
+    :type :u8
     :doc  "Sequence number 1-255, 0 disables reordering"}
    {:name :physical, :type :u8, :doc "Physical port 0-3"}
    {:name :sub-uni, :type :u8, :doc "Low nibble=universe, high nibble=sub-net"}
@@ -178,9 +178,9 @@
    {:name :prot-ver-lo, :type :u8, :value protocol-version}
    {:name :filler1, :type :u8, :value 0} {:name :bind-index, :type :u8}
    {:name :num-ports-hi, :type :u8} {:name :num-ports-lo, :type :u8}
-   {:name   :input,
-    :type   :bytes,
-    :length 4,
+   {:name   :input
+    :type   :bytes
+    :length 4
     :doc    "Bit 0 per port: 1=disable input"}])
 
 (def art-diag-data-spec
@@ -190,13 +190,13 @@
    {:name :prot-ver-hi, :type :u8, :value 0}
    {:name :prot-ver-lo, :type :u8, :value protocol-version}
    {:name :filler1, :type :u8, :value 0}
-   {:name :priority,
-    :type :u8,
+   {:name :priority
+    :type :u8
     :doc
     "DpLow=0x10, DpMed=0x40, DpHigh=0x80, DpCritical=0xE0, DpVolatile=0xF0"}
    {:name :logical-port, :type :u8} {:name :filler3, :type :u8, :value 0}
-   {:name :length,
-    :type :u16be,
+   {:name :length
+    :type :u16be
     :doc  "Length of Data[] including null terminator"}])
 
 (def art-timecode-spec
@@ -324,8 +324,8 @@
    {:name :filler2, :type :u8, :value 0}
    {:name :uid, :type :uid, :doc "6-byte RDM UID"}
    {:name :spare1, :type :u8, :value 0}
-   {:name :command-class,
-    :type :u8,
+   {:name :command-class
+    :type :u8
     :doc  "0x20=Get, 0x21=GetResp, 0x30=Set, 0x31=SetResp"}
    {:name :parameter-id, :type :u16be} {:name :sub-device, :type :u16be}
    {:name :sub-count, :type :u16be} {:name :spare2, :type :u8, :value 0}
@@ -513,9 +513,9 @@
    {:name :flags, :type :u8, :doc "Bit 0: Last entry"}
    {:name :file-type, :type :u8}
    {:name :name, :type :fixed-string, :length 16, :doc "Filename"}
-   {:name   :description,
-    :type   :fixed-string,
-    :length 64,
+   {:name   :description
+    :type   :fixed-string
+    :length 64
     :doc    "File description"}
    {:name :length-3, :type :u8, :doc "MSB of 32-bit file size"}
    {:name :length-2, :type :u8} {:name :length-1, :type :u8}
@@ -523,42 +523,42 @@
 
 (def packet-specs
   "Registry of all packet specifications keyed by opcode keyword"
-  {:artpoll              art-poll-spec,
-   :artpollreply         art-poll-reply-spec,
-   :artdmx               art-dmx-spec,
-   :artnzs               art-nzs-spec,
-   :artsync              art-sync-spec,
-   :artaddress           art-address-spec,
-   :artinput             art-input-spec,
-   :artdiagdata          art-diag-data-spec,
-   :arttimecode          art-timecode-spec,
-   :arttrigger           art-trigger-spec,
-   :artcommand           art-command-spec,
-   :artipprog            art-ip-prog-spec,
-   :artipprogreply       art-ip-prog-reply-spec,
-   :arttodrequest        art-tod-request-spec,
-   :arttoddata           art-tod-data-spec,
-   :arttodcontrol        art-tod-control-spec,
-   :artrdm               art-rdm-spec,
-   :artrdmsub            art-rdm-sub-spec,
-   :artfirmwaremaster    art-firmware-master-spec,
-   :artfirmwarereply     art-firmware-reply-spec,
-   :artdatarequest       art-data-request-spec,
-   :artdatareply         art-data-reply-spec,
-   :artvideosetup        art-video-setup-spec,
-   :artvideopalette      art-video-palette-spec,
-   :artvideodata         art-video-data-spec,
-   :artmacmaster         art-mac-master-spec,
-   :artmacslave          art-mac-slave-spec,
-   :artfiletnmaster      art-file-tn-master-spec,
-   :artfilefnmaster      art-file-fn-master-spec,
-   :artfilefnreply       art-file-fn-reply-spec,
-   :artmedia             art-media-spec,
-   :artmediapatch        art-media-patch-spec,
-   :artmediacontrol      art-media-control-spec,
-   :artmediacontrolreply art-media-control-reply-spec,
-   :arttimesync          art-time-sync-spec,
-   :artdirectory         art-directory-spec,
+  {:artpoll              art-poll-spec
+   :artpollreply         art-poll-reply-spec
+   :artdmx               art-dmx-spec
+   :artnzs               art-nzs-spec
+   :artsync              art-sync-spec
+   :artaddress           art-address-spec
+   :artinput             art-input-spec
+   :artdiagdata          art-diag-data-spec
+   :arttimecode          art-timecode-spec
+   :arttrigger           art-trigger-spec
+   :artcommand           art-command-spec
+   :artipprog            art-ip-prog-spec
+   :artipprogreply       art-ip-prog-reply-spec
+   :arttodrequest        art-tod-request-spec
+   :arttoddata           art-tod-data-spec
+   :arttodcontrol        art-tod-control-spec
+   :artrdm               art-rdm-spec
+   :artrdmsub            art-rdm-sub-spec
+   :artfirmwaremaster    art-firmware-master-spec
+   :artfirmwarereply     art-firmware-reply-spec
+   :artdatarequest       art-data-request-spec
+   :artdatareply         art-data-reply-spec
+   :artvideosetup        art-video-setup-spec
+   :artvideopalette      art-video-palette-spec
+   :artvideodata         art-video-data-spec
+   :artmacmaster         art-mac-master-spec
+   :artmacslave          art-mac-slave-spec
+   :artfiletnmaster      art-file-tn-master-spec
+   :artfilefnmaster      art-file-fn-master-spec
+   :artfilefnreply       art-file-fn-reply-spec
+   :artmedia             art-media-spec
+   :artmediapatch        art-media-patch-spec
+   :artmediacontrol      art-media-control-spec
+   :artmediacontrolreply art-media-control-reply-spec
+   :arttimesync          art-time-sync-spec
+   :artdirectory         art-directory-spec
    :artdirectoryreply    art-directory-reply-spec})
 
 (defn field-size

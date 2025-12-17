@@ -2,15 +2,16 @@
   "Integration tests for Art-Net node network behavior.
 
    Tests UDP packet emission, injection handling, and sync buffer behavior."
-  (:require [clj-artnet :as core]
-            [clj-artnet.fixtures.builders :as builders]
-            [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.types :as types]
-            [clj-artnet.impl.protocol.diagnostics :as diagnostics]
-            [clj-artnet.support.helpers :as helpers]
-            [clojure.core.async.flow :as flow]
-            [clojure.test :refer [deftest is]])
+  (:require
+    [clj-artnet :as core]
+    [clj-artnet.fixtures.builders :as builders]
+    [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.types :as types]
+    [clj-artnet.impl.protocol.diagnostics :as diagnostics]
+    [clj-artnet.support.helpers :as helpers]
+    [clojure.core.async.flow :as flow]
+    [clojure.test :refer [deftest is]])
   (:import
     (java.net DatagramPacket DatagramSocket InetAddress SocketTimeoutException)
     (java.nio ByteBuffer)
@@ -26,19 +27,19 @@
                                                                   data-view))]
                                      (.get data-view data-bytes)
                                      (deliver delivered
-                                              {:op         (:op packet),
-                                               :length     (:length packet),
-                                               :sender     sender,
-                                               :node       node,
+                                              {:op         (:op packet)
+                                               :length     (:length packet)
+                                               :sender     sender
+                                               :node       node
                                                :data-bytes data-bytes})))}})
         packet (builders/artdmx-buffer (byte-array [1 2 3 4]))]
     (try
       (flow/inject (:flow node)
                    [:logic :rx]
-                   [{:type    :rx,
-                     :packet  packet,
-                     :sender  {:host (InetAddress/getByName "127.0.0.1"),
-                               :port 6454},
+                   [{:type    :rx
+                     :packet  packet
+                     :sender  {:host (InetAddress/getByName "127.0.0.1")
+                               :port 6454}
                      :release #(deliver released true)}])
       (let [result (deref delivered 1000 ::timeout)]
         (is (= :artdmx (:op result)))
@@ -86,15 +87,15 @@
   (let [priority-code (diagnostics/priority-code priority)]
     (flow/inject (:flow node)
                  [:logic :rx]
-                 [{:type   :rx,
-                   :sender sender,
-                   :packet {:op              :artpoll,
-                            :flags           0x20,
-                            :diag-priority   priority-code,
-                            :diag-request?   true,
-                            :diag-unicast?   unicast?,
-                            :target-enabled? false,
-                            :target-top      0,
+                 [{:type   :rx
+                   :sender sender
+                   :packet {:op              :artpoll
+                            :flags           0x20
+                            :diag-priority   priority-code
+                            :diag-request?   true
+                            :diag-unicast?   unicast?
+                            :target-enabled? false
+                            :target-top      0
                             :target-bottom   0}}])
     ;; Allow the async logic process to record the subscription before we
     ;; emit diagnostics
@@ -103,17 +104,17 @@
 (deftest send-dmx-emits-udp
   (let [listener (DatagramSocket. 0)
         port (.getLocalPort listener)
-        node (core/start-node! {:default-target {:host "127.0.0.1",
+        node (core/start-node! {:default-target {:host "127.0.0.1"
                                                  :port port}})
         payload (byte-array [9 8 7 6])]
     (try
       ;; Wait for node to be ready rather than fixed sleep
       (helpers/wait-for #(some? (:flow node)) 500)
       (core/send-dmx! node
-                      {:net      0,
-                       :sub-net  0,
-                       :universe 0,
-                       :target   {:host "127.0.0.1", :port port},
+                      {:net      0
+                       :sub-net  0
+                       :universe 0
+                       :target   {:host "127.0.0.1", :port port}
                        :data     payload})
       (let [buf (recv-datagram! listener 3000)
             packet (dispatch/decode buf)]
@@ -132,7 +133,7 @@
 (deftest send-rdm-emits-udp
   (let [listener (DatagramSocket. 0)
         port (.getLocalPort listener)
-        node (core/start-node! {:default-target {:host "127.0.0.1",
+        node (core/start-node! {:default-target {:host "127.0.0.1"
                                                  :port port}})
         payload (byte-array (map unchecked-byte (range 1 40)))]
     (aset payload 20 (byte 0x30))
@@ -140,8 +141,8 @@
       ;; Wait for node to be ready rather than fixed sleep
       (helpers/wait-for #(some? (:flow node)) 500)
       (core/send-rdm! node
-                      {:target       {:host "127.0.0.1", :port port},
-                       :port-address (common/compose-port-address 0 0 1),
+                      {:target       {:host "127.0.0.1", :port port}
+                       :port-address (common/compose-port-address 0 0 1)
                        :rdm-packet   payload})
       (let [buf (recv-datagram! listener 3000)
             packet (dispatch/decode buf)
@@ -156,8 +157,8 @@
 (deftest send-diagnostic-broadcasts-to-configured-target
   (let [listener (DatagramSocket. 0)
         port (.getLocalPort listener)
-        node (core/start-node! {:bind            {:host "127.0.0.1", :port 0},
-                                :random-delay-fn (constantly 0),
+        node (core/start-node! {:bind            {:host "127.0.0.1", :port 0}
+                                :random-delay-fn (constantly 0)
                                 :diagnostics     {:broadcast-target
                                                   {:host "127.0.0.1", :port port}}})
         sender {:host (InetAddress/getByName "127.0.0.1"), :port port}]
@@ -178,10 +179,10 @@
 (deftest send-diagnostic-respects-unicast-subscriber
   (let [listener (DatagramSocket. 0)
         port (.getLocalPort listener)
-        node (core/start-node! {:bind            {:host "127.0.0.1", :port 0},
-                                :random-delay-fn (constantly 0),
+        node (core/start-node! {:bind            {:host "127.0.0.1", :port 0}
+                                :random-delay-fn (constantly 0)
                                 :diagnostics     {:broadcast-target {:host
-                                                                     "127.0.0.1",
+                                                                     "127.0.0.1"
                                                                      :port 65000}}})
         sender {:host (InetAddress/getByName "127.0.0.1"), :port port}]
     (try (subscribe-for-diagnostics! node
@@ -206,23 +207,23 @@
         released (promise)
         sender {:host (InetAddress/getByName "127.0.0.1"), :port 6454}
         node (core/start-node! {:callbacks {:dmx (fn [ctx]
-                                                   (deliver delivered ctx))},
+                                                   (deliver delivered ctx))}
                                 ;; Extend buffer TTL so the staged frame
                                 ;; survives our timeout check
                                 :sync      {:mode :art-sync, :buffer-ttl-ms 1000}})
         packet (builders/artdmx-buffer (byte-array [1 2 3]))]
     (try (flow/inject (:flow node)
                       [:logic :rx]
-                      [{:type    :rx,
-                        :packet  packet,
-                        :sender  sender,
+                      [{:type    :rx
+                        :packet  packet
+                        :sender  sender
                         :release #(deliver released true)}])
          (is (= ::timeout (deref delivered 200 ::timeout)))
          (is (true? (deref released 1000 false)))
          (flow/inject (:flow node)
                       [:logic :rx]
-                      [{:type   :rx,
-                        :sender sender,
+                      [{:type   :rx
+                        :sender sender
                         :packet {:op :artsync, :aux1 0, :aux2 0}}])
          (let [result (deref delivered 1000 ::timeout)
                view (types/payload-buffer (:packet result))

@@ -3,20 +3,22 @@
 
    These tests verify invariants that should hold for all valid inputs,
    complementing the example-based tests in other test namespaces."
-  (:require [clj-artnet.impl.protocol.addressing :as addressing]
-            [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
-            [clj-artnet.impl.protocol.dmx :as dmx-protocol]
-            [clj-artnet.impl.protocol.dmx-helpers :as dmx-helpers]
-            [clj-artnet.impl.protocol.effects :as effects]
-            [clj-artnet.impl.protocol.machine :as machine]
-            [clj-artnet.impl.protocol.sync :as sync]
-            [clj-artnet.impl.shell.policy :as policy]
-            [clojure.test :refer [deftest is testing]]
-            [clojure.test.check.clojure-test :refer [defspec]]
-            [clojure.test.check.generators :as gen]
-            [clojure.test.check.properties :as prop])
-  (:import (clojure.lang ExceptionInfo)
-           (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.addressing :as addressing]
+    [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
+    [clj-artnet.impl.protocol.dmx :as dmx-protocol]
+    [clj-artnet.impl.protocol.dmx-helpers :as dmx-helpers]
+    [clj-artnet.impl.protocol.effects :as effects]
+    [clj-artnet.impl.protocol.machine :as machine]
+    [clj-artnet.impl.protocol.sync :as sync]
+    [clj-artnet.impl.shell.policy :as policy]
+    [clojure.test :refer [deftest is testing]]
+    [clojure.test.check.clojure-test :refer [defspec]]
+    [clojure.test.check.generators :as gen]
+    [clojure.test.check.properties :as prop])
+  (:import
+    (clojure.lang ExceptionInfo)
+    (java.nio ByteBuffer)))
 
 ;; Per Art-Net 4 spec: Port-Address is a 15-bit number composed of
 ;; Net (7-bit) + Sub-Net (4-bit) + Universe (4-bit)
@@ -74,12 +76,12 @@
   (prop/for-all
     [net gen-net sub-net gen-sub-net universe gen-universe sequence
      gen-sequence physical gen-physical data gen-dmx-values]
-    (let [packet {:op       :artdmx,
-                  :sequence sequence,
-                  :physical physical,
-                  :net      net,
-                  :sub-net  sub-net,
-                  :universe universe,
+    (let [packet {:op       :artdmx
+                  :sequence sequence
+                  :physical physical
+                  :net      net
+                  :sub-net  sub-net
+                  :universe universe
                   :data     (byte-array data)}
           buf (dispatch/encode packet (ByteBuffer/allocate 600))
           _ (.rewind buf)
@@ -144,7 +146,7 @@
     (let [;; Ensure valid range (bottom <= top)
           [bottom top] (sort [range-bottom range-top])
           in-range? (and (>= port-address bottom) (<= port-address top))]
-      ;; Property: port-address is in range iff between bottom and
+      ;; Property: Port-Address is in range iff between bottom and
       ;; top inclusive
       (= in-range?
          (and (>= port-address bottom) (<= port-address top))))))
@@ -223,13 +225,13 @@
 (defn- step-produces-reply?
   "Check if machine/step handle-packet :artpoll produces a reply effect."
   [subscribed-ports bottom top]
-  (let [state {:node {:subscribed-ports subscribed-ports,
-                      :short-name       "Test",
+  (let [state {:node {:subscribed-ports subscribed-ports
+                      :short-name       "Test"
                       :long-name        "Test Node"}}
-        packet {:op                         :artpoll,
-                :target-enabled?            true,
-                :target-port-address-top    top,
-                :target-port-address-bottom bottom,
+        packet {:op                         :artpoll
+                :target-enabled?            true
+                :target-port-address-top    top
+                :target-port-address-bottom bottom
                 :suppress-delay?            true}           ; Immediate reply for testing
         sender {:host "10.0.0.1", :port 0x1936}
         event {:type :rx-packet, :packet packet, :sender sender, :timestamp 0}
@@ -268,7 +270,8 @@
       ;; Property: sync sender must match dmx sender for
       ;; sync to apply
       (or (= dmx-sender sync-sender)                        ; Valid: same sender
-          different?))))                                    ; Valid: different sender (would be ignored)
+          different?))))                                    ; Valid: different sender (would be
+; ignored)
 
 ;; Per Art-Net 4 spec: HTP (Highest Takes
 ;; Precedence) and LTP merge modes
@@ -450,11 +453,11 @@
           ;; packet needs :port-address key directly for
           ;; dmx-source-key
           final-state (reduce (fn [state frame-n]
-                                (let [packet {:op           :artdmx,
-                                              :port-address port-address,
-                                              :data         (byte-array 512),
-                                              :length       512,
-                                              :sequence     frame-n,
+                                (let [packet {:op           :artdmx
+                                              :port-address port-address
+                                              :data         (byte-array 512)
+                                              :length       512
+                                              :sequence     frame-n
                                               :physical     0}
                                       result
                                       (dmx-protocol/process-artdmx-merge

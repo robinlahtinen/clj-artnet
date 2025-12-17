@@ -10,10 +10,12 @@
    - Encoded results match Art-Net 4 wire format
 
    Migrated from: fixtures.clj, artpollreply_fixtures.clj, arttimecode_fixtures.clj"
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.dispatch :as dispatch])
-  (:import (java.nio ByteBuffer)
-           (java.nio.charset StandardCharsets)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.dispatch :as dispatch])
+  (:import
+    (java.nio ByteBuffer)
+    (java.nio.charset StandardCharsets)))
 
 (def ^:private artnet-id
   "Art-Net protocol identifier bytes."
@@ -68,14 +70,14 @@
      :universe  - Art-Net universe (default: 0)
      :data      - DMX data as byte-array (required)"
   [data &
-   {:keys [sequence physical net sub-net universe],
+   {:keys [sequence physical net sub-net universe]
     :or   {sequence 1, physical 0, net 0, sub-net 0, universe 0}}]
-  {:op       :artdmx,
-   :sequence sequence,
-   :physical physical,
-   :net      net,
-   :sub-net  sub-net,
-   :universe universe,
+  {:op       :artdmx
+   :sequence sequence
+   :physical physical
+   :net      net
+   :sub-net  sub-net
+   :universe universe
    :data     data})
 
 (defn artdmx-buffer
@@ -84,7 +86,7 @@
    Encodes an ArtDmx packet with the given DMX data and returns
    a decoded packet ready for injection into the flow graph."
   [data &
-   {:keys [sequence physical net sub-net universe],
+   {:keys [sequence physical net sub-net universe]
     :or   {sequence 1, physical 0, net 0, sub-net 0, universe 0}}]
   (-> (artdmx-packet data
                      :sequence sequence
@@ -157,8 +159,8 @@
   (let [octets (vec (build-artpollreply-octets page))]
     (when (not= const/artpollreply-length (count octets))
       (throw (ex-info "ArtPollReply fixture length mismatch"
-                      {:expected const/artpollreply-length,
-                       :actual   (count octets),
+                      {:expected const/artpollreply-length
+                       :actual   (count octets)
                        :page     (:bind-index page)})))
     (byte-array (map unchecked-byte octets))))
 
@@ -174,7 +176,7 @@
      :minutes   - Minutes (0-59)
      :hours     - Hours (0-23)
      :type      - Timecode type (0-3)"
-  [{:keys [proto unused stream-id frames seconds minutes hours type],
+  [{:keys [proto unused stream-id frames seconds minutes hours type]
     :as   fields}]
   (let [opcode (const/keyword->opcode :arttimecode)
         proto (bit-and (int (or proto const/protocol-version)) 0xFFFF)
@@ -193,8 +195,8 @@
         octets (persistent! builder)]
     (when (not= const/arttimecode-length (count octets))
       (throw (ex-info "ArtTimeCode fixture length mismatch"
-                      {:expected const/arttimecode-length,
-                       :actual   (count octets),
+                      {:expected const/arttimecode-length
+                       :actual   (count octets)
                        :fields   fields})))
     octets))
 

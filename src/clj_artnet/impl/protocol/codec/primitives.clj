@@ -4,10 +4,12 @@
 (ns clj-artnet.impl.protocol.codec.primitives
   "Low-level buffer read/write primitives for Art-Net codec.
    All functions operate on java.nio.ByteBuffer instances."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const])
-  (:import (java.nio ByteBuffer)
-           (java.nio.charset StandardCharsets)
-           (java.util Arrays)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const])
+  (:import
+    (java.nio ByteBuffer)
+    (java.nio.charset StandardCharsets)
+    (java.util Arrays)))
 
 (set! *warn-on-reflection* true)
 
@@ -134,8 +136,8 @@
   (cond (instance? ByteBuffer payload) (.duplicate ^ByteBuffer payload)
         (bytes? payload) (ByteBuffer/wrap ^bytes payload)
         :else (throw (ex-info "Unsupported payload container"
-                              {:type    (class payload),
-                               :allowed [ByteBuffer byte-array-class],
+                              {:type    (class payload)
+                               :allowed [ByteBuffer byte-array-class]
                                :hint    "Provide a byte-array or ByteBuffer"}))))
 
 (defn payload-length
@@ -145,8 +147,8 @@
                                                                payload))
         (bytes? payload) (alength ^bytes payload)
         :else (throw (ex-info "Unsupported payload container"
-                              {:type    (class payload),
-                               :allowed [ByteBuffer byte-array-class],
+                              {:type    (class payload)
+                               :allowed [ByteBuffer byte-array-class]
                                :hint    "Provide a byte-array or ByteBuffer"}))))
 
 (defn payload-bytes
@@ -170,8 +172,8 @@
                                            (.put buf dup))
           (bytes? payload) (.put buf ^bytes payload)
           :else (throw (ex-info "Unsupported payload container"
-                                {:type    (class payload),
-                                 :allowed [ByteBuffer byte-array-class],
+                                {:type    (class payload)
+                                 :allowed [ByteBuffer byte-array-class]
                                  :hint    "Provide a byte-array or ByteBuffer"}))))
   buf)
 

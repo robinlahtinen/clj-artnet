@@ -5,9 +5,11 @@
   "Art-Net RDM/TOD helpers for the impl architecture. Maintains a
   lightweight Table-of-Devices snapshot and subscriber registry so the logic
   coordinator can focus on orchestration."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -15,9 +17,9 @@
 (def ^:private default-background-poll-interval-ns (long (* 500 1000000)))
 
 (def ^:private discovery-defaults
-  {:batch-size       64,
-   :step-delay-ns    (long (* 50 1000000)),
-   :initial-delay-ns 0,
+  {:batch-size       64
+   :step-delay-ns    (long (* 50 1000000))
+   :initial-delay-ns 0
    :max-backoff-ns   (long (* 1000 1000000))})
 
 (defn- normalize-discovery-options
@@ -39,10 +41,10 @@
                           (:max-backoff-ms opts)
                           (long (* 1000000 (max 0 (:max-backoff-ms opts))))
                           :else (:max-backoff-ns discovery-defaults))]
-    {:batch-size       batch,
+    {:batch-size       batch
      :step-delay-ns
-     (if (pos? step-ns) step-ns (:step-delay-ns discovery-defaults)),
-     :initial-delay-ns initial,
+     (if (pos? step-ns) step-ns (:step-delay-ns discovery-defaults))
+     :initial-delay-ns initial
      :max-backoff-ns   (max initial max-backoff)}))
 
 (def ^:private default-background-targets-per-poll 4)
@@ -67,12 +69,12 @@
   (when-let [port (get-in state [:ports port-address])]
     (let [{:keys [net sub-net universe]} (common/split-port-address
                                            port-address)]
-      {:port-address port-address,
-       :net          net,
-       :sub-net      sub-net,
-       :universe     universe,
-       :port         (:port port 1),
-       :bind-index   (:bind-index port 1),
+      {:port-address port-address
+       :net          net
+       :sub-net      sub-net
+       :universe     universe
+       :port         (:port port 1)
+       :bind-index   (:bind-index port 1)
        :rdm-version  (:rdm-version port (:version state))})))
 
 (defn- background-targets
@@ -135,11 +137,11 @@
                       :else default-background-poll-interval-ns)
         policy (bit-and (int (or (:policy config) 0)) 0xFF)]
     (when supported?
-      {:supported?       true,
-       :policy           policy,
-       :severity         (background-policy->severity policy),
-       :poll-interval-ns poll-ns,
-       :next-poll-at     nil,
+      {:supported?       true
+       :policy           policy
+       :severity         (background-policy->severity policy)
+       :poll-interval-ns poll-ns
+       :next-poll-at     nil
        :cursor           0})))
 
 (defn background-queue-supported?
@@ -164,7 +166,7 @@
   "Advance the background queue scheduler. Returns `[state event]` where the event is
   a map describing the requested severity/poll if a poll should be dispatched."
   [state now]
-  (let [{:keys [supported? severity next-poll-at poll-interval-ns cursor],
+  (let [{:keys [supported? severity next-poll-at poll-interval-ns cursor]
          :as   queue}
         (:background-queue state)]
     (if (and supported?
@@ -178,10 +180,10 @@
                                      targets
                                      cursor
                                      default-background-targets-per-poll)
-            event {:policy         (:policy queue),
-                   :severity       severity,
-                   :requested-pids (severity->requested-pids severity),
-                   :targets        selected,
+            event {:policy         (:policy queue)
+                   :severity       severity
+                   :requested-pids (severity->requested-pids severity)
+                   :targets        selected
                    :timestamp      now}]
         [(assoc state
            :background-queue
@@ -238,14 +240,14 @@
 
 (defn- build-discovery-state
   [ports config]
-  {:config          config,
-   :queue           empty-task-queue,
-   :next-run-at     nil,
-   :last-run-at     nil,
-   :last-request-at nil,
-   :current-backoff (:initial-delay-ns config),
+  {:config          config
+   :queue           empty-task-queue
+   :next-run-at     nil
+   :last-run-at     nil
+   :last-request-at nil
+   :current-backoff (:initial-delay-ns config)
    :incremental
-   {:next-at  nil,
+   {:next-at  nil
     :per-port (into {} (map (fn [[addr _]] [addr {:enabled? true}]) ports))}})
 
 (defn- next-backoff-ns
@@ -275,7 +277,7 @@
   * `:subscriber-ttl-ns/ms` -> override subscriber lifetime"
   [node
    {:keys [rdm-version ports devices port-addresses subscriber-ttl-ns
-           subscriber-ttl-ms background discovery],
+           subscriber-ttl-ms background discovery]
     :as   _config}]
   (let [version (int (or rdm-version default-rdm-version))
         ttl (long (cond subscriber-ttl-ns subscriber-ttl-ns
@@ -296,10 +298,10 @@
                                             default-bind-index))
                           rdmv (int (or (:rdm-version cfg) version))]]
                 [port-address
-                 {:port-address port-address,
-                  :port         physical,
-                  :bind-index   bind-idx,
-                  :rdm-version  rdmv,
+                 {:port-address port-address
+                  :port         physical
+                  :bind-index   bind-idx
+                  :rdm-version  rdmv
                   :uids         uids}]))
         discovery-options (merge (or (:discovery node) {}) (or discovery {}))
         discovery-config (normalize-discovery-options discovery-options)
@@ -311,10 +313,10 @@
                                            (:background-queue-policy node 0))
                                   cfg (assoc background :policy policy)]
                               (normalize-background-config cfg)))]
-    (cond-> {:version           version,
-             :ports             normalized-ports,
-             :subscribers       {},
-             :subscriber-ttl-ns ttl,
+    (cond-> {:version           version
+             :ports             normalized-ports
+             :subscribers       {}
+             :subscriber-ttl-ns ttl
              :last-control      nil}
             discovery-state (assoc :discovery discovery-state)
             background-config (assoc :background-queue background-config))))
@@ -360,9 +362,9 @@
           queue' (if chunked
                    (reduce (fn [q chunk]
                              (enqueue-task q
-                                           {:mode         mode,
-                                            :ports        chunk,
-                                            :reason       reason,
+                                           {:mode         mode
+                                            :ports        chunk
+                                            :reason       reason
                                             :requested-at now}))
                            queue
                            chunked)
@@ -471,11 +473,11 @@
                                      (assoc :last-run-at now)
                                      (assoc :next-run-at next-run))]
                   [(assoc state :discovery discovery')
-                   {:mode         (:mode task),
-                    :reason       (:reason task),
-                    :ports        (:ports task),
-                    :targets      targets,
-                    :requested-at (:requested-at task),
+                   {:mode         (:mode task)
+                    :reason       (:reason task)
+                    :ports        (:ports task)
+                    :targets      targets
+                    :requested-at (:requested-at task)
                     :timestamp    now}])
                 (let [discovery' (-> discovery
                                      (assoc :queue queue')
@@ -548,32 +550,32 @@
           version (:rdm-version port (:version state))
           discovery-running? (discovery-running-for-port? state port-address)]
       (if (or discovery-running? (empty? responders))
-        [{:op               :arttoddata,
-          :rdm-version      version,
-          :port             (:port port 1),
-          :bind-index       (:bind-index port 1),
-          :net              net,
-          :command-response 0xFF,
-          :address          addr-byte,
-          :uid-total        total,
-          :block-count      0,
+        [{:op               :arttoddata
+          :rdm-version      version
+          :port             (:port port 1)
+          :bind-index       (:bind-index port 1)
+          :net              net
+          :command-response 0xFF
+          :address          addr-byte
+          :uid-total        total
+          :block-count      0
           :tod              []}]
         (for [{:keys [block uids]} (chunk-tod responders)]
-          {:op               :arttoddata,
-           :rdm-version      version,
-           :port             (:port port 1),
-           :bind-index       (:bind-index port 1),
-           :net              net,
-           :command-response 0,
-           :address          addr-byte,
-           :uid-total        total,
-           :block-count      block,
+          {:op               :arttoddata
+           :rdm-version      version
+           :port             (:port port 1)
+           :bind-index       (:bind-index port 1)
+           :net              net
+           :command-response 0
+           :address          addr-byte
+           :uid-total        total
+           :block-count      block
            :tod              uids})))))
 
 (defn- mk-send-action
   [sender packet]
-  {:type   :send,
-   :target {:host (:host sender), :port (:port sender 0x1936)},
+  {:type   :send
+   :target {:host (:host sender), :port (:port sender 0x1936)}
    :packet packet})
 
 (defn handle-tod-request

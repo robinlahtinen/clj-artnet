@@ -3,8 +3,9 @@
 
    Provides a functional API for queuing side effects and protocol actions
    to be processed by the shell/logic graph."
-  (:require [clj-artnet.impl.protocol.diagnostics :as diagnostics]
-            [clojure.core.async.flow :as flow]))
+  (:require
+    [clj-artnet.impl.protocol.diagnostics :as diagnostics]
+    [clojure.core.async.flow :as flow]))
 
 (set! *warn-on-reflection* true)
 
@@ -93,10 +94,10 @@
              (toString [_] "FlowGraph"))})
   ;; Enqueue various commands
   (commands/send-dmx! node
-                      {:target   {:host "1.2.3.4", :port 6454},
-                       :data     (byte-array 512),
-                       :net      0,
-                       :sub-net  0,
+                      {:target   {:host "1.2.3.4", :port 6454}
+                       :data     (byte-array 512)
+                       :net      0
+                       :sub-net  0
                        :universe 1})
   (commands/send-sync! node)
   ;; Build state command

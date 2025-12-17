@@ -6,9 +6,10 @@
 
    Provides pure functions for configuring and transforming node state,
    ensuring valid bitmasks and default values."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clojure.string :as str]))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clojure.string :as str]))
 
 (def ^:const status2-rdm-artaddress-bit 0x80)
 (def ^:const status2-output-style-bit 0x40)
@@ -61,17 +62,17 @@
   (or (:timestamp event) (*system-nano-time*)))
 
 (def ^:private status2-bit-aliases
-  {:rdm-artaddress status2-rdm-artaddress-bit,
-   :output-style   status2-output-style-bit,
-   :extended-port  status2-extended-port-bit,
-   :dhcp-capable   status2-dhcp-capable-bit,
+  {:rdm-artaddress status2-rdm-artaddress-bit
+   :output-style   status2-output-style-bit
+   :extended-port  status2-extended-port-bit
+   :dhcp-capable   status2-dhcp-capable-bit
    :dhcp-active    status2-dhcp-active-bit})
 
 (def ^:private status3-bit-aliases
-  {:programmable-failsafe status3-programmable-failsafe-bit,
-   :llrp                  status3-llrp-bit,
-   :port-direction        status3-port-direction-bit,
-   :rdmnet                status3-rdmnet-bit,
+  {:programmable-failsafe status3-programmable-failsafe-bit
+   :llrp                  status3-llrp-bit
+   :port-direction        status3-port-direction-bit
+   :rdmnet                status3-rdmnet-bit
    :background-queue      status3-background-queue-bit})
 
 (defn- status-mask-value
@@ -133,39 +134,39 @@
    Populates defaults for required Art-Net node properties like IP, port,
    status bits, and port definitions."
   [node]
-  (-> {:ip                      [0 0 0 0],
-       :bind-ip                 nil,
-       :port                    0x1936,
-       :version-hi              0,
-       :version-lo              0,
-       :net-switch              0,
-       :sub-switch              0,
-       :oem                     0xFFFF,
-       :ubea-version            0,
-       :status1                 0,
-       :esta-man                const/esta-man-prototype-id,
-       :short-name              "clj-artnet",
-       :long-name               "clj-artnet node",
-       :node-report             "#0001 [0001] Startup",
-       :num-ports               1,
-       :port-types              [0xC0 0 0 0],
-       :good-input              [0 0 0 0],
-       :good-output-a           [0 0 0 0],
-       :good-output-b           (vec (repeat 4 default-good-output-b-byte)),
-       :sw-in                   [0 0 0 0],
-       :sw-out                  [0 0 0 0],
-       :acn-priority            100,
-       :sw-macro                0,
-       :sw-remote               0,
-       :style                   0,
-       :mac                     [0 0 0 0 0 0],
-       :bind-index              1,
-       :status2                 (bit-or status2-extended-port-bit status2-output-style-bit),
-       :status3                 status3-port-direction-bit,
-       :default-responder       [0 0 0 0 0 0],
-       :user-hi                 0,
-       :user-lo                 0,
-       :refresh-rate            0,
+  (-> {:ip                      [0 0 0 0]
+       :bind-ip                 nil
+       :port                    0x1936
+       :version-hi              0
+       :version-lo              0
+       :net-switch              0
+       :sub-switch              0
+       :oem                     0xFFFF
+       :ubea-version            0
+       :status1                 0
+       :esta-man                const/esta-man-prototype-id
+       :short-name              "clj-artnet"
+       :long-name               "clj-artnet node"
+       :node-report             "#0001 [0001] Startup"
+       :num-ports               1
+       :port-types              [0xC0 0 0 0]
+       :good-input              [0 0 0 0]
+       :good-output-a           [0 0 0 0]
+       :good-output-b           (vec (repeat 4 default-good-output-b-byte))
+       :sw-in                   [0 0 0 0]
+       :sw-out                  [0 0 0 0]
+       :acn-priority            100
+       :sw-macro                0
+       :sw-remote               0
+       :style                   0
+       :mac                     [0 0 0 0 0 0]
+       :bind-index              1
+       :status2                 (bit-or status2-extended-port-bit status2-output-style-bit)
+       :status3                 status3-port-direction-bit
+       :default-responder       [0 0 0 0 0 0]
+       :user-hi                 0
+       :user-lo                 0
+       :refresh-rate            0
        :background-queue-policy 0}
       (merge node)
       (update :ip ensure-width 4 0)
@@ -183,10 +184,10 @@
 (defn default-network-state
   "Constructs default network state from node config and overrides."
   [node overrides]
-  (merge {:ip          (:ip node),
-          :port        (:port node 0x1936),
-          :subnet-mask [255 0 0 0],
-          :gateway     [0 0 0 0],
+  (merge {:ip          (:ip node)
+          :port        (:port node 0x1936)
+          :subnet-mask [255 0 0 0]
+          :gateway     [0 0 0 0]
           :dhcp?       false}
          overrides))
 
@@ -224,16 +225,16 @@
                                0xFF)
         sw-in (bit-and (int (or (:sw-in descriptor) universe)) 0xFF)
         sw-out (bit-and (int (or (:sw-out descriptor) universe)) 0xFF)]
-    {:order         order,
-     :net           net,
-     :sub-net       sub-net,
-     :universe      universe,
-     :port-address  port-address,
-     :port-type     port-type,
-     :good-input    good-input,
-     :good-output-a good-output-a,
-     :good-output-b good-output-b,
-     :sw-in         sw-in,
+    {:order         order
+     :net           net
+     :sub-net       sub-net
+     :universe      universe
+     :port-address  port-address
+     :port-type     port-type
+     :good-input    good-input
+     :good-output-a good-output-a
+     :good-output-b good-output-b
+     :sw-in         sw-in
      :sw-out        sw-out}))
 
 (defn ports->pages
@@ -255,9 +256,9 @@
       (let [grouped (->> normalized
                          (group-by (juxt :net :sub-net))
                          (map (fn [[[net sub-net] entries]]
-                                {:net     net,
-                                 :sub-net sub-net,
-                                 :order   (apply min (map :order entries)),
+                                {:net     net
+                                 :sub-net sub-net
+                                 :order   (apply min (map :order entries))
                                  :entries (sort-by :order entries)}))
                          (sort-by :order)
                          (mapcat

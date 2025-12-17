@@ -3,11 +3,13 @@
 
    Provides a thread-safe, hot-path optimized regular buffer pool to minimize
    garbage collection pressure during high-throughput packet processing."
-  (:require [taoensso.trove :as trove])
-  (:import (java.io Closeable)
-           (java.nio ByteBuffer)
-           (java.util.concurrent LinkedBlockingQueue)
-           (java.util.concurrent.atomic AtomicBoolean)))
+  (:require
+    [taoensso.trove :as trove])
+  (:import
+    (java.io Closeable)
+    (java.nio ByteBuffer)
+    (java.util.concurrent LinkedBlockingQueue)
+    (java.util.concurrent.atomic AtomicBoolean)))
 
 (set! *warn-on-reflection* true)
 
@@ -64,13 +66,13 @@
   (when (and pool buf)
     (try (.clear buf)
          (when-not (.offer ^LinkedBlockingQueue (:queue pool) buf)
-           (trove/log! {:level :warn,
-                        :id    ::buffer-pool-full,
+           (trove/log! {:level :warn
+                        :id    ::buffer-pool-full
                         :msg   "Dropping ByteBuffer; pool full"}))
          (catch Exception e
-           (trove/log! {:level :warn,
-                        :id    ::buffer-return-failed,
-                        :msg   "Failed to return ByteBuffer to pool",
+           (trove/log! {:level :warn
+                        :id    ::buffer-return-failed
+                        :msg   "Failed to return ByteBuffer to pool"
                         :error e})))))
 
 (comment

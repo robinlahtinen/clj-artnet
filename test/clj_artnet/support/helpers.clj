@@ -5,7 +5,8 @@
    and async coordination utilities.
 
    Migrated from: test_support.clj, fixtures.clj (wait-for)"
-  (:import (java.time Duration)))
+  (:import
+    (java.time Duration)))
 
 (defmacro thrown-with-msg?
   "Evaluates `body` and returns true when it throws `exception-class` with a
@@ -32,7 +33,8 @@
       (let [elapsed (- (System/currentTimeMillis) start)]
         (cond (predicate) true
               (>= elapsed timeout-ms) false
-              :else (do (^[Duration] Thread/sleep poll-interval-ms) (recur)))))))
+              :else (do (^[Duration] Thread/sleep poll-interval-ms)
+                        (recur)))))))
 
 (comment
   ;; Example: Wait for a condition

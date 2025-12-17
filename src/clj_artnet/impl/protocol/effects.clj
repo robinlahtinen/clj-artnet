@@ -25,7 +25,7 @@
   "Merges multiple step results, combining effects."
   [& results]
   (reduce (fn [acc r]
-            {:state   (:state r (:state acc)),
+            {:state   (:state r (:state acc))
              :effects (into (:effects acc []) (:effects r []))})
           {:state nil, :effects []}
           results))
@@ -65,18 +65,18 @@
 (defn diag-message
   "Effect: Send ArtDiagData diagnostic message."
   [priority message target]
-  {:effect :tx-packet,
-   :op     :artdiagdata,
-   :data   {:priority priority, :data message},
+  {:effect :tx-packet
+   :op     :artdiagdata
+   :data   {:priority priority, :data message}
    :target target})
 
 (defn dmx-frame
   "Effect: Emit DMX frame to output."
   [port-address sequence data length]
-  {:effect       :dmx-frame,
-   :port-address port-address,
-   :sequence     sequence,
-   :data         data,
+  {:effect       :dmx-frame
+   :port-address port-address
+   :sequence     sequence
+   :data         data
    :length       length})
 
 (comment

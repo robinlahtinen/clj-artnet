@@ -3,8 +3,10 @@
 
 (ns clj-artnet.impl.protocol.firmware
   "Art-Net firmware upload coordination."
-  (:require [taoensso.trove :as trove])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [taoensso.trove :as trove])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -87,16 +89,16 @@
     (cond (odd? block-bytes)
           {:status :error, :reason :unaligned-block, :block-bytes block-bytes}
           (and (pos? firmware-bytes) (> received firmware-bytes))
-          {:status   :error,
-           :reason   :length-overflow,
-           :expected firmware-bytes,
+          {:status   :error
+           :reason   :length-overflow
+           :expected firmware-bytes
            :received received}
           (and header-total
                (pos? firmware-bytes)
                (not= (long header-total) firmware-bytes))
-          {:status           :error,
-           :reason           :firmware-length-mismatch,
-           :header-bytes     header-total,
+          {:status           :error
+           :reason           :firmware-length-mismatch
+           :header-bytes     header-total
            :advertised-bytes firmware-bytes}
           :else nil)))
 
@@ -107,22 +109,22 @@
         expected-total (long firmware-bytes)
         expected-checksum (:expected-checksum session)]
     (or (when (< header-received firmware-header-length)
-          {:status          :error,
-           :reason          :header-incomplete,
+          {:status          :error
+           :reason          :header-incomplete
            :header-received header-received})
         (when (nil? expected-checksum)
           {:status :error, :reason :checksum-missing})
         (when (and (pos? expected-total) (not= actual-total expected-total))
-          {:status   :error,
-           :reason   :length-mismatch,
-           :expected expected-total,
+          {:status   :error
+           :reason   :length-mismatch
+           :expected expected-total
            :received actual-total})
         (when expected-checksum
           (let [actual-checksum (payload-checksum (:payload-sum session))]
             (when (not= actual-checksum expected-checksum)
-              {:status   :error,
-               :reason   :checksum-mismatch,
-               :expected expected-checksum,
+              {:status   :error
+               :reason   :checksum-mismatch
+               :expected expected-checksum
                :actual   actual-checksum}))))))
 
 (defn- update-integrity-tracking
@@ -169,8 +171,8 @@
 (defn initial-state
   "Builds initial firmware state."
   [{:keys [on-chunk on-complete], :as config}]
-  {:sessions  {},
-   :callbacks {:on-chunk on-chunk, :on-complete on-complete},
+  {:sessions  {}
+   :callbacks {:on-chunk on-chunk, :on-complete on-complete}
    :config    config})
 
 (defn- now-ns [] (System/nanoTime))
@@ -184,8 +186,8 @@
 
 (defn- reply-action
   [sender status]
-  {:type   :send,
-   :target (target-for sender),
+  {:type   :send
+   :target (target-for sender)
    :packet {:op :artfirmwarereply, :status status}})
 
 (defn- duplicate-data
@@ -218,17 +220,17 @@
   [transfer firmware-length now]
   (let [words (long (max 0 (long (or firmware-length 0))))
         total (long (* 2 words))]
-    {:transfer          transfer,
-     :firmware-length   firmware-length,
-     :total-bytes       total,
-     :received-bytes    0,
-     :received-blocks   0,
-     :expected-block-id 0,
-     :header-buffer     (byte-array firmware-header-length),
-     :header-received   0,
-     :payload-sum       0,
-     :payload-bytes     0,
-     :started-at        now,
+    {:transfer          transfer
+     :firmware-length   firmware-length
+     :total-bytes       total
+     :received-bytes    0
+     :received-blocks   0
+     :expected-block-id 0
+     :header-buffer     (byte-array firmware-header-length)
+     :header-received   0
+     :payload-sum       0
+     :payload-bytes     0
+     :started-at        now
      :updated-at        now}))
 
 (defn- update-session
@@ -250,24 +252,24 @@
         state' (if (= stage :last)
                  (update state :sessions #(dissoc % key))
                  (assoc-in state [:sessions key] session))]
-    {:state   state',
-     :actions (if (seq extras) (into [ack] extras) [ack]),
+    {:state   state'
+     :actions (if (seq extras) (into [ack] extras) [ack])
      :status  :ok}))
 
 (defn- failure
   [state key sender stage reason detail]
   (let [state' (update state :sessions #(dissoc % key))
         reply (reply-action sender (or (:reply-status detail) :fail))]
-    (trove/log! {:level :warn,
-                 :id    ::firmware-transfer-failed,
-                 :msg   "Firmware transfer failed",
-                 :data  {:reason reason,
-                         :stage  stage,
+    (trove/log! {:level :warn
+                 :id    ::firmware-transfer-failed
+                 :msg   "Firmware transfer failed"
+                 :data  {:reason reason
+                         :stage  stage
                          :detail (dissoc detail :actions :data)}})
-    {:state   state',
-     :actions [reply],
-     :status  :error,
-     :error   reason,
+    {:state   state'
+     :actions [reply]
+     :status  :error
+     :error   reason
      :detail  detail}))
 
 (defn- complete-last-block
@@ -276,16 +278,16 @@
   (if-let [final-error (final-validation-error session firmware-bytes)]
     (failure state key sender stage (:reason final-error) final-error)
     (let [duration (when-let [started (:started-at session)] (- now started))
-          complete-event {:node            node,
-                          :sender          sender,
-                          :transfer        transfer,
-                          :stage           :complete,
-                          :firmware-length firmware-length,
-                          :firmware-bytes  firmware-bytes,
-                          :received-bytes  (:received-bytes session),
-                          :received-blocks (:received-blocks session),
-                          :duration-ns     duration,
-                          :session         session,
+          complete-event {:node            node
+                          :sender          sender
+                          :transfer        transfer
+                          :stage           :complete
+                          :firmware-length firmware-length
+                          :firmware-bytes  firmware-bytes
+                          :received-bytes  (:received-bytes session)
+                          :received-blocks (:received-blocks session)
+                          :duration-ns     duration
+                          :session         session
                           :packet          pkt}
           complete-result
           (invoke-handler on-complete complete-event ::on-complete)]
@@ -304,7 +306,7 @@
   [state packet sender node]
   (let [{:keys [sessions callbacks]} state
         {:keys [on-chunk on-complete]} callbacks
-        {:keys [stage transfer block-id firmware-length data data-length],
+        {:keys [stage transfer block-id firmware-length data data-length]
          :as   pkt}
         packet
         stage (or stage :unknown)
@@ -338,8 +340,8 @@
                sender
                stage
                :unexpected-block
-               {:status   :error,
-                :expected (:expected-block-id existing0),
+               {:status   :error
+                :expected (:expected-block-id existing0)
                 :received block-id})
       (and existing0
            (not= (long firmware-length) (long (:firmware-length existing0))))
@@ -361,22 +363,22 @@
                                                     block-bytes
                                                     firmware-bytes)]
           (failure state0 key sender stage (:reason validation) validation)
-          (let [chunk-event {:node            node,
-                             :sender          sender,
-                             :transfer        transfer,
-                             :stage           stage,
-                             :block-id        block-id,
-                             :start?          first?,
-                             :final?          last?,
-                             :block-bytes     block-bytes,
-                             :block-words     (long (quot block-bytes 2)),
-                             :firmware-length firmware-length,
-                             :firmware-bytes  firmware-bytes,
-                             :received-bytes  (:received-bytes session-tracked),
+          (let [chunk-event {:node            node
+                             :sender          sender
+                             :transfer        transfer
+                             :stage           stage
+                             :block-id        block-id
+                             :start?          first?
+                             :final?          last?
+                             :block-bytes     block-bytes
+                             :block-words     (long (quot block-bytes 2))
+                             :firmware-length firmware-length
+                             :firmware-bytes  firmware-bytes
+                             :received-bytes  (:received-bytes session-tracked)
                              :received-blocks (:received-blocks
-                                                session-tracked),
-                             :session         session-tracked,
-                             :data            data-view,
+                                                session-tracked)
+                             :session         session-tracked
+                             :data            data-view
                              :packet          pkt}
                 chunk-result (invoke-handler on-chunk chunk-event ::on-chunk)]
             (if (handler-error? chunk-result)

@@ -3,15 +3,16 @@
 
    Decouples the logic-layer protocol machine from the shell-layer IO system
    via open multimethod dispatch."
-  (:import (java.nio ByteBuffer)))
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
 (defmulti translate-effect
           "Translates a single protocol effect map to an IO-layer action map.
 
-                   Dispatch key: (:effect effect)
-                   Default: returns nil (no action)"
+           Dispatch key: (:effect effect)
+           Default: returns nil (no action)"
           (fn [_context effect] (:effect effect)))
 
 ;; Default: unknown effects return nil
@@ -43,8 +44,8 @@
         f (or (:fn effect) (get callbacks cb-key) (get callbacks :default))
         helper? (:helper? effect)]
     (when f
-      (cond-> {:type    :callback,
-               :fn      f,
+      (cond-> {:type    :callback
+               :fn      f
                :payload (cond-> (assoc (:payload effect) :node node)
                                 cb-key (assoc :callback-key cb-key))}
               helper? (assoc :helper? true)))))
@@ -54,9 +55,9 @@
   (let [{:keys [delay-ms event]} effect
         {:keys [cmd target data]} event]
     (when (= :send-poll-reply cmd)
-      {:type     :send,
-       :delay-ms delay-ms,
-       :packet   (assoc data :op :artpollreply),
+      {:type     :send
+       :delay-ms delay-ms
+       :packet   (assoc data :op :artpollreply)
        :target   target})))
 
 (defmethod translate-effect :log [_ _] nil)
@@ -65,8 +66,8 @@
   [{:keys [callbacks]} effect]
   (let [f (get callbacks :dmx-frame)]
     (when f
-      {:type    :callback,
-       :fn      f,
+      {:type    :callback
+       :fn      f
        :payload (select-keys effect [:port-address :sequence :data :length])})))
 
 (def ^:private inline-callback-keys
@@ -100,9 +101,9 @@
   (require '[clj-artnet.impl.shell.effects :as effects] :reload)
   ;; Translate transmit packet effect
   (effects/translate-effect nil
-                            {:effect :tx-packet,
-                             :op     :artdmx,
-                             :data   {:data (byte-array 512)},
+                            {:effect :tx-packet
+                             :op     :artdmx
+                             :data   {:data (byte-array 512)}
                              :target {:host "10.0.0.1", :port 6454}})
   ;; => {:type :send, :packet {...}, :target {...}}
   ;; Translate callback effect

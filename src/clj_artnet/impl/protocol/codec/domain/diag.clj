@@ -3,18 +3,20 @@
 
 (ns clj-artnet.impl.protocol.codec.domain.diag
   "Encode/decode for Diagnostic family packets: ArtDiagData, ArtCommand, ArtTrigger, ArtTimeCode."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.primitives :as prim])
-  (:import (java.nio ByteBuffer)
-           (java.nio.charset StandardCharsets)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.primitives :as prim])
+  (:import
+    (java.nio ByteBuffer)
+    (java.nio.charset StandardCharsets)))
 
 (set! *warn-on-reflection* true)
 
 (defn encode-artdiagdata!
   "Encode ArtDiagData packet into a buffer."
   [^ByteBuffer buf
-   {:keys [priority logical-port text message],
+   {:keys [priority logical-port text message]
     :or   {priority 0x10, logical-port 0}}]
   (let [content (or text message "")
         encoded (.getBytes ^String content StandardCharsets/US_ASCII)
@@ -59,10 +61,10 @@
                                 :else (recur (inc idx))))
             message
             (String. payload 0 (int text-length) StandardCharsets/US_ASCII)]
-        {:op           :artdiagdata,
-         :priority     priority,
-         :logical-port logical-port,
-         :length       length,
+        {:op           :artdiagdata
+         :priority     priority
+         :logical-port logical-port
+         :length       length
          :text         message}))))
 
 (defn- artcommand-payload-bytes
@@ -76,7 +78,7 @@
               payload (byte-array payload-length)]
           (when (> (alength raw) (dec const/artcommand-max-bytes))
             (throw (ex-info "ArtCommand text exceeds maximum length"
-                            {:max    (dec const/artcommand-max-bytes),
+                            {:max    (dec const/artcommand-max-bytes)
                              :length (alength raw)})))
           (System/arraycopy raw 0 payload 0 copy-length)
           (aset payload copy-length (byte 0))
@@ -84,7 +86,7 @@
         data (let [bytes (prim/payload-bytes data)
                    _ (when (> (alength bytes) const/artcommand-max-bytes)
                        (throw (ex-info "ArtCommand data exceeds maximum length"
-                                       {:max    const/artcommand-max-bytes,
+                                       {:max    const/artcommand-max-bytes
                                         :length (alength bytes)})))]
                (prim/ensure-null-terminated bytes const/artcommand-max-bytes))
         :else (byte-array 1)))
@@ -137,12 +139,12 @@
                               0
                               (int text-length)
                               StandardCharsets/US_ASCII)]
-            {:op               :artcommand,
-             :protocol-version protocol,
-             :esta-man         esta,
-             :length           length,
-             :text             text,
-             :payload          payload,
+            {:op               :artcommand
+             :protocol-version protocol
+             :esta-man         esta
+             :length           length
+             :text             text
+             :payload          payload
              :data             payload}))))))
 
 (defn- trigger-payload-source
@@ -155,7 +157,7 @@
                                                payload))
         :else (throw (ex-info
                        "Unsupported ArtTrigger payload container"
-                       {:type (class payload),
+                       {:type (class payload)
                         :hint
                         "Provide bytes, ByteBuffer, or a seq of octets"}))))
 
@@ -170,7 +172,7 @@
         payload-length (alength ^bytes payload-bytes)]
     (when (> payload-length const/arttrigger-max-data)
       (throw (ex-info "ArtTrigger payload exceeds maximum length"
-                      {:length payload-length,
+                      {:length payload-length
                        :max    const/arttrigger-max-data})))
     (.clear buf)
     (doto buf
@@ -203,20 +205,20 @@
     (.position view const/arttrigger-header-size)
     (.limit view (int (+ const/arttrigger-header-size payload-length)))
     (let [payload (.asReadOnlyBuffer (.slice view))]
-      {:op               :arttrigger,
-       :protocol-version protocol,
-       :oem              oem,
-       :key              key,
-       :key-type         (get const/arttrigger-key->keyword key),
-       :sub-key          sub-key,
-       :data-length      payload-length,
-       :payload          payload,
+      {:op               :arttrigger
+       :protocol-version protocol
+       :oem              oem
+       :key              key
+       :key-type         (get const/arttrigger-key->keyword key)
+       :sub-key          sub-key
+       :data-length      payload-length
+       :payload          payload
        :data             payload})))
 
 (defn encode-arttimecode!
   "Encode ArtTimeCode packet into a buffer."
   [^ByteBuffer buf
-   {:keys [stream-id frames seconds minutes hours type],
+   {:keys [stream-id frames seconds minutes hours type]
     :or   {stream-id 0, frames 0, seconds 0, minutes 0, hours 0, type 0}}]
   (let [^ByteBuffer target (prim/prepare-target buf const/arttimecode-length)]
     (.clear target)
@@ -238,12 +240,12 @@
   [^ByteBuffer buf]
   (when (< (.limit buf) const/arttimecode-length)
     (throw (ex-info "Truncated ArtTimeCode" {:limit (.limit buf)})))
-  {:op        :arttimecode,
-   :proto     (prim/safe-uint16-be buf 10),
-   :unused    (prim/ubyte (.get buf 12)),
-   :stream-id (prim/ubyte (.get buf 13)),
-   :frames    (prim/ubyte (.get buf 14)),
-   :seconds   (prim/ubyte (.get buf 15)),
-   :minutes   (prim/ubyte (.get buf 16)),
-   :hours     (prim/ubyte (.get buf 17)),
+  {:op        :arttimecode
+   :proto     (prim/safe-uint16-be buf 10)
+   :unused    (prim/ubyte (.get buf 12))
+   :stream-id (prim/ubyte (.get buf 13))
+   :frames    (prim/ubyte (.get buf 14))
+   :seconds   (prim/ubyte (.get buf 15))
+   :minutes   (prim/ubyte (.get buf 16))
+   :hours     (prim/ubyte (.get buf 17))
    :type      (prim/ubyte (.get buf 18))})

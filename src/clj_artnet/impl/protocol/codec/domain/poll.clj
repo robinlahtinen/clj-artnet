@@ -3,62 +3,64 @@
 
 (ns clj-artnet.impl.protocol.codec.domain.poll
   "Encode/decode for Poll family packets: ArtPoll, ArtPollReply."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.primitives :as prim])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.primitives :as prim])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
 (def ^:private default-pollreply
-  {:ip                      [0 0 0 0],
-   :port                    0x1936,
-   :version-hi              0,
-   :version-lo              0,
-   :net-switch              0,
-   :sub-switch              0,
-   :oem                     0xFFFF,
-   :ubea-version            0,
-   :status1                 0,
-   :esta-man                const/esta-man-prototype-id,
-   :short-name              "clj-artnet",
-   :long-name               "clj-artnet node",
-   :node-report             "#0001 [0001] Startup",
-   :num-ports               1,
-   :port-types              [0 0 0 0],
-   :good-input              [0 0 0 0],
-   :good-output-a           [0 0 0 0],
-   :good-output-b           [0 0 0 0],
-   :sw-in                   [0 0 0 0],
-   :sw-out                  [0 0 0 0],
-   :acn-priority            100,
-   :sw-macro                0,
-   :sw-remote               0,
-   :style                   0,
-   :mac                     [0 0 0 0 0 0],
-   :bind-ip                 nil,
-   :bind-index              1,
-   :status2                 0,
-   :status3                 0,
-   :default-responder       [0 0 0 0 0 0],
-   :user-hi                 0,
-   :user-lo                 0,
-   :refresh-rate            0,
+  {:ip                      [0 0 0 0]
+   :port                    0x1936
+   :version-hi              0
+   :version-lo              0
+   :net-switch              0
+   :sub-switch              0
+   :oem                     0xFFFF
+   :ubea-version            0
+   :status1                 0
+   :esta-man                const/esta-man-prototype-id
+   :short-name              "clj-artnet"
+   :long-name               "clj-artnet node"
+   :node-report             "#0001 [0001] Startup"
+   :num-ports               1
+   :port-types              [0 0 0 0]
+   :good-input              [0 0 0 0]
+   :good-output-a           [0 0 0 0]
+   :good-output-b           [0 0 0 0]
+   :sw-in                   [0 0 0 0]
+   :sw-out                  [0 0 0 0]
+   :acn-priority            100
+   :sw-macro                0
+   :sw-remote               0
+   :style                   0
+   :mac                     [0 0 0 0 0 0]
+   :bind-ip                 nil
+   :bind-index              1
+   :status2                 0
+   :status3                 0
+   :default-responder       [0 0 0 0 0 0]
+   :user-hi                 0
+   :user-lo                 0
+   :refresh-rate            0
    :background-queue-policy 0})
 
 (defn- normalize-pollreply
   "Normalize ArtPollReply fields with defaults and validation."
   [m]
   (let [m (merge default-pollreply m)
-        {ip                :ip,
-         bind-ip           :bind-ip,
-         mac               :mac,
-         port-types        :port-types,
-         good-input        :good-input,
-         good-output-a     :good-output-a,
-         good-output-b     :good-output-b,
-         sw-in             :sw-in,
-         sw-out            :sw-out,
+        {ip                :ip
+         bind-ip           :bind-ip
+         mac               :mac
+         port-types        :port-types
+         good-input        :good-input
+         good-output-a     :good-output-a
+         good-output-b     :good-output-b
+         sw-in             :sw-in
+         sw-out            :sw-out
          default-responder :default-responder}
         m]
     (-> m
@@ -140,19 +142,19 @@
         target-bottom (prim/safe-uint16-be buf 16)
         esta-man (prim/safe-uint16-be buf 18)
         oem (prim/safe-uint16-be buf 20)]
-    {:op               :artpoll,
-     :protocol-version protocol,
-     :flags            flags,
-     :talk-to-me       flags,
-     :priority         diag,
-     :diag-priority    diag,
-     :diag-request?    (pos? (bit-and flags 0x04)),
-     :diag-unicast?    (pos? (bit-and flags 0x08)),
-     :target-enabled?  (pos? (bit-and flags 0x20)),
-     :target-top       target-top,
-     :target-bottom    target-bottom,
-     :reply-on-change? (pos? (bit-and flags 0x02)),
-     :esta-man         esta-man,
+    {:op               :artpoll
+     :protocol-version protocol
+     :flags            flags
+     :talk-to-me       flags
+     :priority         diag
+     :diag-priority    diag
+     :diag-request?    (pos? (bit-and flags 0x04))
+     :diag-unicast?    (pos? (bit-and flags 0x08))
+     :target-enabled?  (pos? (bit-and flags 0x20))
+     :target-top       target-top
+     :target-bottom    target-bottom
+     :reply-on-change? (pos? (bit-and flags 0x02))
+     :esta-man         esta-man
      :oem              oem}))
 
 (defn decode-artpollreply
@@ -194,38 +196,38 @@
         user-lo (prim/safe-ubyte buf 225)
         refresh-rate (prim/safe-uint16-be buf 226)
         background-queue-policy (prim/safe-ubyte buf 228)]
-    {:op                      :artpollreply,
-     :ip                      ip,
-     :port                    port,
-     :version-hi              version-hi,
-     :version-lo              version-lo,
-     :net-switch              net-switch,
-     :sub-switch              sub-switch,
-     :oem                     oem,
-     :ubea-version            ubea-version,
-     :status1                 status1,
-     :esta-man                esta-man,
-     :short-name              short-name,
-     :long-name               long-name,
-     :node-report             node-report,
-     :num-ports               num-ports,
-     :port-types              port-types,
-     :good-input              good-input,
-     :good-output-a           good-output-a,
-     :good-output-b           good-output-b,
-     :sw-in                   sw-in,
-     :sw-out                  sw-out,
-     :acn-priority            acn-priority,
-     :sw-macro                sw-macro,
-     :sw-remote               sw-remote,
-     :style                   style,
-     :mac                     mac,
-     :bind-ip                 bind-ip,
-     :bind-index              bind-index,
-     :status2                 status2,
-     :status3                 status3,
-     :default-responder       default-responder,
-     :user-hi                 user-hi,
-     :user-lo                 user-lo,
-     :refresh-rate            refresh-rate,
+    {:op                      :artpollreply
+     :ip                      ip
+     :port                    port
+     :version-hi              version-hi
+     :version-lo              version-lo
+     :net-switch              net-switch
+     :sub-switch              sub-switch
+     :oem                     oem
+     :ubea-version            ubea-version
+     :status1                 status1
+     :esta-man                esta-man
+     :short-name              short-name
+     :long-name               long-name
+     :node-report             node-report
+     :num-ports               num-ports
+     :port-types              port-types
+     :good-input              good-input
+     :good-output-a           good-output-a
+     :good-output-b           good-output-b
+     :sw-in                   sw-in
+     :sw-out                  sw-out
+     :acn-priority            acn-priority
+     :sw-macro                sw-macro
+     :sw-remote               sw-remote
+     :style                   style
+     :mac                     mac
+     :bind-ip                 bind-ip
+     :bind-index              bind-index
+     :status2                 status2
+     :status3                 status3
+     :default-responder       default-responder
+     :user-hi                 user-hi
+     :user-lo                 user-lo
+     :refresh-rate            refresh-rate
      :background-queue-policy background-queue-policy}))

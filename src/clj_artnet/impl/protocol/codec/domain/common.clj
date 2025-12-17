@@ -3,10 +3,12 @@
 
 (ns clj-artnet.impl.protocol.codec.domain.common
   "Common utilities shared across domain encode/decode modules."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.primitives :as prim])
-  (:import (java.net InetAddress)
-           (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.primitives :as prim])
+  (:import
+    (java.net InetAddress)
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -20,8 +22,8 @@
 (defn split-port-address
   "Split a 15-bit port address into {:net :sub-net :universe}."
   [port-address]
-  {:net      (bit-and (unsigned-bit-shift-right (long port-address) 8) 0x7F),
-   :sub-net  (bit-and (unsigned-bit-shift-right (long port-address) 4) 0x0F),
+  {:net      (bit-and (unsigned-bit-shift-right (long port-address) 8) 0x7F)
+   :sub-net  (bit-and (unsigned-bit-shift-right (long port-address) 4) 0x0F)
    :universe (bit-and (long port-address) 0x0F)})
 
 (defn normalize-ip
@@ -85,7 +87,7 @@
           (if (some? resolved)
             resolved
             (throw (ex-info "Unknown ArtDataRequest type"
-                            {:request-type request-type,
+                            {:request-type request-type
                              :packet       (dissoc packet :payload :data :text)}))))
         :else (throw (ex-info "ArtDataRequest packet requires :request code"
                               {:packet (dissoc packet :payload :data :text)}))))

@@ -3,8 +3,9 @@
 
 (ns clj-artnet.impl.protocol.diagnostics
   "Diagnostics logic (Art-Net 4)."
-  (:require [clojure.string :as str]
-            [taoensso.trove :as trove]))
+  (:require
+    [clojure.string :as str]
+    [taoensso.trove :as trove]))
 
 (set! *warn-on-reflection* true)
 
@@ -19,10 +20,10 @@
 (def ^:const default-priority-code 0x10)
 
 (def ^:private priority-table
-  {:dp-low      0x10,
-   :dp-med      0x40,
-   :dp-high     0x80,
-   :dp-critical 0xE0,
+  {:dp-low      0x10
+   :dp-med      0x40
+   :dp-high     0x80
+   :dp-critical 0xE0
    :dp-volatile 0xF0})
 
 (def ^:private priority-codes (set (vals priority-table)))
@@ -34,7 +35,7 @@
                            code
                            (throw (ex-info
                                     "Unknown diagnostics priority keyword"
-                                    {:value   value,
+                                    {:value   value
                                      :allowed (sort (keys priority-table))})))
         (string? value) (normalize-priority-code (some-> value
                                                          str/lower-case
@@ -45,10 +46,10 @@
           (if (priority-codes code)
             code
             (throw (ex-info "Diagnostics priority must use Table 5 codes"
-                            {:value   value,
+                            {:value   value
                              :allowed (sort (vals priority-table))}))))
         :else (throw (ex-info "Unsupported diagnostics priority value"
-                              {:value   value,
+                              {:value   value
                                :allowed (sort (keys priority-table))}))))
 
 (defn priority-code
@@ -84,10 +85,10 @@
         positive-hz (when (pos? rate-limit-hz) rate-limit-hz)
         min-interval-ns (when positive-hz
                           (long (/ nanos-per-second positive-hz)))]
-    {:broadcast-target             broadcast-target,
-     :subscriber-ttl-ns            ttl,
-     :subscriber-warning-threshold threshold,
-     :rate-limit-hz                (or positive-hz 0.0),
+    {:broadcast-target             broadcast-target
+     :subscriber-ttl-ns            ttl
+     :subscriber-warning-threshold threshold
+     :rate-limit-hz                (or positive-hz 0.0)
      :min-interval-ns              min-interval-ns}))
 
 (defn- nano-time [] (System/nanoTime))
@@ -115,9 +116,9 @@
               raised? (assoc diagnostics :subscriber-warning-raised? false)
               :else diagnostics)]
     (when (and over? (not raised?))
-      (trove/log! {:level :warn,
-                   :id    ::diagnostic-subscriber-threshold,
-                   :msg   "Diagnostics subscriber count exceeded threshold",
+      (trove/log! {:level :warn
+                   :id    ::diagnostic-subscriber-threshold
+                   :msg   "Diagnostics subscriber count exceeded threshold"
                    :data  {:count subscriber-count, :threshold threshold}}))
     diagnostics'))
 
@@ -140,20 +141,20 @@
                            (let [trimmed (some-> text
                                                  str/trim)]
                              (when (seq trimmed)
-                               {:text         trimmed,
+                               {:text         trimmed
                                 :priority     (bit-and (int (or priority 0x10))
-                                                       0xFF),
+                                                       0xFF)
                                 :logical-port (bit-and (int (or logical-port 0))
                                                        0xFF)})))))]
     (if (or (empty? valid) (nil? (:host sender)))
       [state []]
       (let [target {:host (:host sender), :port (:port sender 0x1936)}
             actions (mapv (fn [{:keys [text priority logical-port]}]
-                            {:type   :send,
-                             :target target,
-                             :packet {:op           :artdiagdata,
-                                      :priority     priority,
-                                      :logical-port logical-port,
+                            {:type   :send
+                             :target target
+                             :packet {:op           :artdiagdata
+                                      :priority     priority
+                                      :logical-port logical-port
                                       :text         text}})
                           valid)]
         [(update-in state [:stats :diagnostics-sent] (fnil + 0) (count actions))
@@ -171,18 +172,18 @@
         has-diag-subscriber-system? (contains? (:diagnostics state)
                                                :subscribers)
         diag-subscribers (mapv (fn [sub]
-                                 {:host     (:host sub),
-                                  :port     (or (:port sub) 0x1936),
-                                  :unicast? (:unicast? sub),
+                                 {:host     (:host sub)
+                                  :port     (or (:port sub) 0x1936)
+                                  :unicast? (:unicast? sub)
                                   :priority (or (:priority sub) 0x10)})
                                active-diag-subscribers)
         peer-subscribers (if has-diag-subscriber-system?
                            []
                            (vec (keep (fn [[_ peer]]
                                         (when (:diag-subscriber? peer)
-                                          {:host     (:host peer),
-                                           :port     (or (:port peer) 0x1936),
-                                           :unicast? (:diag-unicast? peer),
+                                          {:host     (:host peer)
+                                           :port     (or (:port peer) 0x1936)
+                                           :unicast? (:diag-unicast? peer)
                                            :priority (or (:diag-priority peer)
                                                          0x10)}))
                                       (:peers state'))))
@@ -198,10 +199,10 @@
                             [broadcast-target])
         targets (vec (concat (or broadcast-targets []) unicast-targets))]
     [state'
-     {:targets            targets,
-      :effective-priority effective-priority,
-      :subscriber-count   subscriber-count,
-      :has-unicast?       (boolean (seq unicast)),
+     {:targets            targets
+      :effective-priority effective-priority
+      :subscriber-count   subscriber-count
+      :has-unicast?       (boolean (seq unicast))
       :has-broadcast?     (boolean (seq broadcast))}]))
 
 (comment

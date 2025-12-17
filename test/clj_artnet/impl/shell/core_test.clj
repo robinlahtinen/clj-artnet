@@ -3,30 +3,32 @@
 
    These tests focus on the modular components while the main clj-artnet-test
    covers integration-level verification of the public API."
-  (:require [clj-artnet.impl.shell.buffers :as buffers]
-            [clj-artnet.impl.shell.commands :as commands]
-            [clj-artnet.impl.shell.graph :as graph]
-            [clj-artnet.impl.shell.lifecycle :as lifecycle]
-            [clj-artnet.impl.shell.net :as net]
-            [clj-artnet.impl.shell.state :as state]
-            [clj-artnet.support.helpers :refer [thrown-with-msg?]]
-            [clojure.test :refer [deftest is testing]])
-  (:import (clojure.lang ExceptionInfo)
-           (java.nio.channels DatagramChannel)))
+  (:require
+    [clj-artnet.impl.shell.buffers :as buffers]
+    [clj-artnet.impl.shell.commands :as commands]
+    [clj-artnet.impl.shell.graph :as graph]
+    [clj-artnet.impl.shell.lifecycle :as lifecycle]
+    [clj-artnet.impl.shell.net :as net]
+    [clj-artnet.impl.shell.state :as state]
+    [clj-artnet.support.helpers :refer [thrown-with-msg?]]
+    [clojure.test :refer [deftest is testing]])
+  (:import
+    (clojure.lang ExceptionInfo)
+    (java.nio.channels DatagramChannel)))
 
 (deftest build-logic-config-test
   (testing "extracts relevant keys from config"
-    (let [config {:node            {:short-name "Test"},
-                  :callbacks       {:dmx identity},
-                  :diagnostics     {:threshold 10},
-                  :network         {:ip [192 168 1 1]},
-                  :programming     {:on-change identity},
-                  :rdm             {:enabled true},
-                  :sync            {:timeout-ns 1000},
-                  :data            {:custom "value"},
-                  :capabilities    {:status2 {:set 0x04}},
-                  :failsafe        {:mode :hold},
-                  :random-delay-fn (fn [] 100),
+    (let [config {:node            {:short-name "Test"}
+                  :callbacks       {:dmx identity}
+                  :diagnostics     {:threshold 10}
+                  :network         {:ip [192 168 1 1]}
+                  :programming     {:on-change identity}
+                  :rdm             {:enabled true}
+                  :sync            {:timeout-ns 1000}
+                  :data            {:custom "value"}
+                  :capabilities    {:status2 {:set 0x04}}
+                  :failsafe        {:mode :hold}
+                  :random-delay-fn (fn [] 100)
                   :extra-ignored   :ignored}
           result (lifecycle/build-logic-config config)]
       (is (= "Test" (get-in result [:node :short-name])))
@@ -46,7 +48,7 @@
                     (lifecycle/close-quietly tx-pool)))))
   (testing "creates pools with custom sizes"
     (let [{:keys [rx-pool tx-pool]} (lifecycle/create-resource-pools
-                                      {:rx-buffer {:count 64, :size 1024},
+                                      {:rx-buffer {:count 64, :size 1024}
                                        :tx-buffer {:count 32, :size 1024}})]
       (try (is (buffers/buffer-pool? rx-pool))
            (is (buffers/buffer-pool? tx-pool))
@@ -89,21 +91,21 @@
 
 (deftest create-graph-structure-test
   (testing "creates flow with expected processes"
-    (let [channel (net/open-channel {:bind           {:host "0.0.0.0", :port 0},
-                                     :broadcast?     true,
+    (let [channel (net/open-channel {:bind           {:host "0.0.0.0", :port 0}
+                                     :broadcast?     true
                                      :reuse-address? true})
           rx-pool (buffers/create-pool {:count 8, :size 512})
           tx-pool (buffers/create-pool {:count 4, :size 512})]
       (try (let [flow-def (graph/create-graph
-                            {:channel                  channel,
-                             :rx-pool                  rx-pool,
-                             :tx-pool                  tx-pool,
-                             :logic-config             {:node {:short-name "Test"}},
-                             :max-packet               2048,
-                             :recv-buffer              32,
-                             :command-buffer           16,
-                             :actions-buffer           16,
-                             :default-target           nil,
+                            {:channel                  channel
+                             :rx-pool                  rx-pool
+                             :tx-pool                  tx-pool
+                             :logic-config             {:node {:short-name "Test"}}
+                             :max-packet               2048
+                             :recv-buffer              32
+                             :command-buffer           16
+                             :actions-buffer           16
+                             :default-target           nil
                              :allow-limited-broadcast? false})]
              ;; Verify the flow is created (it's an opaque object)
              (is (some? flow-def)))
@@ -123,16 +125,16 @@
           dmx-called (atom nil)
           callbacks {:dmx-frame (fn [p] (reset! dmx-called p))}
           config {:callbacks callbacks, :node {:short-name "Test"}}
-          event {:type      :rx-packet,
-                 :packet    {:op           :artdmx,
-                             :port-address 0,
-                             :data         (byte-array 512),
-                             :length       512,
-                             :sequence     1,
-                             :physical     0,
-                             :net          0,
-                             :sub-uni      0},
-                 :sender    {:host "1.2.3.4", :port 6454},
+          event {:type      :rx-packet
+                 :packet    {:op           :artdmx
+                             :port-address 0
+                             :data         (byte-array 512)
+                             :length       512
+                             :sequence     1
+                             :physical     0
+                             :net          0
+                             :sub-uni      0}
+                 :sender    {:host "1.2.3.4", :port 6454}
                  :timestamp 0}
           ;; Run io-step. Pass nil state so it initializes.
           [_ actions] (io-step nil config event)

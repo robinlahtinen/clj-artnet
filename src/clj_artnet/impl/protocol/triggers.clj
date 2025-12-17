@@ -15,7 +15,8 @@
    - OEM-based target filtering
    - Key/SubKey interpretation and acknowledgement generation
    - Helper dispatch for registered trigger handlers"
-  (:require [clojure.string :as str]))
+  (:require
+    [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
 
@@ -27,13 +28,13 @@
   #{:key-macro :key-soft :key-show :key-ascii})
 
 (def ^:private trigger-kind-aliases
-  {:macro     :key-macro,
-   :key-macro :key-macro,
-   :soft      :key-soft,
-   :key-soft  :key-soft,
-   :show      :key-show,
-   :key-show  :key-show,
-   :ascii     :key-ascii,
+  {:macro     :key-macro
+   :key-macro :key-macro
+   :soft      :key-soft
+   :key-soft  :key-soft
+   :show      :key-show
+   :key-show  :key-show
+   :ascii     :key-ascii
    :key-ascii :key-ascii})
 
 (defn canonical-trigger-kind
@@ -127,40 +128,40 @@
         general? (= oem 0xFFFF)]
     (if general?
       (case key-type
-        :key-ascii {:kind      :ascii,
-                    :key       key,
-                    :sub-key   sub-key,
-                    :character (char-label sub-key),
-                    :ack       {:priority 0x10,
+        :key-ascii {:kind      :ascii
+                    :key       key
+                    :sub-key   sub-key
+                    :character (char-label sub-key)
+                    :ack       {:priority 0x10
                                 :text     (format "Trigger KeyAscii (%s) processed"
                                                   (char-label sub-key))}}
-        :key-macro {:kind    :macro,
-                    :key     key,
-                    :sub-key sub-key,
-                    :ack     {:priority 0x10,
+        :key-macro {:kind    :macro
+                    :key     key
+                    :sub-key sub-key
+                    :ack     {:priority 0x10
                               :text     (format "Trigger KeyMacro %d executed"
                                                 sub-key)}}
-        :key-soft {:kind    :soft,
-                   :key     key,
-                   :sub-key sub-key,
-                   :ack     {:priority 0x10,
+        :key-soft {:kind    :soft
+                   :key     key
+                   :sub-key sub-key
+                   :ack     {:priority 0x10
                              :text     (format "Trigger KeySoft %d pressed" sub-key)}}
-        :key-show {:kind    :show,
-                   :key     key,
-                   :sub-key sub-key,
-                   :ack     {:priority 0x10,
+        :key-show {:kind    :show
+                   :key     key
+                   :sub-key sub-key
+                   :ack     {:priority 0x10
                              :text     (format "Trigger KeyShow %d started" sub-key)}}
-        {:kind    :unknown,
-         :key     key,
-         :sub-key sub-key,
-         :ack     {:priority 0x80,
+        {:kind    :unknown
+         :key     key
+         :sub-key sub-key
+         :ack     {:priority 0x80
                    :text     (format "Unsupported ArtTrigger key 0x%02X" key)}})
       ;; Vendor-specific when OEM != 0xFFFF
-      {:kind    :vendor,
-       :key     key,
-       :sub-key sub-key,
-       :oem     oem,
-       :ack     {:priority 0x40,
+      {:kind    :vendor
+       :key     key
+       :sub-key sub-key
+       :oem     oem
+       :ack     {:priority 0x40
                  :text     (format "Vendor trigger key 0x%02X sub-key 0x%02X forwarded"
                                    key
                                    sub-key)}})))
@@ -187,7 +188,7 @@
         millis (max 1
                     (nanos->millis
                       (if (pos? interval) interval default-min-interval-ns)))]
-    {:priority 0x40,
+    {:priority 0x40
      :text     (format "%s ignored (debounced %dms)" (trigger-label info) millis)}))
 
 (defn helper-action
@@ -207,9 +208,9 @@
                      (when-let [lookup-kind (canonical-trigger-kind kind)]
                        (get-in helpers [lookup-kind sub])))]
         (when helper
-          {:effect  :callback,
-           :fn      helper,
-           :helper? true,                                   ;; Mark as helper callback to be returned in
+          {:effect  :callback
+           :fn      helper
+           :helper? true                                    ;; Mark as helper callback to be returned in
            ;; actions
            :payload {:packet packet, :sender sender, :trigger info}})))))
 
@@ -222,7 +223,7 @@
     (if (and enabled? sender)
       (let [target-map (if (= target :sender)
                          (when (:host sender)
-                           {:host (:host sender),
+                           {:host (:host sender)
                             :port (int (or (:port sender) 0x1936))})
                          target)]
         (if target-map
@@ -232,10 +233,10 @@
                   :fixed fixed-oem
                   :node (bit-and (int (or (get-in state [:node :oem]) 0xFFFF))
                                  0xFFFF))
-                reply-packet {:op       :arttrigger,
-                              :oem      reply-oem,
-                              :key      (:key packet),
-                              :key-type (:key-type packet),
+                reply-packet {:op       :arttrigger
+                              :oem      reply-oem
+                              :key      (:key packet)
+                              :key-type (:key-type packet)
                               :sub-key  (:sub-key packet)}]
             [(update-in state [:stats :trigger-replies] (fnil inc 0))
              {:type :send, :target target-map, :packet reply-packet}])
@@ -315,14 +316,14 @@
                 (cond (nil? sanitized) (update acc
                                                :acks
                                                conj
-                                               {:priority 0x80,
+                                               {:priority 0x80
                                                 :text     (str label
                                                                " missing value")})
                       (= current sanitized)
                       (update acc
                               :acks
                               conj
-                              {:priority 0x10,
+                              {:priority 0x10
                                :text
                                (str label " already set to '" sanitized "'")})
                       :else (-> acc
@@ -330,7 +331,7 @@
                                 (update :changed assoc :swout sanitized)
                                 (update :acks
                                         conj
-                                        {:priority 0x10,
+                                        {:priority 0x10
                                          :text
                                          (str label " applied: " sanitized)}))))
               :swin-text
@@ -340,14 +341,14 @@
                 (cond (nil? sanitized) (update acc
                                                :acks
                                                conj
-                                               {:priority 0x80,
+                                               {:priority 0x80
                                                 :text     (str label
                                                                " missing value")})
                       (= current sanitized)
                       (update acc
                               :acks
                               conj
-                              {:priority 0x10,
+                              {:priority 0x10
                                :text
                                (str label " already set to '" sanitized "'")})
                       :else (-> acc
@@ -355,13 +356,13 @@
                                 (update :changed assoc :swin sanitized)
                                 (update :acks
                                         conj
-                                        {:priority 0x10,
+                                        {:priority 0x10
                                          :text
                                          (str label " applied: " sanitized)}))))
               (update acc
                       :acks
                       conj
-                      {:priority 0x80,
+                      {:priority 0x80
                        :text     (str "Unsupported ArtCommand: " raw)})))
           {:labels labels, :changed {}, :acks []}
           directives)
@@ -393,7 +394,7 @@
                            (char? value) (int value)
                            (and (string? value) (seq value)) (int (first value))
                            :else (throw (ex-info "Unsupported trigger sub-key"
-                                                 {:kind    kind,
+                                                 {:kind    kind
                                                   :sub-key value})))]
             (bit-and (int byte) 0xFF)))
         normalize-handler
@@ -438,8 +439,8 @@
                             (fn [m raw-sub handler]
                               (let [sub (normalize-sub-key :vendor raw-sub)
                                     f (normalize-handler handler
-                                                         {:kind    :vendor,
-                                                          :key     key-byte,
+                                                         {:kind    :vendor
+                                                          :key     key-byte
                                                           :sub-key raw-sub})]
                                 (assoc m sub f)))
                             {}
@@ -453,7 +454,7 @@
         reply (or (:reply config) {})
         target-config (:target reply)
         target (cond (and (map? target-config) (:host target-config))
-                     {:host (:host target-config),
+                     {:host (:host target-config)
                       :port (int (or (:port target-config) 0x1936))}
                      (map? target-config) nil
                      (= (keyword target-config) :sender) :sender
@@ -464,12 +465,12 @@
                          (integer? oem) :fixed
                          :else :node)
         fixed-oem (when (integer? oem) (bit-and (int oem) 0xFFFF))
-        reply-config {:enabled?   (true? (:enabled? reply)),
-                      :target     target,
-                      :oem-source oem-source,
+        reply-config {:enabled?   (true? (:enabled? reply))
+                      :target     target
+                      :oem-source oem-source
                       :fixed-oem  fixed-oem}
         sanitized-interval (long
                              (max 0 (or min-interval default-min-interval-ns)))]
-    {:min-interval-ns sanitized-interval,
-     :helpers         helper-map,
+    {:min-interval-ns sanitized-interval
+     :helpers         helper-map
      :reply           reply-config}))

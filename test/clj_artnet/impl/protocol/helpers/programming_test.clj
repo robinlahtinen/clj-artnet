@@ -3,8 +3,9 @@
 
    Uses impl.helpers.programming directly since the library is unpublished
    and backward compatibility is not a concern."
-  (:require [clj-artnet.impl.protocol.programming :as programming]
-            [clojure.test :refer [deftest is]]))
+  (:require
+    [clj-artnet.impl.protocol.programming :as programming]
+    [clojure.test :refer [deftest is]]))
 
 (def base-node {:good-input [0 0 0 0], :bind-index 5})
 
@@ -19,14 +20,14 @@
 
 (deftest apply-artipprog-reset-falls-back-to-defaults
   (let [{:keys [network reply]} (programming/apply-artipprog
-                                  {:node             {},
-                                   :network          {:ip          [3 3 3 3],
-                                                      :subnet-mask [255 255 0 0],
-                                                      :gateway     [3 3 3 1],
-                                                      :port        0x3333,
-                                                      :dhcp?       true},
-                                   :network-defaults {:ip          [2 2 2 2],
-                                                      :subnet-mask [255 0 0 0]},
+                                  {:node             {}
+                                   :network          {:ip          [3 3 3 3]
+                                                      :subnet-mask [255 255 0 0]
+                                                      :gateway     [3 3 3 1]
+                                                      :port        0x3333
+                                                      :dhcp?       true}
+                                   :network-defaults {:ip          [2 2 2 2]
+                                                      :subnet-mask [255 0 0 0]}
                                    :packet           {:op :artipprog, :command 0x88}})]
     (is (= [2 2 2 2] (:ip network)))
     (is (= [255 0 0 0] (:subnet-mask network)))
@@ -39,12 +40,12 @@
 
 (deftest apply-artipprog-dhcp-command-ignores-enable
   (let [{:keys [network reply]} (programming/apply-artipprog
-                                  {:node    {},
-                                   :network {:ip          [10 10 10 10],
-                                             :subnet-mask [255 0 0 0],
-                                             :gateway     [10 10 10 1],
-                                             :port        0x1234,
-                                             :dhcp?       false},
+                                  {:node    {}
+                                   :network {:ip          [10 10 10 10]
+                                             :subnet-mask [255 0 0 0]
+                                             :gateway     [10 10 10 1]
+                                             :port        0x1234
+                                             :dhcp?       false}
                                    :packet  {:op :artipprog, :command 0x40}})]
     (is (true? (:dhcp? network)))
     (is (= [10 10 10 10] (:ip network)))

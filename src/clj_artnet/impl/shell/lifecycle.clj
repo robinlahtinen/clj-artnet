@@ -4,11 +4,13 @@
    Manages initialization, resource acquisition (channels, buffers),
    and clean shutdown of the imperative shell components.
    Delegates core domain logic to pure functions in the protocol layer."
-  (:require [clj-artnet.impl.shell.buffers :as buffers]
-            [clj-artnet.impl.shell.net :as net]
-            [taoensso.trove :as trove])
-  (:import (java.io Closeable)
-           (java.nio.channels DatagramChannel)))
+  (:require
+    [clj-artnet.impl.shell.buffers :as buffers]
+    [clj-artnet.impl.shell.net :as net]
+    [taoensso.trove :as trove])
+  (:import
+    (java.io Closeable)
+    (java.nio.channels DatagramChannel)))
 
 (set! *warn-on-reflection* true)
 
@@ -29,10 +31,10 @@
   (when c
     (try (.close c)
          (catch Throwable t
-           (trove/log! {:level :warn,
-                        :id    ::close-error,
-                        :msg   "Error closing resource",
-                        :error t,
+           (trove/log! {:level :warn
+                        :id    ::close-error
+                        :msg   "Error closing resource"
+                        :error t
                         :data  {:resource (class c)}})))))
 
 (defn ensure-chan-open
@@ -42,9 +44,9 @@
   (when (and ch (.isOpen ch))
     (try (.close ch)
          (catch Throwable t
-           (trove/log! {:level :warn,
-                        :id    ::channel-close-error,
-                        :msg   "Error closing DatagramChannel",
+           (trove/log! {:level :warn
+                        :id    ::channel-close-error
+                        :msg   "Error closing DatagramChannel"
                         :error t})))))
 
 (defn resolve-bind
@@ -164,9 +166,9 @@
         (try (require '[clojure.core.async.flow :as flow])
              ((resolve 'clojure.core.async.flow/stop) flow)
              (catch Throwable t
-               (trove/log! {:level :warn,
-                            :id    ::flow-stop-failed,
-                            :msg   "Flow stop failed",
+               (trove/log! {:level :warn
+                            :id    ::flow-stop-failed
+                            :msg   "Flow stop failed"
                             :error t})))
         (close-quietly rx-pool)
         (close-quietly tx-pool)

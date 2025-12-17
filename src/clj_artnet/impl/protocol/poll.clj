@@ -51,7 +51,7 @@
    Returns updated state with excess subscribers disabled based on policy.
    Uses :discovery {:reply-on-change-limit N :reply-on-change-policy ...}."
   [state]
-  (let [{:keys [reply-on-change-limit reply-on-change-policy],
+  (let [{:keys [reply-on-change-limit reply-on-change-policy]
          :or   {reply-on-change-limit 1, reply-on-change-policy :prefer-existing}}
         (:discovery state)
         limit (long (max 0 (or reply-on-change-limit 0)))
@@ -169,9 +169,9 @@
   [state reply-data exclude-key]
   (let [peers (reply-on-change-peers state exclude-key)]
     (mapv (fn [target]
-            {:effect :tx-packet,
-             :op     :artpollreply,
-             :data   reply-data,
+            {:effect :tx-packet
+             :op     :artpollreply
+             :data   reply-data
              :target target})
           peers)))
 

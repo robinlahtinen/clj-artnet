@@ -1,8 +1,9 @@
 (ns clj-artnet.impl.protocol.helpers.triggers-test
   "Unit tests for clj-artnet.impl.protocol.helpers.triggers module.
    Tests ArtTrigger/ArtCommand processing per Art-Net 4 specification."
-  (:require [clj-artnet.impl.protocol.triggers :as triggers]
-            [clojure.test :refer [deftest is run-tests testing]]))
+  (:require
+    [clj-artnet.impl.protocol.triggers :as triggers]
+    [clojure.test :refer [deftest is run-tests testing]]))
 
 (deftest trigger-oem-filtering
   (testing "OEM=0xFFFF accepts any node"
@@ -68,7 +69,7 @@
   (testing "Trigger within interval is rejected"
     (let [interval 100000000                                ; 100ms
           now 50000000                                      ; 50ms later
-          state {:triggers {:min-interval-ns interval,
+          state {:triggers {:min-interval-ns interval
                             :history         {[:ascii 65] 0}}}
           info {:kind :ascii, :key 0, :sub-key 65}
           [_ allowed?] (triggers/allow? state info now)]
@@ -76,7 +77,7 @@
   (testing "Trigger after interval is allowed"
     (let [interval 100000000                                ; 100ms
           now 200000000                                     ; 200ms later
-          state {:triggers {:min-interval-ns interval,
+          state {:triggers {:min-interval-ns interval
                             :history         {[:ascii 65] 0}}}
           info {:kind :ascii, :key 0, :sub-key 65}
           [_ allowed?] (triggers/allow? state info now)]

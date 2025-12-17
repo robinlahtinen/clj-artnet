@@ -6,9 +6,11 @@
 
    Provides pure functions for normalizing data configuration, utilized by
    `impl.protocol.lifecycle`. Extracted to resolve dependency cycles."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const])
-  (:import (java.nio ByteBuffer)
-           (java.nio.charset StandardCharsets)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const])
+  (:import
+    (java.nio ByteBuffer)
+    (java.nio.charset StandardCharsets)))
 
 (set! *warn-on-reflection* true)
 
@@ -27,8 +29,8 @@
         total-length (inc (alength bytes))]
     (when (> total-length const/artdatareply-max-bytes)
       (throw (ex-info "ArtDataReply text exceeds maximum length"
-                      {:context context,
-                       :length  total-length,
+                      {:context context
+                       :length  total-length
                        :max     const/artdatareply-max-bytes}))))
   text)
 
@@ -45,8 +47,8 @@
   (let [length (payload-byte-length payload)]
     (when (> length const/artdatareply-max-bytes)
       (throw (ex-info "ArtDataReply payload exceeds maximum length"
-                      {:context context,
-                       :length  length,
+                      {:context context
+                       :length  length
                        :max     const/artdatareply-max-bytes})))
     payload))
 

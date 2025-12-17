@@ -4,18 +4,20 @@
 (ns clj-artnet.impl.protocol.codec.domain.dmx
   "Encode/decode for DMX family packets: ArtDmx, ArtNzs, ArtVlc, ArtSync.
    These are the hot-path packets that use flyweight types for zero allocation."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.primitives :as prim]
-            [clj-artnet.impl.protocol.codec.types :as types])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.primitives :as prim]
+    [clj-artnet.impl.protocol.codec.types :as types])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
 (defn encode-artdmx!
   "Encode ArtDmx packet into buffer."
   [^ByteBuffer buf
-   {:keys [sequence physical net sub-net universe data],
+   {:keys [sequence physical net sub-net universe data]
     :or   {sequence 0, physical 0, net 0, sub-net 0, universe 0}}]
   (let [payload (prim/as-buffer data)
         length (.remaining payload)]
@@ -45,7 +47,7 @@
       (throw (ex-info "DMX payload exceeds 512 bytes" {:length length})))
     (when (> (+ const/artdmx-header-size length) (.limit buf))
       (throw (ex-info "Incomplete ArtDmx payload"
-                      {:expected (+ const/artdmx-header-size length),
+                      {:expected (+ const/artdmx-header-size length)
                        :limit    (.limit buf)})))
     (let [sequence (prim/ubyte (.get buf 12))
           physical (prim/ubyte (.get buf 13))
@@ -71,7 +73,7 @@
 (defn encode-artnzs!
   "Encode ArtNzs packet into buffer."
   [^ByteBuffer buf
-   {:keys [sequence start-code net sub-net universe data],
+   {:keys [sequence start-code net sub-net universe data]
     :or   {sequence 0, net 0, sub-net 0, universe 0}}]
   (let [payload (prim/as-buffer data)
         length (.remaining payload)
@@ -102,14 +104,14 @@
 (defn encode-artvlc!
   "Encode ArtVlc packet (transmitted as ArtNzs with start code 0x91)."
   [^ByteBuffer buf
-   {:keys [sequence net sub-net universe vlc],
-    :or   {sequence 0, net 0, sub-net 0, universe 0},
+   {:keys [sequence net sub-net universe vlc]
+    :or   {sequence 0, net 0, sub-net 0, universe 0}
     :as   packet}]
   (when-not vlc
     (throw (ex-info "ArtVlc packet requires :vlc details"
                     {:packet (dissoc packet :vlc)})))
   (let [{:keys [payload transaction slot-address depth frequency modulation
-                payload-language beacon-repeat reserved],
+                payload-language beacon-repeat reserved]
          :as   vlc-info}
         vlc
         payload (or payload
@@ -119,7 +121,7 @@
         payload-count (alength payload-bytes)
         _ (when (> payload-count const/artvlc-max-payload)
             (throw (ex-info "ArtVlc payload exceeds maximum supported length"
-                            {:length payload-count,
+                            {:length payload-count
                              :max    const/artvlc-max-payload})))
         total-length (+ const/artvlc-header-size payload-count)
         declared-count (:payload-count vlc-info)
@@ -211,20 +213,20 @@
         (when (not= checksum payload-checksum)
           (throw (ex-info "ArtVlc payload checksum mismatch"
                           {:expected payload-checksum, :actual checksum})))
-        (let [vlc {:flags            flags,
-                   :ieee?            (common/flag-set? flags const/artvlc-flag-ieee),
-                   :reply?           (common/flag-set? flags const/artvlc-flag-reply),
-                   :beacon?          (common/flag-set? flags const/artvlc-flag-beacon),
-                   :transaction      transaction,
-                   :slot-address     slot-address,
-                   :payload-count    payload-count,
-                   :payload-checksum payload-checksum,
-                   :reserved         reserved,
-                   :depth            depth,
-                   :frequency        frequency,
-                   :modulation       modulation,
-                   :payload-language payload-language,
-                   :beacon-repeat    beacon-repeat,
+        (let [vlc {:flags            flags
+                   :ieee?            (common/flag-set? flags const/artvlc-flag-ieee)
+                   :reply?           (common/flag-set? flags const/artvlc-flag-reply)
+                   :beacon?          (common/flag-set? flags const/artvlc-flag-beacon)
+                   :transaction      transaction
+                   :slot-address     slot-address
+                   :payload-count    payload-count
+                   :payload-checksum payload-checksum
+                   :reserved         reserved
+                   :depth            depth
+                   :frequency        frequency
+                   :modulation       modulation
+                   :payload-language payload-language
+                   :beacon-repeat    beacon-repeat
                    :payload          payload-slice}]
           (types/->ArtNzsPacket :artvlc
                                 view
@@ -250,7 +252,7 @@
                       {:length length, :min 1, :max const/max-dmx-channels})))
     (when (> (+ const/artnzs-header-size length) (.limit buf))
       (throw (ex-info "Incomplete ArtNzs payload"
-                      {:expected (+ const/artnzs-header-size length),
+                      {:expected (+ const/artnzs-header-size length)
                        :limit    (.limit buf)})))
     (let [sequence (prim/ubyte (.get buf 12))
           start-code (prim/ubyte (.get buf 13))
@@ -289,6 +291,6 @@
   [^ByteBuffer buf]
   (when (< (.limit buf) 14)
     (throw (ex-info "Truncated ArtSync" {:limit (.limit buf)})))
-  {:op   :artsync,
-   :aux1 (prim/ubyte (.get buf 12)),
+  {:op   :artsync
+   :aux1 (prim/ubyte (.get buf 12))
    :aux2 (prim/ubyte (.get buf 13))})

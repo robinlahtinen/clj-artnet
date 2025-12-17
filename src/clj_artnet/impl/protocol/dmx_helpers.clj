@@ -3,10 +3,12 @@
 
 (ns clj-artnet.impl.protocol.dmx-helpers
   "DMX logic helpers: sync, failsafe, merge (Art-Net 4)."
-  (:require [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.types :as types])
-  (:import (java.nio ByteBuffer)
-           (java.util Arrays)))
+  (:require
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.types :as types])
+  (:import
+    (java.nio ByteBuffer)
+    (java.util Arrays)))
 
 (set! *warn-on-reflection* true)
 
@@ -15,8 +17,8 @@
 (def ^:const default-refresh-rate-hz 44)
 
 (def ^:const default-failsafe-config
-  {:enabled?         true,
-   :idle-timeout-ns  (long (* 6 1000000000)),
+  {:enabled?         true
+   :idle-timeout-ns  (long (* 6 1000000000))
    :tick-interval-ns (long (* 100 1000000))})
 
 (def ^:const failsafe-min-tick-interval-ns (long (* 10 1000000)))
@@ -59,8 +61,8 @@
                             (:tick-interval-ms config)
                             (long (* 1000000 (:tick-interval-ms config)))
                             :else (:tick-interval-ns default-failsafe-config))]
-    {:enabled?         enabled?,
-     :idle-timeout-ns  idle-timeout,
+    {:enabled?         enabled?
+     :idle-timeout-ns  idle-timeout
      :tick-interval-ns (max failsafe-min-tick-interval-ns tick-interval)}))
 
 (defn ensure-merge-state
@@ -70,18 +72,18 @@
 
 (defn initial-state
   "Returns default DMX state shard."
-  [{:keys [sync-config failsafe-config],
-    :or   {sync-config     (normalize-sync-config nil),
+  [{:keys [sync-config failsafe-config]
+    :or   {sync-config     (normalize-sync-config nil)
            failsafe-config (normalize-failsafe-config nil)}}]
-  {:sync        sync-config,
-   :sync-buffer {},
-   :throughput  {:artnzs {}},
-   :merge       (ensure-merge-state nil),
-   :failsafe    {:config        failsafe-config,
-                 :scene         {},
-                 :recorded-at   nil,
-                 :playback      {},
-                 :missing-scene {}},
+  {:sync        sync-config
+   :sync-buffer {}
+   :throughput  {:artnzs {}}
+   :merge       (ensure-merge-state nil)
+   :failsafe    {:config        failsafe-config
+                 :scene         {}
+                 :recorded-at   nil
+                 :playback      {}
+                 :missing-scene {}}
    :sequence    0})
 
 (defn node-merge-modes
@@ -121,7 +123,7 @@
   "Returns failsafe config from state."
   [state]
   (or (get-in state [:dmx :failsafe :config])
-      {:enabled?        true,
+      {:enabled?        true
        :idle-timeout-ns (:idle-timeout-ns default-failsafe-config)}))
 
 (defn failsafe-globally-enabled?
@@ -142,7 +144,7 @@
               (Arrays/fill arr (unchecked-byte 0xFF))
               {:data arr, :length length})
       :scene (when scene-entry
-               {:data   (aclone ^bytes (:data scene-entry)),
+               {:data   (aclone ^bytes (:data scene-entry))
                 :length (min length (alength ^bytes (:data scene-entry)))})
       nil)))
 
@@ -196,20 +198,20 @@
                                                universe
                                                port-address
                                                (.asReadOnlyBuffer payload))
-                  cb-payload {:packet        packet,
-                              :sender        nil,
-                              :failsafe?     true,
-                              :failsafe-mode mode,
+                  cb-payload {:packet        packet
+                              :sender        nil
+                              :failsafe?     true
+                              :failsafe-mode mode
                               :port-address  port-address}
-                  effects [{:effect       :dmx-frame,
-                            :port-address port-address,
-                            :sequence     0,
-                            :data         (.asReadOnlyBuffer payload),
+                  effects [{:effect       :dmx-frame
+                            :port-address port-address
+                            :sequence     0
+                            :data         (.asReadOnlyBuffer payload)
                             :length       length}
                            {:effect :callback, :key :dmx, :payload cb-payload}
-                           {:effect  :log,
-                            :level   :info,
-                            :message "Failsafe engaged",
+                           {:effect  :log
+                            :level   :info
+                            :message "Failsafe engaged"
                             :data    {:port-address port-address, :mode mode}}]]
               {:state state', :effects (into (:effects acc) effects)})
             acc))
@@ -270,8 +272,8 @@
                             (or (:playback failsafe) {}))
         scene-ports (vec (sort (keys (:scene failsafe))))
         missing (vec (sort (keys (:missing-scene failsafe))))]
-    (cond-> {:supported? (failsafe-supported? state),
-             :mode       (failsafe-mode state),
+    (cond-> {:supported? (failsafe-supported? state)
+             :mode       (failsafe-mode state)
              :enabled?   (get-in failsafe [:config :enabled?])}
             (:recorded-at failsafe) (assoc :scene-recorded-at (:recorded-at failsafe))
             (seq scene-ports) (assoc :scene-ports scene-ports)
@@ -307,8 +309,8 @@
                   (when-let [updated-at (:updated-at last-output)]
                     (let [idle-time (- now updated-at)]
                       (when (>= idle-time interval-ns)
-                        {:port-address port-address,
-                         :last-output  last-output,
+                        {:port-address port-address
+                         :last-output  last-output
                          :idle-time-ns idle-time})))))
           ports)))
 
@@ -321,13 +323,13 @@
                   (when (and data (pos? length))
                     (let [{:keys [net sub-net universe]}
                           (common/split-port-address port-address)
-                          packet {:op       :artdmx,
-                                  :sequence 0,
-                                  :physical 0,
-                                  :net      net,
-                                  :sub-net  sub-net,
-                                  :universe universe,
-                                  :data     data,
+                          packet {:op       :artdmx
+                                  :sequence 0
+                                  :physical 0
+                                  :net      net
+                                  :sub-net  sub-net
+                                  :universe universe
+                                  :data     data
                                   :length   length}]
                       {:port-address port-address, :packet packet})))))
         stale-ports))
@@ -375,8 +377,8 @@
                            (if-let [{:keys [data length]} last-output]
                              (assoc acc
                                port
-                               {:data       (aclone ^bytes data),
-                                :length     length,
+                               {:data       (aclone ^bytes data)
+                                :length     length
                                 :updated-at timestamp})
                              acc))
                          {}

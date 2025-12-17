@@ -41,10 +41,10 @@
 
 (defn sender-from-socket
   "Extracts sender info {:host ... :port ...} from a SocketAddress.
-   Returns nil if address is not an InetSocketAddress."
+   Returns nil if the address is not an InetSocketAddress."
   [^SocketAddress addr]
   (when (instance? InetSocketAddress addr)
-    {:host (.getAddress ^InetSocketAddress addr),
+    {:host (.getAddress ^InetSocketAddress addr)
      :port (.getPort ^InetSocketAddress addr)}))
 
 (defn open-channel
@@ -55,7 +55,7 @@
    - :broadcast?     -> Enable SO_BROADCAST (default true)
    - :reuse-address? -> Enable SO_REUSEADDR (default true)"
   ^DatagramChannel
-  [{:keys [bind broadcast? reuse-address?],
+  [{:keys [bind broadcast? reuse-address?]
     :or   {broadcast? true, reuse-address? true}}]
   (let [^SelectorProvider provider (SelectorProvider/provider)
         ^DatagramChannel ch (.openDatagramChannel provider)]

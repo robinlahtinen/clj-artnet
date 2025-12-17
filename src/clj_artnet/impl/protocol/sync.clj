@@ -139,13 +139,13 @@
                   port-addr (:port-address packet)
                   processed (long (:frames-processed acc))]
               (if emit?
-                {:state            state,
-                 :frames-processed (unchecked-inc processed),
+                {:state            state
+                 :frames-processed (unchecked-inc processed)
                  :frames-data      (conj (:frames-data acc)
-                                         {:packet        packet,
-                                          :sender        sender,
-                                          :port-address  port-addr,
-                                          :output-data   output-data,
+                                         {:packet        packet
+                                          :sender        sender
+                                          :port-address  port-addr
+                                          :output-data   output-data
                                           :output-length output-length})}
                 (assoc acc :state state))))
           {:state state''', :frames-processed 0, :frames-data []}

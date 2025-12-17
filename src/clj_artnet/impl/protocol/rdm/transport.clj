@@ -22,8 +22,10 @@
    - ArtRdmSub packet validation
    - Sub-device range and entry helpers
    - Payload normalization for outbound commands"
-  (:require [clj-artnet.impl.protocol.codec.domain.common :as common])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.domain.common :as common])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -140,8 +142,8 @@
   (let [vals (vec (or values []))]
     (->> (sub-devices packet)
          (map-indexed (fn [idx sub-dev]
-                        {:index      idx,
-                         :sub-device sub-dev,
+                        {:index      idx
+                         :sub-device sub-dev
                          :value      (when (< idx (count vals)) (nth vals idx))}))
          vec)))
 
@@ -196,7 +198,7 @@
    Handles packet normalization, validation, and packet field population.
    Throws an exception if validation fails.
    Returns action map."
-  [{:keys [target rdm-packet rdm-version fifo-available fifo-max address],
+  [{:keys [target rdm-packet rdm-version fifo-available fifo-max address]
     :as   command-msg}]
   (let [target' (normalize-target target)]
     (when-not rdm-packet
@@ -214,9 +216,9 @@
                 (let [n (bit-and (or (:net command-msg) 0) 0x7F)
                       s (bit-and (or (:sub-net command-msg) 0) 0x0F)
                       u (bit-and (or (:universe command-msg) 0) 0x0F)]
-                  {:net          n,
-                   :sub-net      s,
-                   :universe     u,
+                  {:net          n
+                   :sub-net      s
+                   :universe     u
                    :port-address (common/compose-port-address n s u)}))
               low-byte (bit-and (int port-address) 0xFF)
               address-byte (bit-and (int (or address low-byte)) 0xFF)
@@ -224,14 +226,14 @@
                                              (:rdm-command command-msg)
                                              0))
                                     0xFF)
-              packet {:op                :artrdm,
-                      :rdm-version       (bit-and (int (or rdm-version 1)) 0xFF),
+              packet {:op                :artrdm
+                      :rdm-version       (bit-and (int (or rdm-version 1)) 0xFF)
                       :fifo-available    (bit-and (int (or fifo-available 0))
-                                                  0xFF),
-                      :fifo-max          (bit-and (int (or fifo-max 0)) 0xFF),
-                      :net               (bit-and (int net) 0x7F),
-                      :command           command-byte,
-                      :address           address-byte,
-                      :rdm-packet        packet-buffer,
+                                                  0xFF)
+                      :fifo-max          (bit-and (int (or fifo-max 0)) 0xFF)
+                      :net               (bit-and (int net) 0x7F)
+                      :command           command-byte
+                      :address           address-byte
+                      :rdm-packet        packet-buffer
                       :rdm-packet-length packet-length}]
           {:type :send, :target target', :packet packet})))))

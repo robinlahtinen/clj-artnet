@@ -6,7 +6,8 @@
 
    Provides pure functions to transform node state based on remote programming commands,
    including diagnostic acknowledgement generation."
-  (:require [clojure.string :as str]))
+  (:require
+    [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
 
@@ -137,17 +138,17 @@
 
 (defn- output-style-command
   [command]
-  (cond (<= 0xA0 (int command) 0xA3) {:style :delta,
+  (cond (<= 0xA0 (int command) 0xA3) {:style :delta
                                       :port  (- (int command) 0xA0)}
-        (<= 0xB0 (int command) 0xB3) {:style :constant,
+        (<= 0xB0 (int command) 0xB3) {:style :constant
                                       :port  (- (int command) 0xB0)}
         :else nil))
 
 (defn- rdm-state-command
   [command]
-  (cond (<= 0xC0 (int command) 0xC3) {:state :enable,
+  (cond (<= 0xC0 (int command) 0xC3) {:state :enable
                                       :port  (- (int command) 0xC0)}
-        (<= 0xD0 (int command) 0xD3) {:state :disable,
+        (<= 0xD0 (int command) 0xD3) {:state :disable
                                       :port  (- (int command) 0xD0)}
         :else nil))
 
@@ -164,8 +165,8 @@
         rdm-cmd (when cmd (rdm-state-command cmd))]
     (cond
       (= cmd 0x01) [node nil
-                    {:description     :cancel-merge,
-                     :applied?        true,
+                    {:description     :cancel-merge
+                     :applied?        true
                      :merge-directive {:type :cancel}}]
       (= cmd 0x02) (let [status (set-indicator-state (:status1 node) :normal)]
                      [(assoc node :status1 status) {:status1 status}
@@ -189,16 +190,16 @@
                      [(assoc node :status3 status) {:status3 status}
                       {:description :failsafe-scene, :applied? true}])
       (= cmd 0x0C) [node nil
-                    {:description        :failsafe-record,
-                     :applied?           true,
+                    {:description        :failsafe-record
+                     :applied?           true
                      :failsafe-directive :record}]
       clear-cmd (let [{:keys [port]} clear-cmd
                       valid-port? (valid-port-index? port)
-                      info {:description      :output-clear,
-                            :applied?         valid-port?,
-                            :port-index       port,
+                      info {:description      :output-clear
+                            :applied?         valid-port?
+                            :port-index       port
                             :output-directive (when valid-port?
-                                                {:type :clear-buffer,
+                                                {:type :clear-buffer
                                                  :port port})}]
                   [node nil info])
       style-cmd
@@ -214,9 +215,9 @@
                                          port
                                          good-outputb-continuous-bit
                                          (= style :constant))
-                info {:description desc,
-                      :applied?    (boolean changed?),
-                      :port-index  port,
+                info {:description desc
+                      :applied?    (boolean changed?)
+                      :port-index  port
                       :style       style}
                 changes (when changed? {:good-output-b ports})]
             [node' changes info])))
@@ -233,9 +234,9 @@
                                          port
                                          good-outputb-rdm-disabled-bit
                                          disable?)
-                info {:description desc,
-                      :applied?    (boolean changed?),
-                      :port-index  port,
+                info {:description desc
+                      :applied?    (boolean changed?)
+                      :port-index  port
                       :state       state}
                 changes (when changed? {:good-output-b ports})]
             [node' changes info])))
@@ -251,10 +252,10 @@
                 after (nth next port 0)
                 changed? (not= before after)
                 info {:description
-                      (if (= direction :tx) :port-output :port-input),
-                      :applied?           changed?,
-                      :port-index         port,
-                      :direction          direction,
+                      (if (= direction :tx) :port-output :port-input)
+                      :applied?           changed?
+                      :port-index         port
+                      :direction          direction
                       :flush-subscribers? (= direction :rx)}]
             (if changed?
               [(assoc node :port-types next) {:port-types next} info]
@@ -263,19 +264,19 @@
                       valid-port? (valid-port-index? port)]
                   (if-not valid-port?
                     [node nil
-                     {:description :merge-mode,
-                      :applied?    false,
-                      :port-index  port,
+                     {:description :merge-mode
+                      :applied?    false
+                      :port-index  port
                       :mode        mode}]
                     (let [[node' changed? ports] (set-good-output-bit
                                                    node
                                                    port
                                                    good-output-ltp-bit
                                                    (= mode :ltp))
-                          info {:description :merge-mode,
-                                :applied?    (boolean changed?),
-                                :port-index  port,
-                                :mode        mode,
+                          info {:description :merge-mode
+                                :applied?    (boolean changed?)
+                                :port-index  port
+                                :mode        mode
                                 :merge-directive
                                 {:type :set-mode, :port port, :mode mode}}
                           changes (when changed? {:good-output-a ports})]
@@ -286,16 +287,16 @@
             sacn? (= protocol :sacn)]
         (if-not valid-port?
           [node nil
-           {:description :output-protocol,
-            :applied?    false,
-            :port-index  port,
+           {:description :output-protocol
+            :applied?    false
+            :port-index  port
             :protocol    protocol}]
           (let [[node' changed? ports]
                 (set-good-output-bit node port good-output-sacn-bit sacn?)
-                info {:description :output-protocol,
-                      :applied?    (boolean changed?),
-                      :port-index  port,
-                      :protocol    protocol,
+                info {:description :output-protocol
+                      :applied?    (boolean changed?)
+                      :port-index  port
+                      :protocol    protocol
                       :output-directive
                       {:type :set-protocol, :port port, :protocol protocol}}
                 changes (when changed? {:good-output-a ports})]
@@ -308,10 +309,10 @@
             node' (cond-> node
                           changed? (assoc :background-queue-policy clamped))
             changes (when changed? {:background-queue-policy clamped})
-            info {:description   :background-queue-policy,
-                  :applied?      changed?,
-                  :value         clamped,
-                  :rdm-directive {:type   :set-background-queue-policy,
+            info {:description   :background-queue-policy
+                  :applied?      changed?
+                  :value         clamped
+                  :rdm-directive {:type   :set-background-queue-policy
                                   :policy clamped}}]
         [node' changes info])
       :else [node nil
@@ -366,15 +367,15 @@
                 (assoc :acn-priority priority'))
         [node-final command-changes command-info] (apply-command node' command)
         merged (merge base-changes (or command-changes {}))]
-    {:node         node-final,
-     :changes      (not-empty merged),
+    {:node         node-final
+     :changes      (not-empty merged)
      :command-info (when command command-info)}))
 
 (def ^:private artipprog-defaults
-  {:ip          [0 0 0 0],
-   :subnet-mask [255 0 0 0],
-   :gateway     [0 0 0 0],
-   :port        0x1936,
+  {:ip          [0 0 0 0]
+   :subnet-mask [255 0 0 0]
+   :gateway     [0 0 0 0]
+   :port        0x1936
    :dhcp?       false})
 
 (defn apply-artipprog
@@ -435,16 +436,16 @@
                   (bit-or status-old 0x02)
                   (bit-and status-old 0xFD))
         node-final (assoc node' :status2 status2)
-        reply {:op          :artipprogreply,
-               :ip          ip-reply,
-               :subnet-mask mask-reply,
-               :gateway     gateway-reply,
-               :port        port-reply,
+        reply {:op          :artipprogreply
+               :ip          ip-reply
+               :subnet-mask mask-reply
+               :gateway     gateway-reply
+               :port        port-reply
                :dhcp?       (:dhcp? network')}]
-    {:node    node-final,
-     :network network',
-     :changes (not-empty changes),
-     :dhcp?   (:dhcp? network'),
+    {:node    node-final
+     :network network'
+     :changes (not-empty changes)
+     :dhcp?   (:dhcp? network')
      :reply   reply}))
 
 (defn- normalize-disable-flags
@@ -487,10 +488,10 @@
         node-final (if apply-base? (assoc node :good-input next-good) node)
         changes (when (and apply-base? (not= good-input next-good))
                   {:good-input next-good})]
-    {:node               node-final,
-     :disabled           disable-flags,
-     :changes            changes,
-     :applied-bind-index requested-bind,
+    {:node               node-final
+     :disabled           disable-flags
+     :changes            changes
+     :applied-bind-index requested-bind
      :applied-to-base?   apply-base?}))
 
 (defn describe-artaddress-command
@@ -622,7 +623,7 @@
   (programming/apply-artaddress {:short-name "Old"} {} {:short-name "New"})
   ;; => {:node {:short-name "New"} ...}
   ;; Generate acknowledgement
-  (programming/artaddress-acknowledgements {:applied?    true,
+  (programming/artaddress-acknowledgements {:applied?    true
                                             :description :led-normal}
                                            {})
   ;; => [{:text "LED indicators set to normal", :priority 0x10}]

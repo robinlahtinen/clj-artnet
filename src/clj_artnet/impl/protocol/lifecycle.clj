@@ -3,14 +3,15 @@
 
 (ns clj-artnet.impl.protocol.lifecycle
   "State lifecycle management: initialization and cap sync."
-  (:require [clj-artnet.impl.protocol.data :as data]
-            [clj-artnet.impl.protocol.diagnostics :as diagnostics]
-            [clj-artnet.impl.protocol.dmx-helpers :as dmx]
-            [clj-artnet.impl.protocol.firmware :as firmware]
-            [clj-artnet.impl.protocol.node-state :as state]
-            [clj-artnet.impl.protocol.poll :as poll]
-            [clj-artnet.impl.protocol.rdm.discovery :as rdm.discovery]
-            [clj-artnet.impl.protocol.triggers :as triggers]))
+  (:require
+    [clj-artnet.impl.protocol.data :as data]
+    [clj-artnet.impl.protocol.diagnostics :as diagnostics]
+    [clj-artnet.impl.protocol.dmx-helpers :as dmx]
+    [clj-artnet.impl.protocol.firmware :as firmware]
+    [clj-artnet.impl.protocol.node-state :as state]
+    [clj-artnet.impl.protocol.poll :as poll]
+    [clj-artnet.impl.protocol.rdm.discovery :as rdm.discovery]
+    [clj-artnet.impl.protocol.triggers :as triggers]))
 
 (set! *warn-on-reflection* true)
 
@@ -22,7 +23,7 @@
 
 (defn initial-capability-tracker
   [user-node]
-  {:status2 {:manual? (contains? user-node :status2)},
+  {:status2 {:manual? (contains? user-node :status2)}
    :status3 {:manual? (contains? user-node :status3)}})
 
 (defn mark-capability-manual
@@ -84,7 +85,7 @@
 (defn refresh-capability-status
   [state]
   (let [tracker (:capability-tracker state)
-        auto-flags {:status2 (capability-auto? tracker :status2),
+        auto-flags {:status2 (capability-auto? tracker :status2)
                     :status3 (capability-auto? tracker :status3)}
         capabilities (:capabilities state)
         status2-mask (if (get-in capabilities [:status2 :override])
@@ -194,65 +195,65 @@
         failsafe-config (dmx/normalize-failsafe-config failsafe)
         trigger-config (triggers/normalize-config triggers)
         command-label-state (state/ensure-command-labels command-labels)
-        dmx-state (dmx/initial-state {:sync-config     sync-config,
+        dmx-state (dmx/initial-state {:sync-config     sync-config
                                       :failsafe-config failsafe-config})
-        base-state {:node               runtime-node,
-                    :node-defaults      node-defaults,
-                    :network            network-defaults,
-                    :network-defaults   network-defaults,
-                    :programming        {:on-change (:on-change programming-config)},
-                    :command-labels     command-label-state,
-                    :inputs             {:disabled        [false false false false],
-                                         :per-page        {},
-                                         :last-bind-index 1},
-                    :rdm                rdm-state,
-                    :callbacks          callbacks,
-                    :firmware           firmware-state,
-                    :data               data-config,
-                    :capabilities       capabilities-config,
-                    :dmx                dmx-state,
-                    :discovery          discovery-config,
-                    :random-delay-fn    random-delay-fn,
-                    :peers              {},
-                    :capability-tracker capability-tracker,
+        base-state {:node               runtime-node
+                    :node-defaults      node-defaults
+                    :network            network-defaults
+                    :network-defaults   network-defaults
+                    :programming        {:on-change (:on-change programming-config)}
+                    :command-labels     command-label-state
+                    :inputs             {:disabled        [false false false false]
+                                         :per-page        {}
+                                         :last-bind-index 1}
+                    :rdm                rdm-state
+                    :callbacks          callbacks
+                    :firmware           firmware-state
+                    :data               data-config
+                    :capabilities       capabilities-config
+                    :dmx                dmx-state
+                    :discovery          discovery-config
+                    :random-delay-fn    random-delay-fn
+                    :peers              {}
+                    :capability-tracker capability-tracker
                     :diagnostics
-                    {:subscribers                {},
-                     :broadcast-target           (:broadcast-target diagnostics-config),
-                     :subscriber-ttl-ns          (:subscriber-ttl-ns diagnostics-config),
+                    {:subscribers                {}
+                     :broadcast-target           (:broadcast-target diagnostics-config)
+                     :subscriber-ttl-ns          (:subscriber-ttl-ns diagnostics-config)
                      :subscriber-warning-threshold
-                     (:subscriber-warning-threshold diagnostics-config),
-                     :rate-limit-hz              (:rate-limit-hz diagnostics-config),
-                     :min-interval-ns            (:min-interval-ns diagnostics-config),
-                     :subscriber-warning-raised? false,
-                     :rate-warning-raised?       false,
-                     :last-emitted-ns            nil,
-                     :last-dropped-ns            nil},
-                    :triggers           (assoc trigger-config :history {}),
-                    :stats              {:rx-artdmx                 0,
-                                         :rx-artnzs                 0,
-                                         :rx-artvlc                 0,
-                                         :rx-artinput               0,
-                                         :tx-artdmx                 0,
-                                         :tx-artrdm                 0,
-                                         :rx-artsync                0,
-                                         :rx-artnzs-throttled       0,
-                                         :poll-requests             0,
-                                         :diagnostics-sent          0,
-                                         :diagnostics-throttled     0,
-                                         :address-requests          0,
-                                         :ip-program-requests       0,
-                                         :tod-requests              0,
-                                         :tod-controls              0,
-                                         :rdm-commands              0,
-                                         :rdm-invalid-command-class 0,
-                                         :rdm-sub-commands          0,
-                                         :rdm-sub-invalid           0,
-                                         :rdm-sub-proxied           0,
-                                         :firmware-requests         0,
-                                         :trigger-requests          0,
-                                         :trigger-throttled         0,
-                                         :trigger-replies           0,
-                                         :command-requests          0,
+                     (:subscriber-warning-threshold diagnostics-config)
+                     :rate-limit-hz              (:rate-limit-hz diagnostics-config)
+                     :min-interval-ns            (:min-interval-ns diagnostics-config)
+                     :subscriber-warning-raised? false
+                     :rate-warning-raised?       false
+                     :last-emitted-ns            nil
+                     :last-dropped-ns            nil}
+                    :triggers           (assoc trigger-config :history {})
+                    :stats              {:rx-artdmx                 0
+                                         :rx-artnzs                 0
+                                         :rx-artvlc                 0
+                                         :rx-artinput               0
+                                         :tx-artdmx                 0
+                                         :tx-artrdm                 0
+                                         :rx-artsync                0
+                                         :rx-artnzs-throttled       0
+                                         :poll-requests             0
+                                         :diagnostics-sent          0
+                                         :diagnostics-throttled     0
+                                         :address-requests          0
+                                         :ip-program-requests       0
+                                         :tod-requests              0
+                                         :tod-controls              0
+                                         :rdm-commands              0
+                                         :rdm-invalid-command-class 0
+                                         :rdm-sub-commands          0
+                                         :rdm-sub-invalid           0
+                                         :rdm-sub-proxied           0
+                                         :firmware-requests         0
+                                         :trigger-requests          0
+                                         :trigger-throttled         0
+                                         :trigger-replies           0
+                                         :command-requests          0
                                          :data-requests             0}}]
     (-> base-state
         refresh-node-state
@@ -276,10 +277,10 @@
         summary
         (when diagnostics
           (let [ttl-ns (long (or (:subscriber-ttl-ns diagnostics) 0))]
-            {:subscriber-count  (count (or subscribers [])),
-             :subscriber-ttl-ms (nanos->millis ttl-ns),
-             :warning-threshold (:subscriber-warning-threshold diagnostics),
-             :warning?          (true? (:subscriber-warning-raised? diagnostics)),
+            {:subscriber-count  (count (or subscribers []))
+             :subscriber-ttl-ms (nanos->millis ttl-ns)
+             :warning-threshold (:subscriber-warning-threshold diagnostics)
+             :warning?          (true? (:subscriber-warning-raised? diagnostics))
              :last-updated-ns   (or last-updated 0)}))
         dmx-snapshot (when dmx? (dmx/snapshot state'))]
     (cond-> selected

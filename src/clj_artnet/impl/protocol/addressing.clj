@@ -39,20 +39,20 @@
     :universe     - int
     :port-address - int"
   [port-address]
-  {:net          (bit-and (bit-shift-right port-address 8) 0x7F),
-   :sub-net      (bit-and (bit-shift-right port-address 4) 0x0F),
-   :universe     (bit-and port-address 0x0F),
+  {:net          (bit-and (bit-shift-right port-address 8) 0x7F)
+   :sub-net      (bit-and (bit-shift-right port-address 4) 0x0F)
+   :universe     (bit-and port-address 0x0F)
    :port-address port-address})
 
 (defn valid-port-address?
-  "Returns true if port-address is valid (1-32767)."
+  "Returns true if Port-Address is valid (1-32767)."
   [port-address]
   (and (integer? port-address)
        (>= port-address min-port-address)
        (<= port-address max-port-address)))
 
 (defn deprecated-port-address?
-  "Returns true if port-address is deprecated (0)."
+  "Returns true if Port-Address is deprecated (0)."
   [port-address]
   (= port-address 0))
 
@@ -67,12 +67,12 @@
                     {:type :invalid-port-address, :port-address port-address})))
   (when (> port-address max-port-address)
     (throw (ex-info "Port-Address exceeds maximum value"
-                    {:type         :invalid-port-address,
-                     :port-address port-address,
+                    {:type         :invalid-port-address
+                     :port-address port-address
                      :max          max-port-address})))
   (when (zero? port-address)
     (throw (ex-info "Port-Address 0 is deprecated"
-                    {:type         :deprecated-port-address,
+                    {:type         :deprecated-port-address
                      :port-address port-address})))
   port-address)
 
@@ -90,7 +90,7 @@
               (or (some? net) (some? sub-net) (some? universe))
               (compose-port-address (or net 0) (or sub-net 0) (or universe 0))
               :else (throw (ex-info "No port-address specified"
-                                    {:type :missing-port-address,
+                                    {:type :missing-port-address
                                      :opts opts})))]
     (validate-port-address! addr)))
 

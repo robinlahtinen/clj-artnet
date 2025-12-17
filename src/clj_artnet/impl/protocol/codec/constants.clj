@@ -5,8 +5,10 @@
   "Art-Net 4 protocol constants, opcodes, and lookup tables.
    Single source of truth for all protocol-level values derived from
    the Art-Net 4 specification."
-  (:require [clj-artnet.impl.protocol.codec.spec :as spec])
-  (:import (java.nio.charset StandardCharsets)))
+  (:require
+    [clj-artnet.impl.protocol.codec.spec :as spec])
+  (:import
+    (java.nio.charset StandardCharsets)))
 
 (def ^:const protocol-version "Art-Net protocol version (14 for Art-Net 4)." 14)
 
@@ -128,42 +130,42 @@
 
 (def ^:const opcode->keyword
   "Map from numeric Art-Net opcode to keyword."
-  {0x2000 :artpoll,
-   0x2100 :artpollreply,
-   0x2300 :artdiagdata,
-   0x2400 :artcommand,
-   0x2700 :artdatarequest,
-   0x2800 :artdatareply,
-   0x5000 :artdmx,
-   0x5100 :artnzs,
-   0x5200 :artsync,
-   0x6000 :artaddress,
-   0x7000 :artinput,
-   0x8000 :arttodrequest,
-   0x8100 :arttoddata,
-   0x8200 :arttodcontrol,
-   0x8300 :artrdm,
-   0x8400 :artrdmsub,
-   0x9000 :artmedia,
-   0x9100 :artmediapatch,
-   0x9200 :artmediacontrol,
-   0x9300 :artmediacontrolreply,
-   0x9700 :arttimecode,
-   0x9800 :arttimesync,
-   0x9900 :arttrigger,
-   0x9A00 :artdirectory,
-   0x9B00 :artdirectoryreply,
-   0xA010 :artvideosetup,
-   0xA020 :artvideopalette,
-   0xA040 :artvideodata,
-   0xF000 :artmacmaster,
-   0xF100 :artmacslave,
-   0xF200 :artfirmwaremaster,
-   0xF300 :artfirmwarereply,
-   0xF400 :artfiletnmaster,
-   0xF500 :artfilefnmaster,
-   0xF600 :artfilefnreply,
-   0xF800 :artipprog,
+  {0x2000 :artpoll
+   0x2100 :artpollreply
+   0x2300 :artdiagdata
+   0x2400 :artcommand
+   0x2700 :artdatarequest
+   0x2800 :artdatareply
+   0x5000 :artdmx
+   0x5100 :artnzs
+   0x5200 :artsync
+   0x6000 :artaddress
+   0x7000 :artinput
+   0x8000 :arttodrequest
+   0x8100 :arttoddata
+   0x8200 :arttodcontrol
+   0x8300 :artrdm
+   0x8400 :artrdmsub
+   0x9000 :artmedia
+   0x9100 :artmediapatch
+   0x9200 :artmediacontrol
+   0x9300 :artmediacontrolreply
+   0x9700 :arttimecode
+   0x9800 :arttimesync
+   0x9900 :arttrigger
+   0x9A00 :artdirectory
+   0x9B00 :artdirectoryreply
+   0xA010 :artvideosetup
+   0xA020 :artvideopalette
+   0xA040 :artvideodata
+   0xF000 :artmacmaster
+   0xF100 :artmacslave
+   0xF200 :artfirmwaremaster
+   0xF300 :artfirmwarereply
+   0xF400 :artfiletnmaster
+   0xF500 :artfilefnmaster
+   0xF600 :artfilefnreply
+   0xF800 :artipprog
    0xF900 :artipprogreply})
 
 (def ^:const keyword->opcode
@@ -188,16 +190,16 @@
 
 (def ^:const datarequest-code->keyword
   "Map from ArtDataRequest code to keyword."
-  {0x0000 :dr-poll,
-   0x0001 :dr-url-product,
-   0x0002 :dr-url-user-guide,
-   0x0003 :dr-url-support,
-   0x0004 :dr-url-pers-udr,
-   0x0005 :dr-url-pers-gdtf,
-   0x0006 :dr-ip-product,
-   0x0007 :dr-ip-user-guide,
-   0x0008 :dr-ip-support,
-   0x0009 :dr-ip-pers-udr,
+  {0x0000 :dr-poll
+   0x0001 :dr-url-product
+   0x0002 :dr-url-user-guide
+   0x0003 :dr-url-support
+   0x0004 :dr-url-pers-udr
+   0x0005 :dr-url-pers-gdtf
+   0x0006 :dr-ip-product
+   0x0007 :dr-ip-user-guide
+   0x0008 :dr-ip-support
+   0x0009 :dr-ip-pers-udr
    0x000A :dr-ip-pers-gdtf})
 
 (def ^:const datarequest-keyword->code
@@ -223,11 +225,11 @@
 
 (def firmware-master-type->info
   "Map from firmware master type code to an info map."
-  {0x00 {:block-type :firmware-first, :transfer :firmware, :stage :first},
-   0x01 {:block-type :firmware-continue, :transfer :firmware, :stage :continue},
-   0x02 {:block-type :firmware-last, :transfer :firmware, :stage :last},
-   0x03 {:block-type :ubea-first, :transfer :ubea, :stage :first},
-   0x04 {:block-type :ubea-continue, :transfer :ubea, :stage :continue},
+  {0x00 {:block-type :firmware-first, :transfer :firmware, :stage :first}
+   0x01 {:block-type :firmware-continue, :transfer :firmware, :stage :continue}
+   0x02 {:block-type :firmware-last, :transfer :firmware, :stage :last}
+   0x03 {:block-type :ubea-first, :transfer :ubea, :stage :first}
+   0x04 {:block-type :ubea-continue, :transfer :ubea, :stage :continue}
    0x05 {:block-type :ubea-last, :transfer :ubea, :stage :last}})
 
 (def ^:const esta-man-prototype-id

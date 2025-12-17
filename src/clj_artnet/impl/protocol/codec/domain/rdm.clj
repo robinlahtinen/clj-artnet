@@ -3,10 +3,12 @@
 
 (ns clj-artnet.impl.protocol.codec.domain.rdm
   "Encode/decode for RDM family packets: ArtRdm, ArtRdmSub, ArtTodRequest, ArtTodData, ArtTodControl."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.primitives :as prim])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.primitives :as prim])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -41,9 +43,9 @@
                         {:length length}))))
     (when (and expected (not= length expected))
       (throw (ex-info "ArtRdmSub payload length does not match command class"
-                      {:command-class command-class,
-                       :expected      expected,
-                       :actual        length,
+                      {:command-class command-class
+                       :expected      expected
+                       :actual        length
                        :sub-count     sub-count})))
     (when (> length const/artrdmsub-max-bytes)
       (throw (ex-info "ArtRdmSub payload exceeds maximum length"
@@ -53,8 +55,8 @@
 (defn encode-artrdm!
   "Encode ArtRdm packet into buffer."
   [^ByteBuffer buf
-   {:keys [rdm-version fifo-available fifo-max net command address rdm-packet],
-    :or   {rdm-version 1, fifo-available 0, fifo-max 0, net 0, address 0},
+   {:keys [rdm-version fifo-available fifo-max net command address rdm-packet]
+    :or   {rdm-version 1, fifo-available 0, fifo-max 0, net 0, address 0}
     :as   packet}]
   (when-not (some? command)
     (throw (ex-info "ArtRdm packet requires :command"
@@ -92,14 +94,14 @@
     (.position view const/artrdm-header-size)
     (.limit view (.limit buf))
     (let [payload (.asReadOnlyBuffer (.slice view))]
-      {:op             :artrdm,
-       :rdm-version    (prim/safe-ubyte buf 12),
-       :fifo-available (prim/safe-ubyte buf 19),
-       :fifo-max       (prim/safe-ubyte buf 20),
-       :net            (prim/safe-ubyte buf 21),
-       :command        (prim/safe-ubyte buf 22),
-       :address        (prim/safe-ubyte buf 23),
-       :payload-length payload-length,
+      {:op             :artrdm
+       :rdm-version    (prim/safe-ubyte buf 12)
+       :fifo-available (prim/safe-ubyte buf 19)
+       :fifo-max       (prim/safe-ubyte buf 20)
+       :net            (prim/safe-ubyte buf 21)
+       :command        (prim/safe-ubyte buf 22)
+       :address        (prim/safe-ubyte buf 23)
+       :payload-length payload-length
        :rdm-packet     payload})))
 
 (defn encode-artrdmsub!
@@ -168,9 +170,9 @@
                    available)
         _ (when (not= available expected)
             (throw (ex-info "ArtRdmSub payload length mismatch"
-                            {:command-class command-class,
-                             :expected      expected,
-                             :actual        available,
+                            {:command-class command-class
+                             :expected      expected
+                             :actual        available
                              :sub-count     sub-count})))
         ^ByteBuffer view (.duplicate buf)]
     (.position view const/artrdmsub-header-size)
@@ -182,17 +184,17 @@
                           (bit-or
                             (bit-shift-left (bit-and (aget bytes idx) 0xFF) 8)
                             (bit-and (aget bytes (inc idx)) 0xFF))))]
-        {:op               :artrdmsub,
-         :protocol-version protocol,
-         :rdm-version      rdm-ver,
-         :uid              uid,
-         :command-class    command-class,
-         :command          (get const/rdm-command-class->keyword command-class),
-         :parameter-id     pid,
-         :sub-device       sub-device,
-         :sub-count        sub-count,
-         :payload-length   available,
-         :values           values,
+        {:op               :artrdmsub
+         :protocol-version protocol
+         :rdm-version      rdm-ver
+         :uid              uid
+         :command-class    command-class
+         :command          (get const/rdm-command-class->keyword command-class)
+         :parameter-id     pid
+         :sub-device       sub-device
+         :sub-count        sub-count
+         :payload-length   available
+         :values           values
          :data             payload}))))
 
 (defn decode-arttodrequest
@@ -210,29 +212,29 @@
                       {:required required, :limit (.limit buf)})))
     (let [addresses (vec (for [idx (range add-count)]
                            (prim/safe-ubyte buf (+ 24 idx))))]
-      {:op        :arttodrequest,
-       :net       net,
-       :command   command,
-       :add-count add-count,
+      {:op        :arttodrequest
+       :net       net
+       :command   command
+       :add-count add-count
        :addresses addresses})))
 
 (defn encode-arttoddata!
   "Encode ArtTodData packet into a buffer."
   [^ByteBuffer buf
    {:keys [rdm-version port bind-index net command-response address uid-total
-           block-count tod],
-    :or   {rdm-version      1,
-           port             1,
-           bind-index       1,
-           net              0,
-           command-response 0,
-           address          0,
+           block-count tod]
+    :or   {rdm-version      1
+           port             1
+           bind-index       1
+           net              0
+           command-response 0
+           address          0
            block-count      0}}]
   (let [uids (mapv common/normalize-uid (or tod []))
         uid-count (count uids)
         _ (when (> uid-count const/max-tod-uids-per-packet)
             (throw (ex-info "Too many UIDs for single ArtTodData packet"
-                            {:uid-count uid-count,
+                            {:uid-count uid-count
                              :max       const/max-tod-uids-per-packet})))
         total (or uid-total uid-count)
         payload-bytes (* 6 uid-count)
@@ -285,16 +287,16 @@
                      (recur (inc idx) (conj acc uid) (+ offset 6)))))
           uid-total (bit-or (bit-shift-left (prim/safe-ubyte buf 24) 8)
                             (prim/safe-ubyte buf 25))]
-      {:op               :arttoddata,
-       :rdm-version      (prim/safe-ubyte buf 12),
-       :port             (prim/safe-ubyte buf 13),
-       :bind-index       (prim/safe-ubyte buf 20),
-       :net              (prim/safe-ubyte buf 21),
-       :command-response (prim/safe-ubyte buf 22),
-       :address          (prim/safe-ubyte buf 23),
-       :uid-total        uid-total,
-       :block-count      (prim/safe-ubyte buf 26),
-       :uid-count        uid-count,
+      {:op               :arttoddata
+       :rdm-version      (prim/safe-ubyte buf 12)
+       :port             (prim/safe-ubyte buf 13)
+       :bind-index       (prim/safe-ubyte buf 20)
+       :net              (prim/safe-ubyte buf 21)
+       :command-response (prim/safe-ubyte buf 22)
+       :address          (prim/safe-ubyte buf 23)
+       :uid-total        uid-total
+       :block-count      (prim/safe-ubyte buf 26)
+       :uid-count        uid-count
        :tod              uids})))
 
 (defn decode-arttodcontrol
@@ -302,7 +304,7 @@
   [^ByteBuffer buf]
   (when (< (.limit buf) const/arttodcontrol-length)
     (throw (ex-info "Truncated ArtTodControl" {:limit (.limit buf)})))
-  {:op      :arttodcontrol,
-   :net     (prim/safe-ubyte buf 21),
-   :command (prim/safe-ubyte buf 22),
+  {:op      :arttodcontrol
+   :net     (prim/safe-ubyte buf 21)
+   :command (prim/safe-ubyte buf 22)
    :address (prim/safe-ubyte buf 23)})

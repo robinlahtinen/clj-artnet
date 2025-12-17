@@ -42,20 +42,20 @@
          fs-timeout (or (:idle-timeout-ns failsafe-config)
                         (:idle-timeout-ns config)
                         default-failsafe-timeout-ns)]
-     {:sync        {:mode          sync-mode,
-                    :buffer-ttl-ns (long buffer-ttl-ns),
-                    :active-mode   nil,
-                    :waiting-since nil,
-                    :last-sync-at  nil},
-      :sync-buffer {},
-      :merge       {:per-port {}, :ports {}, :cancel-armed? false},
-      :failsafe    {:config        {:enabled?        fs-enabled,
-                                    :idle-timeout-ns (long fs-timeout)},
-                    :scene         {},
-                    :recorded-at   nil,
-                    :playback      {},
-                    :missing-scene {}},
-      :throughput  {:artnzs {}},
+     {:sync        {:mode          sync-mode
+                    :buffer-ttl-ns (long buffer-ttl-ns)
+                    :active-mode   nil
+                    :waiting-since nil
+                    :last-sync-at  nil}
+      :sync-buffer {}
+      :merge       {:per-port {}, :ports {}, :cancel-armed? false}
+      :failsafe    {:config        {:enabled?        fs-enabled
+                                    :idle-timeout-ns (long fs-timeout)}
+                    :scene         {}
+                    :recorded-at   nil
+                    :playback      {}
+                    :missing-scene {}}
+      :throughput  {:artnzs {}}
       :sequence    0})))
 
 (defn initial-state
@@ -69,18 +69,18 @@
     :rdm       - map, RDM config"
   ([] (initial-state {}))
   ([config]
-   {:node        (or (:node config) {}),
-    :network     (or (:network config) {}),
-    :callbacks   (or (:callbacks config) {}),
-    :peers       {},
-    :stats       {:rx-packets 0,
-                  :tx-packets 0,
-                  :rx-artpoll 0,
-                  :rx-artdmx  0,
-                  :rx-artsync 0,
-                  :rx-artrdm  0},
-    :dmx         (initial-dmx-state (:dmx config)),
-    :rdm         {:tod {}, :discovery {:state :idle, :pending-requests []}},
+   {:node        (or (:node config) {})
+    :network     (or (:network config) {})
+    :callbacks   (or (:callbacks config) {})
+    :peers       {}
+    :stats       {:rx-packets 0
+                  :tx-packets 0
+                  :rx-artpoll 0
+                  :rx-artdmx  0
+                  :rx-artsync 0
+                  :rx-artrdm  0}
+    :dmx         (initial-dmx-state (:dmx config))
+    :rdm         {:tod {}, :discovery {:state :idle, :pending-requests []}}
     :diagnostics {:subscribers {}}}))
 
 (defn node-config

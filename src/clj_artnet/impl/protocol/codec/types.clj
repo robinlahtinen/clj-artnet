@@ -5,9 +5,11 @@
   "Flyweight packet types for zero-allocation hot paths.
    ArtDmx and ArtNzs packets use these types to provide map-like
    access without allocating intermediate data structures."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const])
-  (:import (clojure.lang ILookup)
-           (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const])
+  (:import
+    (clojure.lang ILookup)
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -81,9 +83,9 @@
   Object
   (toString [_]
     (str "#ArtNzsPacket"
-         {:sequence   sequence,
-          :start-code start-code,
-          :port       port-address,
+         {:sequence   sequence
+          :start-code start-code
+          :port       port-address
           :length     length})))
 
 (defn payload-buffer

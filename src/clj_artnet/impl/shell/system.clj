@@ -3,9 +3,10 @@
 
    Integrates shell components and provides higher-level system operations
    (lifecycle, effect execution). Delegates core I/O to shell modules."
-  (:require [clj-artnet.impl.protocol.effects :as effects]
-            [clj-artnet.impl.protocol.state :as proto.state]
-            [clj-artnet.impl.shell.lifecycle :as lifecycle]))
+  (:require
+    [clj-artnet.impl.protocol.effects :as effects]
+    [clj-artnet.impl.protocol.state :as proto.state]
+    [clj-artnet.impl.shell.lifecycle :as lifecycle]))
 
 (set! *warn-on-reflection* true)
 

@@ -3,9 +3,11 @@
 
 (ns clj-artnet.impl.protocol.codec.domain.firmware
   "Encode/decode for Firmware family packets: ArtFirmwareMaster, ArtFirmwareReply."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.primitives :as prim])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.primitives :as prim])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
@@ -33,20 +35,20 @@
         payload-length (max 0 (- total const/artfirmwaremaster-header-size))]
     (when (> payload-length const/artfirmwaremaster-max-bytes)
       (throw (ex-info "ArtFirmwareMaster data exceeds maximum block size"
-                      {:payload payload-length,
+                      {:payload payload-length
                        :max     const/artfirmwaremaster-max-bytes})))
     (let [data-view (.duplicate buf)]
       (.position data-view const/artfirmwaremaster-header-size)
       (.limit data-view total)
       (let [slice (.asReadOnlyBuffer (.slice data-view))]
-        {:op              :artfirmwaremaster,
-         :type-code       type-code,
-         :block-type      (:block-type info),
-         :transfer        (:transfer info),
-         :stage           (:stage info),
-         :block-id        block-id,
-         :firmware-length firmware-length,
-         :data-length     payload-length,
+        {:op              :artfirmwaremaster
+         :type-code       type-code
+         :block-type      (:block-type info)
+         :transfer        (:transfer info)
+         :stage           (:stage info)
+         :block-id        block-id
+         :firmware-length firmware-length
+         :data-length     payload-length
          :data            slice}))))
 
 (defn encode-artfirmwarereply!

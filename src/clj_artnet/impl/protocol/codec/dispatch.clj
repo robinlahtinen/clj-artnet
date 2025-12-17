@@ -5,17 +5,19 @@
   "Central opcode dispatch for Art-Net packet encoding and decoding.
    Routes to domain-specific handlers while maintaining the original
    public API contract."
-  (:require [clj-artnet.impl.protocol.codec.constants :as const]
-            [clj-artnet.impl.protocol.codec.domain.common :as common]
-            [clj-artnet.impl.protocol.codec.domain.config :as config]
-            [clj-artnet.impl.protocol.codec.domain.data :as data]
-            [clj-artnet.impl.protocol.codec.domain.diag :as diag]
-            [clj-artnet.impl.protocol.codec.domain.dmx :as dmx]
-            [clj-artnet.impl.protocol.codec.domain.firmware :as firmware]
-            [clj-artnet.impl.protocol.codec.domain.poll :as poll]
-            [clj-artnet.impl.protocol.codec.domain.rdm :as rdm]
-            [clj-artnet.impl.protocol.codec.primitives :as prim])
-  (:import (java.nio ByteBuffer)))
+  (:require
+    [clj-artnet.impl.protocol.codec.constants :as const]
+    [clj-artnet.impl.protocol.codec.domain.common :as common]
+    [clj-artnet.impl.protocol.codec.domain.config :as config]
+    [clj-artnet.impl.protocol.codec.domain.data :as data]
+    [clj-artnet.impl.protocol.codec.domain.diag :as diag]
+    [clj-artnet.impl.protocol.codec.domain.dmx :as dmx]
+    [clj-artnet.impl.protocol.codec.domain.firmware :as firmware]
+    [clj-artnet.impl.protocol.codec.domain.poll :as poll]
+    [clj-artnet.impl.protocol.codec.domain.rdm :as rdm]
+    [clj-artnet.impl.protocol.codec.primitives :as prim])
+  (:import
+    (java.nio ByteBuffer)))
 
 (set! *warn-on-reflection* true)
 
