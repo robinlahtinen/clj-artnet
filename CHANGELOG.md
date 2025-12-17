@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **ESTA manufacturer ID default.** Changed default `:esta-man` from `0x0000` to `0x7FF0` (ESTA prototype ID) to comply
   with ANSI E1.20 Section 5.1. A WARN-level log is emitted on startup if `:esta-man` is not explicitly configured.
+- **Non-standard UDP port warning.** Non-standard Art-Net UDP ports now trigger a WARN log to alert users while still
+  allowing custom ports for local testing.
+
+### Fixed
+
+- **Bind configuration propagation.** `:bind :host` now correctly propagates to node identity (ArtPollReply IP address).
+  Previously, binding to a specific host would still advertise `0.0.0.0`.
+- **Bind port propagation.** `:bind :port` now correctly propagates to node identity when `:node :port` is not
+  explicitly set.
+- **IP address auto-detection.** When binding to `0.0.0.0`, the node now advertises its primary network interface IP
+  address instead of the invalid `0.0.0.0` address. Auto-detection prefers Art-Net standard ranges (`2.x.x.x`,
+  `10.x.x.x`) per the specification.
 
 ## [0.1.0] - 2025-12-15
 

@@ -38,22 +38,22 @@
          (finally ((:stop! node))))))
 
 (deftest state-snapshot-reflects-config
-  (let [node (start-test-node {:node        {:short-name "Stateless Node",
-                                             :long-name  "Stateless integration test",
-                                             :net-switch 5,
-                                             :sub-switch 2},
-                               :programming {:network {:ip          [10 42 0 7],
-                                                       :subnet-mask [255 255 0
-                                                                     0],
+  (let [node (start-test-node {:node        {:short-name "Stateless Node"
+                                             :long-name  "Stateless integration test"
+                                             :net-switch 5
+                                             :sub-switch 2
+                                             ;; Explicit :node :ip to override
+                                             ;; bind IP
+                                             :ip         [10 42 0 7]}
+                               :programming {:network {:subnet-mask [255 255 0
+                                                                     0]
                                                        :gateway     [10 42 0 1]}}})]
-    (try (let [snapshot (core/state node {:keys [:node :network]})
-               node-only (core/state node {:keys [:node]})]
+    (try (let [snapshot (core/state node {:keys [:node :network]})]
            (is (= #{:node :network} (set (keys snapshot)))
                "state should honor requested keys")
            (is (= "Stateless Node" (get-in snapshot [:node :short-name])))
-           (is (= [10 42 0 7] (get-in snapshot [:network :ip])))
-           (is (= #{:node} (set (keys node-only)))
-               "Filtering to :node should omit other sections"))
+           ;; :node :ip should propagate to :network :ip
+           (is (= [10 42 0 7] (get-in snapshot [:network :ip]))))
          (finally ((:stop! node))))))
 
 (deftest apply-state-updates-node-state

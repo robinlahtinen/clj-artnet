@@ -73,13 +73,39 @@ The `:failsafe` key:
 
 The `:bind` key controls the local socket address:
 
-| Key     | Type   | Default     | Description              |
-|---------|--------|-------------|--------------------------|
-| `:host` | string | `"0.0.0.0"` | Local address to bind to |
-| `:port` | int    | `6454`      | Local UDP port to bind   |
+| Key     | Type   | Default     | Description                 |
+|---------|--------|-------------|-----------------------------|
+| `:host` | string | `"0.0.0.0"` | Local IP address to bind to |
+| `:port` | int    | `6454`      | Local UDP port to bind      |
 
-> **Note**: `:bind` controls where your node listens for packets. To change what your node advertises to
-> other devices (its identity in ArtPollReply), configure `:node :ip` instead.
+> **Note**: The `:bind` key controls where the node listens for packets. The library automatically resolves the
+> advertised identity from bind configuration unless explicitly overridden.
+
+#### IP address resolution
+
+The node's advertised IP address (in ArtPollReply) is resolved with this precedence:
+
+| Priority | Source        | Example                          | Use Case                   |
+|----------|---------------|----------------------------------|----------------------------|
+| 1        | `:node :ip`   | `{:node {:ip [10 0 0 99]}}`      | Explicit identity override |
+| 2        | `:bind :host` | `{:bind {:host "192.168.1.50"}}` | Non-wildcard binding       |
+| 3        | Auto-detected | NetworkInterface enumeration     | Wildcard bind (`0.0.0.0`)  |
+| 4        | Fallback      | `[2 0 0 1]`                      | Detection failed (WARNING) |
+
+Auto-detection prefers Art-Net standard IP ranges (`2.x.x.x`, `10.x.x.x`) per the specification.
+
+#### UDP port resolution
+
+The node's advertised UDP port is resolved with this precedence:
+
+| Priority | Source        | Example                | Use Case          |
+|----------|---------------|------------------------|-------------------|
+| 1        | `:node :port` | `{:node {:port 6455}}` | Explicit override |
+| 2        | `:bind :port` | `{:bind {:port 6455}}` | Non-standard port |
+| 3        | Default       | `6454` (0x1936)        | Standard Art-Net  |
+
+> **Warning**: Non-standard UDP ports trigger a WARN log. Standard Art-Net UDP port is 6454 (0x1936).
+> Custom ports enable local testing with multiple node instances on the same host.
 
 ### Buffer pool configuration
 

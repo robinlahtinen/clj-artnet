@@ -29,7 +29,10 @@
                   :random-delay-fn (fn [] 100),
                   :extra-ignored   :ignored}
           result (lifecycle/build-logic-config config)]
-      (is (= {:short-name "Test"} (:node result)))
+      (is (= "Test" (get-in result [:node :short-name])))
+      (is (vector? (get-in result [:node :ip])) "Node should have resolved :ip")
+      (is (int? (get-in result [:node :port]))
+          "Node should have resolved :port")
       (is (fn? (:dmx (:callbacks result))))
       (is (= {:threshold 10} (:diagnostics result)))
       (is (nil? (:extra-ignored result)) "Should not include extra keys"))))

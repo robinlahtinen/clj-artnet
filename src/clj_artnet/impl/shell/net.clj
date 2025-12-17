@@ -4,7 +4,7 @@
    Provides helpers for java.net.InetAddress and java.nio.channels.DatagramChannel
    setup, isolated from protocol logic."
   (:import
-    (java.net InetAddress InetSocketAddress SocketAddress StandardSocketOptions)
+    (java.net Inet4Address InetAddress InetSocketAddress NetworkInterface SocketAddress SocketException StandardSocketOptions)
     (java.nio.channels DatagramChannel)
     (java.nio.channels.spi SelectorProvider)))
 
@@ -68,6 +68,67 @@
     (when bind (.bind ch ^SocketAddress (->socket-address bind)))
     ch))
 
+(defn- usable-addr?
+  "Returns true if addr is suitable for ArtPollReply.
+   Art-Net uses IPv4 only; filters loopback, link-local, multicast, any-local."
+  [^InetAddress addr]
+  (and (some? addr)
+       (instance? Inet4Address addr)
+       (not (.isAnyLocalAddress addr))
+       (not (.isLoopbackAddress addr))
+       (not (.isLinkLocalAddress addr))
+       (not (.isMulticastAddress addr))))
+
+(defn- artnet-range?
+  "Returns true if addr is in Art-Net preferred ranges.
+   Primary: 2.x.x.x, Secondary: 10.x.x.x per spec."
+  [^InetAddress addr]
+  (let [octets (.getAddress addr)
+        first-octet (bit-and (aget octets 0) 0xFF)]
+    (or (= first-octet 2) (= first-octet 10))))
+
+(defn- usable-interface?
+  "Returns true if the interface is usable for Art-Net."
+  [^NetworkInterface ni]
+  (try (and (.isUp ni) (not (.isLoopback ni)) (not (.isVirtual ni)))
+       (catch SocketException _ false)))
+
+(defn detect-local-ip
+  "Detects the primary non-loopback IPv4 address.
+
+   Returns [a b c d] vector or nil.
+   Prefers Art-Net IP address ranges (2.x.x.x, 10.x.x.x) per spec."
+  []
+  (try (let [interfaces (->> (NetworkInterface/getNetworkInterfaces)
+                             enumeration-seq
+                             (filter usable-interface?))
+             addrs (->> interfaces
+                        (mapcat #(enumeration-seq (.getInetAddresses
+                                                    ^NetworkInterface %)))
+                        (filter usable-addr?))]
+         (if-let [artnet-addr (first (filter artnet-range? addrs))]
+           (mapv #(bit-and % 0xFF) (.getAddress ^InetAddress artnet-addr))
+           (when-let [any-addr (first addrs)]
+             (mapv #(bit-and % 0xFF) (.getAddress ^InetAddress any-addr)))))
+       (catch SocketException _ nil)))
+
+(defn parse-host
+  "Parses host to [a b c d] vector.
+
+   Accepts: IP address string, vector, or nil.
+   Returns nil for nil input."
+  [host]
+  (cond (nil? host) nil
+        (sequential? host) (mapv #(bit-and (int %) 0xFF) (take 4 host))
+        (string? host) (mapv #(bit-and % 0xFF)
+                             (.getAddress (InetAddress/getByName host)))
+        :else (throw (ex-info "Invalid host format" {:host host}))))
+
+(defn wildcard?
+  "Returns true if the host represents any IP address (0.0.0.0 or nil)."
+  [host]
+  (or (nil? host) (= host "0.0.0.0") (= host [0 0 0 0])))
+
 (comment
   (require '[clj-artnet.impl.shell.net :as net] :reload)
   ;; Coerce specific address
@@ -75,4 +136,12 @@
   ;; Coerce socket address
   (net/->socket-address {:host "127.0.0.1", :port 6454})
   ;; => #object[java.net.InetSocketAddress ...]
+  ;; IP detection
+  (net/detect-local-ip)
+  ;; Parse host
+  (net/parse-host "192.168.1.50")
+  (net/parse-host [10 0 0 1])
+  ;; Wildcard?
+  (net/wildcard? "0.0.0.0")
+  (net/wildcard? [0 0 0 0])
   :rcf)

@@ -13,8 +13,14 @@
 (set! *warn-on-reflection* true)
 
 (def ^:private default-bind
-  "Default Art-Net bind address (0.0.0.0:6454)."
+  "Default Art-Net socket address for binding (0.0.0.0:6454)."
   {:host "0.0.0.0", :port 0x1936})
+
+(def ^:private artnet-default-ip
+  "Art-Net fallback IP address when auto-detection fails (primary range)."
+  [2 0 0 1])
+
+(def ^:private artnet-default-port "Standard Art-Net UDP port (6454)." 0x1936)
 
 (defn close-quietly
   "Closes a resource (Closeable), logging any errors instead of throwing.
@@ -41,22 +47,90 @@
                         :msg   "Error closing DatagramChannel",
                         :error t})))))
 
+(defn resolve-bind
+  "Resolves bind configuration to concrete IP address and UDP port.
+
+   Returns map:
+     :ip              - [a b c d] IP address for ArtPollReply
+     :port            - int, UDP port for ArtPollReply (not Port-Address)
+     :ip-source       - :explicit-node, :explicit-bind, :auto-detected, :fallback
+     :port-source     - :explicit-node, :explicit-bind, :default
+     :non-standard-port? - true if UDP port != 0x1936"
+  [{:keys [node bind]}]
+  (let [;; IP address resolution
+        node-ip (:ip node)
+        bind-host (get bind :host "0.0.0.0")
+        bind-octets (net/parse-host bind-host)
+        [ip ip-source]
+        (cond (some? node-ip) [(net/parse-host node-ip) :explicit-node]
+              (and (some? bind-octets) (not (net/wildcard? bind-octets)))
+              [bind-octets :explicit-bind]
+              :else (if-let [detected (net/detect-local-ip)]
+                      [detected :auto-detected]
+                      [artnet-default-ip :fallback]))
+        ;; UDP port resolution
+        node-port (:port node)
+        bind-port (:port bind)
+        [port port-source]
+        (cond (some? node-port) [(int node-port) :explicit-node]
+              (some? bind-port) [(int bind-port) :explicit-bind]
+              :else [artnet-default-port :default])]
+    {:ip                 ip
+     :port               port
+     :ip-source          ip-source
+     :port-source        port-source
+     :non-standard-port? (not= port artnet-default-port)}))
+
 (defn build-logic-config
   "Extracts and normalizes the logic-layer configuration map from
-   the user-provided system configuration."
+   the user-provided system configuration.
+
+   Resolves bind configuration to concrete IP and port values,
+   merging them into node and network maps."
   [{:keys [node network callbacks diagnostics random-delay-fn programming rdm
-           sync data capabilities failsafe]}]
-  {:node            node,
-   :network         network,
-   :callbacks       callbacks,
-   :diagnostics     diagnostics,
-   :random-delay-fn random-delay-fn,
-   :programming     programming,
-   :rdm             rdm,
-   :sync            sync,
-   :data            data,
-   :capabilities    capabilities,
-   :failsafe        failsafe})
+           sync data capabilities failsafe]
+    :as   config}]
+  (let [{:keys [ip port ip-source _port-source non-standard-port?]}
+        (resolve-bind config)
+        ;; Merge resolved values into node
+        node' (-> (or node {})
+                  (assoc :ip ip)
+                  (assoc :port port))
+        ;; Merge resolved values into network (if not explicit)
+        network' (-> (or network {})
+                     (cond-> (not (:ip network)) (assoc :ip ip))
+                     (cond-> (not (:port network)) (assoc :port port)))]
+    ;; Log IP address resolution outcome
+    (case ip-source
+      :auto-detected (trove/log! {:level :info
+                                  :id    ::node-ip-detected
+                                  :msg   (str "Auto-detected node IP address: "
+                                              ip)})
+      :fallback
+      (trove/log!
+        {:level :warn
+         :id    ::node-ip-fallback
+         :msg   (str "Could not detect local IP address. Using Art-Net default: "
+                     ip
+                     ". Set :node :ip explicitly.")})
+      nil)
+    (when non-standard-port?
+      (trove/log! {:level :warn
+                   :id    ::udp-port-nonstandard
+                   :msg   (str "Using non-standard Art-Net UDP port: "
+                               port
+                               ". Standard port is 6454 (0x1936).")}))
+    {:node            node'
+     :network         network'
+     :callbacks       callbacks
+     :diagnostics     diagnostics
+     :random-delay-fn random-delay-fn
+     :programming     programming
+     :rdm             rdm
+     :sync            sync
+     :data            data
+     :capabilities    capabilities
+     :failsafe        failsafe}))
 
 (defn create-resource-pools
   "Creates RX and TX buffer pools.
