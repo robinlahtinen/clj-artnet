@@ -1,3 +1,6 @@
+;;  Copyright (c) Robin Lahtinen and contributors. All rights reserved.
+;;  Licensed under the MIT License. See LICENSE in the project root for license information.
+
 (ns clj-artnet.impl.shell.net
   "Utilities for Art-Net network I/O, including address coercion and channel configuration.
 

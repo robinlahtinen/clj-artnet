@@ -1,3 +1,6 @@
+;;  Copyright (c) Robin Lahtinen and contributors. All rights reserved.
+;;  Licensed under the MIT License. See LICENSE in the project root for license information.
+
 (ns clj-artnet.impl.shell.bind-resolution-test
   "Tests for bind configuration resolution logic."
   (:require
