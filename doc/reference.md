@@ -94,6 +94,10 @@ The node's advertised IP address (in ArtPollReply) is resolved with this precede
 
 Auto-detection prefers Art-Net standard IP ranges (`2.x.x.x`, `10.x.x.x`) per the specification.
 
+> **Important**: Auto-detection only determines the IP address, not the assignment method (static vs. DHCP).
+> If your environment uses DHCP, you must explicitly set `:network {:dhcp? true}` to ensure the node correctly
+> reports itself as "DHCP Configured" in the `ArtPollReply` packet (status register 2 bit 1).
+
 #### UDP port resolution
 
 The node's advertised UDP port is resolved with this precedence:
