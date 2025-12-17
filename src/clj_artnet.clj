@@ -5,8 +5,8 @@
   "Facilities for Art-Net 4 protocol communication.
 
   Lifecycle:
-    start-node! - starts a local art-net node
-    stop-node!  - stops the art-net node
+    start-node! - starts a local Art-Net node
+    stop-node!  - stops the Art-Net node
 
   Commands:
     send-dmx!        - unicasts artdmx packet
