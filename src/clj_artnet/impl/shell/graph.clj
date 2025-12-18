@@ -26,6 +26,7 @@
     [clojure.core.async.flow :as flow]
     [taoensso.trove :as trove])
   (:import
+    (java.util.concurrent Semaphore)
     (java.util.concurrent.atomic AtomicBoolean)))
 
 (set! *warn-on-reflection* true)
@@ -178,51 +179,69 @@
            [(assoc proc-state :logic-state next) outputs]))))))
 
 (defn- failsafe-timer-loop
-  "Background loop for failsafe timer ticks."
-  [{:keys [^AtomicBoolean running? out interval-ms]}]
+  "Background loop for failsafe timer ticks.
+   Uses the provided Semaphore gate for instant resume and zero-CPU idle."
+  [{:keys [^AtomicBoolean running? ^AtomicBoolean paused? ^Semaphore gate out
+           interval-ms]}]
   (try (while (.get running?)
          (Thread/sleep (long (max 1 interval-ms)))
-         (when-not (async/>!! out {:type :tick, :now (System/nanoTime)})
-           (.set running? false)))
+         (when (.get running?)
+           (if (.get paused?)
+             (.acquire gate)
+             (when-not (async/>!! out {:type :tick, :now (System/nanoTime)})
+               (.set running? false)))))
        (catch InterruptedException _ (Thread/interrupted))
-       (catch Throwable t
-         (trove/log! {:level :error
-                      :id    ::failsafe-timer-failed
-                      :msg   "Failsafe timer loop failed"
-                      :error t}))
+       (catch Throwable t (throw t))
        (finally (async/close! out))))
 
 (defn- failsafe-timer-proc
-  "Create the failsafe timer process for the flow graph.
+  "Create the failsafe timer process for the flow graph. Args:
+   * `:interval-ms` -> Tick interval in milliseconds (default 100)
 
    Emits periodic tick events for failsafe DMX handling."
   []
   (flow/process
     (fn
       ([]
-       {:outs     {:ticks "Failsafe tick events"}
+       {:ins      {:pulse "Internal pulse channel"}
+        :outs     {:ticks "Failsafe tick events"}
         :params   {:interval-ms "Tick interval in milliseconds"}
         :workload :cpu})
       ([{:keys [interval-ms], :or {interval-ms 100}}]
        (let [interval (long (max 1 interval-ms))
              running? (AtomicBoolean. true)
+             paused? (AtomicBoolean. false)
+             gate (Semaphore. 0)
              out (async/chan (async/sliding-buffer 1))
-             thread (async/io-thread
-                      (failsafe-timer-loop
-                        {:running? running?, :out out, :interval-ms interval}))]
-         {:running?        running?
-          :out             out
-          :interval-ms     interval
-          :thread          thread
-          ::flow/out-ports {:ticks out}}))
+             thread (async/io-thread (failsafe-timer-loop {:running?    running?
+                                                           :paused?     paused?
+                                                           :gate        gate
+                                                           :out         out
+                                                           :interval-ms interval}))]
+         {:running?       running?
+          :paused?        paused?
+          :gate           gate
+          :out            out
+          :interval-ms    interval
+          :thread         thread
+          ::flow/in-ports {:pulse     out
+                           :lifecycle thread}}))
       ([state transition]
-       (when (= transition ::flow/stop)
-         (let [^AtomicBoolean running? (:running? state)
-               out (:out state)]
-           (when running? (.set running? false))
-           (when out (async/close! out))))
+       (case transition
+         ::flow/stop (let [^AtomicBoolean running? (:running? state)]
+                       (when running? (.set running? false))
+                       (.release ^Semaphore (:gate state)))
+         ::flow/pause (when-let [^AtomicBoolean p (:paused? state)]
+                        (.set p true))
+         ::flow/resume (do (when-let [^AtomicBoolean p (:paused? state)]
+                             (.set p false))
+                           (.release ^Semaphore (:gate state)))
+         nil)
        state)
-      ([state _ _] [state {}]))))
+      ([state in msg]
+       (cond (= in :pulse) [state {:ticks [msg]}]
+             (and (= in :lifecycle) (instance? Throwable msg)) (throw msg)
+             :else [state {}])))))
 
 (defn create-graph
   "Create the flow graph for Art-Net node processing.

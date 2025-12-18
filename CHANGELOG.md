@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `10.x.x.x`) per the specification.
 - **Sequential DMX data coercion.** `send-dmx!` now correctly accepts Clojure vectors and sequences for the `:data`
   parameter, as documented. Previously, only `byte-array` and `ByteBuffer` were accepted.
+- **UDP packet reception reliability.** Fixed a wiring issue in the `core.async.flow` graph where source processes
+  (`receiver-proc` and `failsafe-timer-proc`) were using external ports for internal communication. These processes now
+  use the idiomatic in-port/transform pattern to ensure reliable message delivery to the logic process.
 
 ## [0.1.0] - 2025-12-15
 

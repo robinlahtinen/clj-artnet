@@ -218,6 +218,28 @@ Each process is a step function with four arities:
     ([state input msg] (handle-message state input msg)))           ; transform
 ```
 
+### Source processes and the bridge pattern
+
+Processes that manage external threads (like `UDP Receiver` and `Failsafe Timer`) use a bridge pattern to integrate
+with the flow-managed channel network.
+
+Instead of providing their own output channels, they:
+
+1. Define a hidden internal in-port (e.g., `:internal` or `:pulse`).
+2. Assign their background thread's output channel to this internal in-port in `init`.
+3. Implement a `transform` arity that takes messages from the internal port and returns them on the public ports.
+
+This pattern ensures the flow system owns all public channels. The `:conns` declaration wires processes correctly, and
+background threads have a path to inject messages into the graph.
+
+#### Lifecycle gate
+
+Source processes use `java.util.concurrent.Semaphore` to pause and resume their background threads:
+
+- **Pause**: The background thread calls `.acquire()` on a zero-permit semaphore, which blocks the thread.
+- **Resume**: On `::flow/resume`, the process calls `.release()`, unblocking the background thread.
+- **Stop**: The gate is released during `::flow/stop` to allow paused threads to exit their loops and terminate.
+
 ### Workload types
 
 | Workload   | Thread Type     | Use Case              |
