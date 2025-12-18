@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   allowing custom ports for local testing.
 - **Sequential RDM data support.** `send-rdm!` `:rdm-packet` parameter now accepts Clojure vectors and sequences in
   addition to `byte-array` and `ByteBuffer`.
+- **Concurrency primitives refactor.** Replaced `Thread/sleep` usage in shell processes with `ReentrantLock` +
+  `Condition.await` for interruptible, condition-based waiting. This improves interrupt responsiveness and eliminates
+  CPU spinning during timed waits.
 
 ### Fixed
 

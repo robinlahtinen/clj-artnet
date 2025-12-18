@@ -19,7 +19,9 @@
   (:import
     (clojure.lang ExceptionInfo)
     (java.nio.channels DatagramChannel)
-    (java.util.concurrent.atomic AtomicBoolean)))
+    (java.util.concurrent TimeUnit)
+    (java.util.concurrent.atomic AtomicBoolean)
+    (java.util.concurrent.locks ReentrantLock)))
 
 (set! *warn-on-reflection* true)
 
@@ -96,7 +98,11 @@
   [state action]
   (if-let [delay (:delay-ms action)]
     (async/io-thread
-      (try (Thread/sleep (long (max 0 delay)))
+      (try (let [^ReentrantLock lock (ReentrantLock.)
+                 cond (.newCondition lock)]
+             (.lock lock)
+             (try (.await cond (long (max 0 delay)) TimeUnit/MILLISECONDS)
+                  (finally (.unlock lock))))
            (if (.get ^AtomicBoolean (:running? state))
              (perform-action! state (dissoc action :delay-ms))
              (trove/log! {:level :debug

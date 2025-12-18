@@ -6,7 +6,8 @@
     [clj-artnet :as core]
     [clojure.test :refer [deftest is]])
   (:import
-    (java.util.concurrent Future)))
+    (java.util.concurrent Future TimeUnit)
+    (java.util.concurrent.locks ReentrantLock)))
 
 (def ^:private default-node-config
   {:bind {:host "127.0.0.1", :port 0}, :random-delay-fn (constantly 0)})
@@ -19,14 +20,22 @@
   "Poll state until predicate returns truthy or ::timeout."
   ([node predicate] (wait-for-state node predicate 1000))
   ([node predicate timeout-ms]
-   (let [deadline (+ (System/currentTimeMillis) timeout-ms)]
+   (let [^ReentrantLock lock (ReentrantLock.)
+         condition (.newCondition lock)
+         start (System/currentTimeMillis)]
      (loop []
-       (let [snapshot (core/state node)]
+       (let [elapsed (- (System/currentTimeMillis) start)
+             snapshot (core/state node)]
          (if (predicate snapshot)
            snapshot
-           (if (< (System/currentTimeMillis) deadline)
-             (do (Thread/sleep 25) (recur))
-             ::timeout)))))))
+           (if (>= elapsed timeout-ms)
+             ::timeout
+             (do (.lock lock)
+                 (try (.await condition
+                              (min 25 (- timeout-ms elapsed))
+                              TimeUnit/MILLISECONDS)
+                      (finally (.unlock lock)))
+                 (recur)))))))))
 
 (deftest api-entrypoint-available
   (is (fn? core/start-node!) "Expected public start-node! to exist"))
@@ -35,12 +44,14 @@
   (let [node (core/start-node! {:bind        {:host "127.0.0.1", :port 0}
                                 :diagnostics {:subscriber-warning-threshold
                                               1}})]
-    (try (Thread/sleep 200)
-         (let [snapshot (core/diagnostics node)
-               summary (get-in snapshot [:diagnostics :summary])]
-           (is (= 0 (:subscriber-count summary)))
-           (is (false? (:warning? summary))))
-         (finally ((:stop! node))))))
+    (try
+      ;; Wait for diagnostics to be available
+      (wait-for-state node #(some? (get-in % [:diagnostics :summary])) 1000)
+      (let [snapshot (core/diagnostics node)
+            summary (get-in snapshot [:diagnostics :summary])]
+        (is (= 0 (:subscriber-count summary)))
+        (is (false? (:warning? summary))))
+      (finally ((:stop! node))))))
 
 (deftest state-snapshot-reflects-config
   (let [node (start-test-node {:node        {:short-name "Stateless Node"

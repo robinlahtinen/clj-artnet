@@ -63,10 +63,8 @@
                                                      (deliver dmx-received
                                                               packet))}})]
       (try
-        ;; Wait for flow to be ready
-        (helpers/wait-for #(some? (:flow node)) 1000)
-        ;; Give the receiver thread time to start blocking on receive()
-        (Thread/sleep 300)
+        ;; Wait for the flow to be ready and receiver thread to start
+        (helpers/wait-for #(some? (:flow node)) 1000 :poll-interval-ms 50)
         (let [sender (DatagramSocket.)
               dmx-data (byte-array [255 128 64 32 16])
               packet-bytes (build-artdmx-bytes dmx-data)

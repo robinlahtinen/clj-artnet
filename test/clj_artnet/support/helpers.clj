@@ -9,7 +9,8 @@
 
    Migrated from: test_support.clj, fixtures.clj (wait-for)"
   (:import
-    (java.time Duration)))
+    (java.util.concurrent TimeUnit)
+    (java.util.concurrent.locks ReentrantLock)))
 
 (defmacro thrown-with-msg?
   "Evaluates `body` and returns true when it throws `exception-class` with a
@@ -31,12 +32,19 @@
    Options:
      :poll-interval-ms - Time between checks (default: 10)"
   [predicate timeout-ms & {:keys [poll-interval-ms], :or {poll-interval-ms 10}}]
-  (let [start (System/currentTimeMillis)]
+  (let [^ReentrantLock lock (ReentrantLock.)
+        condition (.newCondition lock)
+        start (System/currentTimeMillis)]
     (loop []
       (let [elapsed (- (System/currentTimeMillis) start)]
         (cond (predicate) true
               (>= elapsed timeout-ms) false
-              :else (do (^[Duration] Thread/sleep poll-interval-ms)
+              :else (do (.lock lock)
+                        (try (.await condition
+                                     (min poll-interval-ms
+                                          (- timeout-ms elapsed))
+                                     TimeUnit/MILLISECONDS)
+                             (finally (.unlock lock)))
                         (recur)))))))
 
 (comment

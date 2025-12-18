@@ -234,11 +234,14 @@ background threads have a path to inject messages into the graph.
 
 #### Lifecycle gate
 
-Source processes use `java.util.concurrent.Semaphore` to pause and resume their background threads:
+Source processes use `java.util.concurrent.locks.ReentrantLock` and `Condition` to pause and resume their background
+threads:
 
-- **Pause**: The background thread calls `.acquire()` on a zero-permit semaphore, which blocks the thread.
-- **Resume**: On `::flow/resume`, the process calls `.release()`, unblocking the background thread.
-- **Stop**: The gate is released during `::flow/stop` to allow paused threads to exit their loops and terminate.
+- **Pause**: The background thread calls `.await()` on a `Condition` while a paused flag is set.
+- **Resume**: On `::flow/resume`, the process calls `.signalAll()`, unblocking the background thread.
+- **Stop**: The `Condition` is signaled during `::flow/stop` to allow paused threads to exit their loops and terminate.
+
+This pattern provides interruptible waiting without CPU spinning.
 
 ### Workload types
 

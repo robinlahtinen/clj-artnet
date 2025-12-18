@@ -26,8 +26,9 @@
     [clojure.core.async.flow :as flow]
     [taoensso.trove :as trove])
   (:import
-    (java.util.concurrent Semaphore)
-    (java.util.concurrent.atomic AtomicBoolean)))
+    (java.util.concurrent TimeUnit)
+    (java.util.concurrent.atomic AtomicBoolean)
+    (java.util.concurrent.locks Condition ReentrantLock)))
 
 (set! *warn-on-reflection* true)
 
@@ -180,14 +181,21 @@
 
 (defn- failsafe-timer-loop
   "Background loop for failsafe timer ticks.
-   Uses the provided Semaphore gate for instant resume and zero-CPU idle."
-  [{:keys [^AtomicBoolean running? ^AtomicBoolean paused? ^Semaphore gate out
-           interval-ms]}]
+   Uses Lock/Condition for interruptible delay and instant resume when unpaused.
+   The Condition is signaled on pause/resume/stop transitions for zero-delay wakeup."
+  [{:keys [^AtomicBoolean running? ^AtomicBoolean paused? ^ReentrantLock lock
+           ^Condition cond out interval-ms]}]
   (try (while (.get running?)
-         (Thread/sleep (long (max 1 interval-ms)))
+         ;; Interruptible delay using Condition.await
+         (.lock lock)
+         (try (.await cond (long (max 1 interval-ms)) TimeUnit/MILLISECONDS)
+              (finally (.unlock lock)))
          (when (.get running?)
            (if (.get paused?)
-             (.acquire gate)
+             ;; Wait for the resume signal
+             (do (.lock lock)
+                 (try (while (and (.get running?) (.get paused?)) (.await cond))
+                      (finally (.unlock lock))))
              (when-not (async/>!! out {:type :tick, :now (System/nanoTime)})
                (.set running? false)))))
        (catch InterruptedException _ (Thread/interrupted))
@@ -198,7 +206,8 @@
   "Create the failsafe timer process for the flow graph. Args:
    * `:interval-ms` -> Tick interval in milliseconds (default 100)
 
-   Emits periodic tick events for failsafe DMX handling."
+   Emits periodic tick events for failsafe DMX handling.
+   Uses Lock/Condition for interruptible timing and instant resume on unpausing."
   []
   (flow/process
     (fn
@@ -211,16 +220,19 @@
        (let [interval (long (max 1 interval-ms))
              running? (AtomicBoolean. true)
              paused? (AtomicBoolean. false)
-             gate (Semaphore. 0)
+             ^ReentrantLock lock (ReentrantLock.)
+             cond (.newCondition lock)
              out (async/chan (async/sliding-buffer 1))
              thread (async/io-thread (failsafe-timer-loop {:running?    running?
                                                            :paused?     paused?
-                                                           :gate        gate
+                                                           :lock        lock
+                                                           :cond        cond
                                                            :out         out
                                                            :interval-ms interval}))]
          {:running?       running?
           :paused?        paused?
-          :gate           gate
+          :lock           lock
+          :cond           cond
           :out            out
           :interval-ms    interval
           :thread         thread
@@ -228,14 +240,22 @@
                            :lifecycle thread}}))
       ([state transition]
        (case transition
-         ::flow/stop (let [^AtomicBoolean running? (:running? state)]
+         ;; On stop: set running? to false and signal to wake the loop
+         ::flow/stop (let [^AtomicBoolean running? (:running? state)
+                           ^ReentrantLock lock (:lock state)]
                        (when running? (.set running? false))
-                       (.release ^Semaphore (:gate state)))
+                       (.lock lock)
+                       (try (.signalAll ^Condition (:cond state))
+                            (finally (.unlock lock))))
+         ;; On pause: just set the flag, loop will block on the next iteration
          ::flow/pause (when-let [^AtomicBoolean p (:paused? state)]
                         (.set p true))
-         ::flow/resume (do (when-let [^AtomicBoolean p (:paused? state)]
-                             (.set p false))
-                           (.release ^Semaphore (:gate state)))
+         ;; On resume: clear pause flag and signal to wake the loop
+         ::flow/resume
+         (let [^ReentrantLock lock (:lock state)]
+           (when-let [^AtomicBoolean p (:paused? state)] (.set p false))
+           (.lock lock)
+           (try (.signalAll ^Condition (:cond state)) (finally (.unlock lock))))
          nil)
        state)
       ([state in msg]

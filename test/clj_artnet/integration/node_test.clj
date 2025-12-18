@@ -100,9 +100,10 @@
                             :target-enabled? false
                             :target-top      0
                             :target-bottom   0}}])
-    ;; Allow the async logic process to record the subscription before we
-    ;; emit diagnostics
-    (Thread/sleep 100)))
+    ;; Wait for the async logic process to record the subscription
+    (helpers/wait-for #(pos? (get-in (core/diagnostics node)
+                                     [:diagnostics :summary :subscriber-count]))
+                      500)))
 
 (deftest send-dmx-emits-udp
   (let [listener (DatagramSocket. 0)
@@ -111,7 +112,6 @@
                                                  :port port}})
         payload (byte-array [9 8 7 6])]
     (try
-      ;; Wait for node to be ready rather than fixed sleep
       (helpers/wait-for #(some? (:flow node)) 500)
       (core/send-dmx! node
                       {:net      0
@@ -141,7 +141,6 @@
         payload (byte-array (map unchecked-byte (range 1 40)))]
     (aset payload 20 (byte 0x30))
     (try
-      ;; Wait for node to be ready rather than fixed sleep
       (helpers/wait-for #(some? (:flow node)) 500)
       (core/send-rdm! node
                       {:target       {:host "127.0.0.1", :port port}

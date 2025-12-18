@@ -17,20 +17,24 @@
   (:import
     (java.nio ByteBuffer)
     (java.nio.channels ClosedChannelException DatagramChannel)
-    (java.util.concurrent Semaphore)
-    (java.util.concurrent.atomic AtomicBoolean)))
+    (java.util.concurrent.atomic AtomicBoolean)
+    (java.util.concurrent.locks Condition ReentrantLock)))
 
 (set! *warn-on-reflection* true)
 
 (defn- receiver-loop
   "Internal loop that reads datagrams, decodes them, and puts to out-chan.
-   Uses the provided Semaphore gate to implement zero-CPU idle during pause."
+   Uses Lock/Condition for zero-CPU idle during pause."
   [{:keys [^DatagramChannel channel ^buffers/BufferPool pool
-           ^AtomicBoolean running? ^AtomicBoolean paused? ^Semaphore gate
-           out-chan max-packet]}]
+           ^AtomicBoolean running? ^AtomicBoolean paused? ^ReentrantLock lock
+           ^Condition condition out-chan max-packet]}]
   (try (while (.get running?)
          (if (.get paused?)
-           (.acquire gate)
+           ;; Wait for a resume signal using Condition
+           (do (.lock lock)
+               (try (while (and (.get running?) (.get paused?))
+                      (.await condition))
+                    (finally (.unlock lock))))
            (let [^ByteBuffer buf (buffers/borrow! pool)]
              (try (.clear buf)
                   (when (> max-packet (.capacity buf))
@@ -86,32 +90,44 @@
          :or   {out-buffer 32, max-packet 2048}}]
        (let [running? (AtomicBoolean. true)
              paused? (AtomicBoolean. false)
-             gate (Semaphore. 0)
+             ^ReentrantLock lock (ReentrantLock.)
+             condition (.newCondition lock)
              out (async/chan out-buffer)
              thread (async/io-thread (receiver-loop {:channel    channel
                                                      :pool       pool
                                                      :running?   running?
                                                      :paused?    paused?
-                                                     :gate       gate
+                                                     :lock       lock
+                                                     :condition  condition
                                                      :out-chan   out
                                                      :max-packet max-packet}))]
          {:channel        channel
           :pool           pool
           :running?       running?
           :paused?        paused?
-          :gate           gate
+          :lock           lock
+          :condition      condition
           :out            out
           :thread         thread
           ::flow/in-ports {:internal  out
                            :lifecycle thread}}))
       ([state transition]
        (case transition
-         ::flow/stop (do (stop-receiver! state)
-                         (.release ^Semaphore (:gate state))
-                         (async/close! (:out state)))
+         ;; On stop: stop receiver and signal to wake the loop
+         ::flow/stop (let [^ReentrantLock lock (:lock state)]
+                       (stop-receiver! state)
+                       (.lock lock)
+                       (try (.signalAll ^Condition (:condition state))
+                            (finally (.unlock lock)))
+                       (async/close! (:out state)))
+         ;; On pause: just set a flag, loop will block on the next iteration
          ::flow/pause (.set ^AtomicBoolean (:paused? state) true)
-         ::flow/resume (do (.set ^AtomicBoolean (:paused? state) false)
-                           (.release ^Semaphore (:gate state)))
+         ;; On resume: clear flag and signal to wake the loop
+         ::flow/resume (let [^ReentrantLock lock (:lock state)]
+                         (.set ^AtomicBoolean (:paused? state) false)
+                         (.lock lock)
+                         (try (.signalAll ^Condition (:condition state))
+                              (finally (.unlock lock))))
          nil)
        state)
       ([state in msg]
