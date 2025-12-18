@@ -130,26 +130,54 @@
   "Class object for byte arrays."
   (class (byte-array 0)))
 
+(defn coerce-to-bytes
+  "Coerce payload to a byte-array.
+   Accepts byte[], ByteBuffer, or sequential collection of integers."
+  ^bytes [payload]
+  (cond (bytes? payload)
+        payload
+        (instance? ByteBuffer payload)
+        (let [^ByteBuffer buf (.duplicate ^ByteBuffer payload)
+              arr (byte-array (.remaining buf))]
+          (.get buf arr)
+          arr)
+        (sequential? payload)
+        (byte-array (map #(unchecked-byte (int %)) payload))
+        :else
+        (throw (ex-info "Unsupported payload container"
+                        {:type    (class payload)
+                         :allowed [ByteBuffer byte-array-class 'sequential?]
+                         :hint    "Provide byte-array, ByteBuffer, or seq of integers"}))))
+
 (defn as-buffer
   "Convert payload to ByteBuffer."
   ^ByteBuffer [payload]
-  (cond (instance? ByteBuffer payload) (.duplicate ^ByteBuffer payload)
-        (bytes? payload) (ByteBuffer/wrap ^bytes payload)
-        :else (throw (ex-info "Unsupported payload container"
-                              {:type    (class payload)
-                               :allowed [ByteBuffer byte-array-class]
-                               :hint    "Provide a byte-array or ByteBuffer"}))))
+  (cond (instance? ByteBuffer payload)
+        (.duplicate ^ByteBuffer payload)
+        (bytes? payload)
+        (ByteBuffer/wrap ^bytes payload)
+        (sequential? payload)
+        (ByteBuffer/wrap (coerce-to-bytes payload))
+        :else
+        (throw (ex-info "Unsupported payload container"
+                        {:type    (class payload)
+                         :allowed [ByteBuffer byte-array-class 'sequential?]
+                         :hint    "Provide byte-array, ByteBuffer, or seq of integers"}))))
 
 (defn payload-length
-  "Get the length of payload (ByteBuffer or byte array)."
+  "Get the length of payload (ByteBuffer, byte array, or sequential)."
   ^long [payload]
-  (cond (instance? ByteBuffer payload) (.remaining (.duplicate ^ByteBuffer
-                                                               payload))
-        (bytes? payload) (alength ^bytes payload)
-        :else (throw (ex-info "Unsupported payload container"
-                              {:type    (class payload)
-                               :allowed [ByteBuffer byte-array-class]
-                               :hint    "Provide a byte-array or ByteBuffer"}))))
+  (cond (instance? ByteBuffer payload)
+        (.remaining (.duplicate ^ByteBuffer payload))
+        (bytes? payload)
+        (alength ^bytes payload)
+        (sequential? payload)
+        (count payload)
+        :else
+        (throw (ex-info "Unsupported payload container"
+                        {:type    (class payload)
+                         :allowed [ByteBuffer byte-array-class 'sequential?]
+                         :hint    "Provide byte-array, ByteBuffer, or seq of integers"}))))
 
 (defn payload-bytes
   "Extract payload as a byte array."
@@ -162,19 +190,24 @@
     data))
 
 (defn write-payload!
-  "Write payload (ByteBuffer or byte array) to the target buffer."
+  "Write payload (ByteBuffer, byte array, or sequential) to the target buffer."
   [^ByteBuffer buf payload]
   (when payload
-    (cond (instance? ByteBuffer payload) (let [^ByteBuffer src payload
-                                               ^ByteBuffer dup (.duplicate src)]
-                                           (.position dup 0)
-                                           (.limit dup (.remaining src))
-                                           (.put buf dup))
-          (bytes? payload) (.put buf ^bytes payload)
-          :else (throw (ex-info "Unsupported payload container"
-                                {:type    (class payload)
-                                 :allowed [ByteBuffer byte-array-class]
-                                 :hint    "Provide a byte-array or ByteBuffer"}))))
+    (cond (instance? ByteBuffer payload)
+          (let [^ByteBuffer src payload
+                ^ByteBuffer dup (.duplicate src)]
+            (.position dup 0)
+            (.limit dup (.remaining src))
+            (.put buf dup))
+          (bytes? payload)
+          (.put buf ^bytes payload)
+          (sequential? payload)
+          (.put buf ^bytes (coerce-to-bytes payload))
+          :else
+          (throw (ex-info "Unsupported payload container"
+                          {:type    (class payload)
+                           :allowed [ByteBuffer byte-array-class 'sequential?]
+                           :hint    "Provide byte-array, ByteBuffer, or seq of integers"}))))
   buf)
 
 (defn ensure-null-terminated
@@ -206,3 +239,16 @@
             next-acc (bit-and (+ acc value) 0xFFFF)]
         (recur (inc idx) next-acc))
       acc)))
+
+(comment
+  (require '[clj-artnet.impl.protocol.codec.primitives :as prim] :reload)
+  ;; Coerce vector to bytes
+  (vec (prim/coerce-to-bytes [255 0 128]))
+  ;; => [-1 0 -128]  ; signed byte representation
+  ;; Coerce to buffer
+  (prim/as-buffer [1 2 3])
+  ;; => #object[java.nio.HeapByteBuffer ...]
+  ;; Get length of sequential
+  (prim/payload-length [1 2 3 4 5])
+  ;; => 5
+  :rcf)

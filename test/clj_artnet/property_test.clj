@@ -9,6 +9,7 @@
   (:require
     [clj-artnet.impl.protocol.addressing :as addressing]
     [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
+    [clj-artnet.impl.protocol.codec.primitives :as prim]
     [clj-artnet.impl.protocol.dmx :as dmx-protocol]
     [clj-artnet.impl.protocol.dmx-helpers :as dmx-helpers]
     [clj-artnet.impl.protocol.effects :as effects]
@@ -21,7 +22,8 @@
     [clojure.test.check.properties :as prop])
   (:import
     (clojure.lang ExceptionInfo)
-    (java.nio ByteBuffer)))
+    (java.nio ByteBuffer)
+    (java.util Arrays)))
 
 ;; Per Art-Net 4 spec: Port-Address is a 15-bit number composed of
 ;; Net (7-bit) + Sub-Net (4-bit) + Universe (4-bit)
@@ -493,3 +495,11 @@
           normalized (addressing/normalize-address-opts opts)
           expected (addressing/compose-port-address net sub-net universe)]
       (= expected (:port-address normalized)))))
+
+(defspec coerce-to-bytes-roundtrip
+  50
+  (prop/for-all [data gen-dmx-values]
+    ;; Coercing a vector should produce an equivalent byte-array
+    (let [arr (byte-array (map unchecked-byte data))
+          coerced (prim/coerce-to-bytes data)]
+      (Arrays/equals arr coerced))))

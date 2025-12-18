@@ -9,6 +9,7 @@
     [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
     [clj-artnet.impl.protocol.codec.domain.common :as common]
     [clj-artnet.impl.protocol.codec.domain.config :as config]
+    [clj-artnet.impl.protocol.codec.primitives :as prim]
     [clj-artnet.support.helpers :refer [thrown-with-msg?]]
     [clojure.test :refer [deftest is]]
     [clojure.test.check :as tc]
@@ -1524,3 +1525,43 @@
 (deftest codec-protocol-version-matches-spec
   (is (= const/protocol-version spec/protocol-version)
       "Protocol version mismatch between codec and spec"))
+
+(deftest coerce-to-bytes-passthrough
+  (let [arr (byte-array [1 2 3])]
+    (is (identical? arr (prim/coerce-to-bytes arr))
+        "byte-array should pass through unchanged")))
+
+(deftest coerce-to-bytes-bytebuffer
+  (let [buf (ByteBuffer/wrap (byte-array [4 5 6]))
+        result (prim/coerce-to-bytes buf)]
+    (is (= [4 5 6] (vec result))
+        "ByteBuffer should be extracted to byte-array")))
+
+(deftest coerce-to-bytes-vector
+  (is (= [255 0 128]
+         (mapv #(bit-and % 0xFF) (prim/coerce-to-bytes [255 0 128])))
+      "vector should coerce to byte-array"))
+
+(deftest coerce-to-bytes-list
+  (is (= [1 2 3] (vec (prim/coerce-to-bytes '(1 2 3))))
+      "list should coerce to byte-array"))
+
+(deftest coerce-to-bytes-lazy-seq
+  (is (= [0 1 2] (vec (prim/coerce-to-bytes (range 3))))
+      "lazy-seq should coerce to byte-array"))
+
+(deftest coerce-to-bytes-unsupported-throws
+  (is (thrown-with-msg? ExceptionInfo #"Unsupported"
+                        (prim/coerce-to-bytes "not-bytes"))
+      "unsupported type should throw"))
+
+(deftest as-buffer-sequential
+  (let [buf (prim/as-buffer [1 2 3 4])
+        arr (byte-array (.remaining buf))]
+    (.get buf arr)
+    (is (= [1 2 3 4] (vec arr))
+        "as-buffer should accept vector")))
+
+(deftest payload-length-sequential
+  (is (= 5 (prim/payload-length [1 2 3 4 5]))
+      "payload-length should accept vector"))

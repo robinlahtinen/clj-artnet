@@ -113,7 +113,7 @@
   "Unicasts an ArtRdm packet to a specific Node. Returns nil.
 
   Options:
-    :rdm-packet   - byte-array/ByteBuffer, RDM PDU
+    :rdm-packet   - byte-array/ByteBuffer/seq, RDM PDU
     :net          - int, Network address (0-127)
     :sub-net      - int, Sub-Net address (0-15)
     :universe     - int, Universe address (0-15)

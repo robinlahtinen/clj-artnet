@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with ANSI E1.20 Section 5.1. A WARN-level log is emitted on startup if `:esta-man` is not explicitly configured.
 - **Non-standard UDP port warning.** Non-standard Art-Net UDP ports now trigger a WARN log to alert users while still
   allowing custom ports for local testing.
+- **Sequential RDM data support.** `send-rdm!` `:rdm-packet` parameter now accepts Clojure vectors and sequences in
+  addition to `byte-array` and `ByteBuffer`.
 
 ### Fixed
 
@@ -23,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **IP address auto-detection.** When binding to `0.0.0.0`, the node now advertises its primary network interface IP
   address instead of the invalid `0.0.0.0` address. Auto-detection prefers Art-Net standard ranges (`2.x.x.x`,
   `10.x.x.x`) per the specification.
+- **Sequential DMX data coercion.** `send-dmx!` now correctly accepts Clojure vectors and sequences for the `:data`
+  parameter, as documented. Previously, only `byte-array` and `ByteBuffer` were accepted.
 
 ## [0.1.0] - 2025-12-15
 
