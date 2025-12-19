@@ -39,6 +39,9 @@
                                             (prim/payload-length data)))
                                        packet)
            :artvlc (dmx/encode-artvlc! buf packet)
+           :artpoll (poll/encode-artpoll!
+                      (prim/prepare-target buf const/artpoll-length)
+                      packet)
            :artpollreply (poll/encode-artpollreply!
                            (prim/prepare-target buf const/artpollreply-length)
                            packet)

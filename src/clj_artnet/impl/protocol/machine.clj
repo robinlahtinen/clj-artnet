@@ -585,27 +585,23 @@
 (defmethod handle-packet :artpoll
   [state {:keys [packet sender], :as event}]
   (let [timestamp (nano-time event)
-        flags (or (:flags packet) (:talk-to-me packet) 0)
-        targeted-mode? (if (contains? packet :target-enabled?)
-                         (:target-enabled? packet)
-                         (bit-test flags 5))
-        unicast-diag? (if (contains? packet :diag-unicast?)
-                        (:diag-unicast? packet)
-                        (bit-test flags 3))
-        send-diag? (if (contains? packet :diag-request?)
-                     (:diag-request? packet)
-                     (bit-test flags 2))
-        reply-on-change? (if (contains? packet :reply-on-change?)
-                           (:reply-on-change? packet)
-                           (bit-test flags 1))
-        suppress-delay? (if (contains? packet :suppress-delay?)
-                          (:suppress-delay? packet)
-                          (bit-test flags 0))
-        diag-priority (or (:diag-priority packet) 0)
-        target-top
-        (or (:target-top packet) (:target-port-address-top packet) 0x7FFF)
-        target-bottom
-        (or (:target-bottom packet) (:target-port-address-bottom packet) 0)
+        {:keys [flags talk-to-me target-enabled? diag-unicast? diag-request?
+                reply-on-change? suppress-delay? diag-priority target-top
+                target-bottom target-port-address-top
+                target-port-address-bottom]}
+        packet
+        f (or flags talk-to-me 0)
+        targeted-mode?
+        (if (some? target-enabled?) target-enabled? (bit-test f 5))
+        unicast-diag? (if (some? diag-unicast?) diag-unicast? (bit-test f 3))
+        send-diag? (if (some? diag-request?) diag-request? (bit-test f 2))
+        reply-on-change?
+        (if (some? reply-on-change?) reply-on-change? (bit-test f 1))
+        suppress-delay?
+        (if (some? suppress-delay?) suppress-delay? (bit-test f 0))
+        diag-priority (or diag-priority 0)
+        target-top (or target-top target-port-address-top 0x7FFF)
+        target-bottom (or target-bottom target-port-address-bottom 0)
         node (:node state)
         all-pages (node-state/node-port-pages node)
         matched-pages (proto.discovery/filter-pages-by-target all-pages

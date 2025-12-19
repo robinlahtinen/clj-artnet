@@ -87,7 +87,7 @@
    {:name :flags
     :type :u8
     :doc
-    "TalkToMe field: bit 0=VLC, 1=reply-on-change, 2=diag, 3=unicast, 5=targeted"}
+    "TalkToMe field: bit 0=suppress-delay, 1=reply-on-change, 2=diag, 3=unicast, 4=VLC, 5=targeted"}
    {:name :diag-priority, :type :u8}
    {:name :target-port-address-top, :type :u16be}
    {:name :target-port-address-bottom, :type :u16be}

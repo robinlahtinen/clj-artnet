@@ -9,6 +9,7 @@
     [clj-artnet.impl.protocol.codec.dispatch :as dispatch]
     [clj-artnet.impl.protocol.codec.domain.common :as common]
     [clj-artnet.impl.protocol.codec.domain.config :as config]
+    [clj-artnet.impl.protocol.codec.domain.poll :as poll]
     [clj-artnet.impl.protocol.codec.primitives :as prim]
     [clj-artnet.support.helpers :refer [thrown-with-msg?]]
     [clojure.test :refer [deftest is]]
@@ -108,6 +109,23 @@
        :refresh-rate            refresh-rate
        :background-queue-policy background-queue-policy}
       (assoc :bind-ip bind-ip))))
+
+(def gen-artpoll
+  (gen/let [protocol (gen/return 14)
+            flags gen-byte
+            priority gen-byte
+            target-top gen-u16
+            target-bottom gen-u16
+            esta-man gen-u16
+            oem gen-u16]
+    {:op               :artpoll
+     :protocol-version protocol
+     :flags            flags
+     :diag-priority    priority
+     :target-top       target-top
+     :target-bottom    target-bottom
+     :esta-man         esta-man
+     :oem              oem}))
 
 (def gen-dmx-payload
   (gen/bind (gen/choose 0 const/max-dmx-channels)
@@ -296,6 +314,20 @@
                  (= reserved (:reserved vlc))
                  (Arrays/equals payload-bytes payload'))))
         false))))
+
+(def encode-decode-artpoll-prop
+  (prop/for-all [packet gen-artpoll]
+    (let [buf (dispatch/encode packet)
+          decoded (dispatch/decode buf)]
+      (and (= :artpoll (:op decoded))
+           (= (:protocol-version packet)
+              (:protocol-version decoded))
+           (= (:flags packet) (:flags decoded))
+           (= (:diag-priority packet) (:diag-priority decoded))
+           (= (:target-top packet) (:target-top decoded))
+           (= (:target-bottom packet) (:target-bottom decoded))
+           (= (:esta-man packet) (:esta-man decoded))
+           (= (:oem packet) (:oem decoded))))))
 
 (def encode-decode-artinput-prop
   (prop/for-all
@@ -739,6 +771,9 @@
 
 (deftest encode-decode-generic-ops
   (assert-property :generic-op encode-decode-generic-op-prop 300))
+
+(deftest encode-decode-artpoll
+  (assert-property :artpoll encode-decode-artpoll-prop 300))
 
 (deftest encode-decode-artcommand
   (let [text "SwoutText=Playback&"
@@ -1565,3 +1600,49 @@
 (deftest payload-length-sequential
   (is (= 5 (prim/payload-length [1 2 3 4 5]))
       "payload-length should accept vector"))
+
+(deftest decode-artpoll-flags-confirmation
+  (let [frame (fn [flags] (artpoll-frame {:flags flags}))]
+    (is (true? (:suppress-delay? (dispatch/decode (frame 0x01)))))
+    (is (true? (:reply-on-change? (dispatch/decode (frame 0x02)))))
+    (is (true? (:diag-request? (dispatch/decode (frame 0x04)))))
+    (is (true? (:diag-unicast? (dispatch/decode (frame 0x08)))))
+    (is (true? (:vlc-transmission-disabled? (dispatch/decode (frame 0x10)))))
+    (is (true? (:target-enabled? (dispatch/decode (frame 0x20)))))))
+
+(deftest encode-artpoll-flags-confirmation
+  (let [buf (ByteBuffer/allocate 22)]
+    (is (= 0x01
+           (prim/safe-ubyte (poll/encode-artpoll! buf {:suppress-delay? true})
+                            12)))
+    (is (= 0x02
+           (prim/safe-ubyte (poll/encode-artpoll! buf {:reply-on-change? true})
+                            12)))
+    (is (= 0x04
+           (prim/safe-ubyte (poll/encode-artpoll! buf {:diag-request? true})
+                            12)))
+    (is (= 0x08
+           (prim/safe-ubyte (poll/encode-artpoll! buf {:diag-unicast? true})
+                            12)))
+    (is (= 0x10
+           (prim/safe-ubyte
+             (poll/encode-artpoll! buf {:vlc-transmission-disabled? true})
+             12)))
+    (is (= 0x20
+           (prim/safe-ubyte (poll/encode-artpoll! buf {:target-enabled? true})
+                            12)))))
+
+(deftest artpoll-field-boundaries-confirmation
+  (let [packet {:op            :artpoll
+                :esta-man      0x1234
+                :oem           0xABCD
+                :target-top    0x5678
+                :target-bottom 0x1234
+                :diag-priority 0x42}
+        buf (dispatch/encode packet)
+        decoded (dispatch/decode buf)]
+    (is (= 0x1234 (:esta-man decoded)))
+    (is (= 0xABCD (:oem decoded)))
+    (is (= 0x5678 (:target-top decoded)))
+    (is (= 0x1234 (:target-bottom decoded)))
+    (is (= 0x42 (:diag-priority decoded)))))

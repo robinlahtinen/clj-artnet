@@ -54,6 +54,8 @@
   "Maximum VLC payload size."
   (- max-dmx-channels artvlc-header-size))
 
+(def ^:const artpoll-length "ArtPoll fixed packet length." 22)
+
 (def ^:const artpollreply-length "ArtPollReply fixed packet length." 239)
 
 (def ^:const artinput-length "ArtInput fixed packet length." 20)

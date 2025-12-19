@@ -129,6 +129,27 @@
   "ArtTimeCode frame with non-zero unused/proto fields for edge case testing."
   (assoc arttimecode-default-frame :unused 0x55 :proto 0x1201))
 
+(def artpoll-default-packet
+  "Default ArtPoll packet with typical configuration."
+  {:protocol-version 14
+   :suppress-delay?  false
+   :reply-on-change? true
+   :diag-request?    false
+   :diag-unicast?    false
+   :target-enabled?  false
+   :diag-priority    0
+   :target-top       0x7FFF
+   :target-bottom    0
+   :esta-man         0
+   :oem              0})
+
+(def artpoll-targeted-packet
+  "ArtPoll packet with targeted mode enabled for a specific universe range."
+  (assoc artpoll-default-packet
+    :target-enabled? true
+    :target-bottom 0x1000
+    :target-top 0x1FFF))
+
 (comment
   ;; Example: Access fixture data
   (:short-name artpollreply-page)

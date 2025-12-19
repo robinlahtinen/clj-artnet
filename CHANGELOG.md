@@ -12,12 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Art-Net conformance test suite.** New `conformance_test.clj` with wire-level protocol verification tests for Art-Net
   Conformance Tester (ACT) compliance. Tests verify OpCode encoding (little-endian), protocol version byte order
   (big-endian), packet lengths, and Status2 capability flags.
+- **Improved ArtPoll coverage.** Achieved 100% field and flag coverage for `ArtPoll` packets. Added property-based
+  roundtrip tests and specialized flag confirmation tests.
 - **MAC address auto-detection.** The node now automatically detects its MAC address from the bound network interface
   when `:node :mac` is not explicitly configured. This eliminates the `00:00:00:00:00:00` placeholder that triggered
   ACT advisories.
 
 ### Changed
 
+- **ArtPoll information model.** Refactored `decode-artpoll` to strictly map the specification information model,
+  including support for VLC transmission (Bit 4) and suppress-delay (Bit 0). Flag keys now use predicates (e.g.,
+  `:target-enabled?`).
 - **ESTA manufacturer ID default.** Changed default `:esta-man` from `0x0000` to `0x7FF0` (ESTA prototype ID) to comply
   with ANSI E1.20 Section 5.1. A WARN-level log is emitted on startup if `:esta-man` is not explicitly configured.
 - **Non-standard UDP port warning.** Non-standard Art-Net UDP ports now trigger a WARN log to alert users while still

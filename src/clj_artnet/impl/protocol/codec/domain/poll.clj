@@ -130,6 +130,36 @@
     (dotimes [_ 10] (.put buf (unchecked-byte 0)))
     (.flip buf)))
 
+(defn encode-artpoll!
+  "Encode ArtPoll packet into a buffer."
+  [^ByteBuffer buf fields]
+  (let [{:keys [protocol-version diag-priority target-top target-bottom esta-man
+                oem suppress-delay? reply-on-change? diag-request? diag-unicast?
+                vlc-transmission-disabled? target-enabled? flags]}
+        fields
+        protocol (or protocol-version const/protocol-version)
+        f (or flags
+              (cond-> 0
+                      suppress-delay? (bit-or 0x01)
+                      reply-on-change? (bit-or 0x02)
+                      diag-request? (bit-or 0x04)
+                      diag-unicast? (bit-or 0x08)
+                      vlc-transmission-disabled? (bit-or 0x10)
+                      target-enabled? (bit-or 0x20)))]
+    (.clear buf)
+    (doto buf
+      (.put ^"[B" const/artnet-id-bytes)
+      (prim/put-u16-le! (const/keyword->opcode :artpoll))
+      (.put (unchecked-byte 0))
+      (.put (unchecked-byte protocol))
+      (.put (unchecked-byte f))
+      (.put (unchecked-byte (or diag-priority 0)))
+      (prim/put-u16-be! (or target-top 0))
+      (prim/put-u16-be! (or target-bottom 0))
+      (prim/put-u16-be! (or esta-man 0))
+      (prim/put-u16-be! (or oem 0)))
+    (.flip buf)))
+
 (defn decode-artpoll
   "Decode ArtPoll packet from buffer."
   [^ByteBuffer buf]
@@ -140,22 +170,24 @@
         diag (prim/safe-ubyte buf 13)
         target-top (prim/safe-uint16-be buf 14)
         target-bottom (prim/safe-uint16-be buf 16)
-        esta-man (prim/safe-uint16-be buf 18)
-        oem (prim/safe-uint16-be buf 20)]
-    {:op               :artpoll
-     :protocol-version protocol
-     :flags            flags
-     :talk-to-me       flags
-     :priority         diag
-     :diag-priority    diag
-     :diag-request?    (pos? (bit-and flags 0x04))
-     :diag-unicast?    (pos? (bit-and flags 0x08))
-     :target-enabled?  (pos? (bit-and flags 0x20))
-     :target-top       target-top
-     :target-bottom    target-bottom
-     :reply-on-change? (pos? (bit-and flags 0x02))
-     :esta-man         esta-man
-     :oem              oem}))
+        esta-man (if (>= (.limit buf) 20) (prim/safe-uint16-be buf 18) 0)
+        oem (if (>= (.limit buf) 22) (prim/safe-uint16-be buf 20) 0)]
+    {:op                         :artpoll
+     :protocol-version           protocol
+     :flags                      flags
+     :talk-to-me                 flags
+     :priority                   diag
+     :diag-priority              diag
+     :suppress-delay?            (bit-test flags 0)
+     :reply-on-change?           (bit-test flags 1)
+     :diag-request?              (bit-test flags 2)
+     :diag-unicast?              (bit-test flags 3)
+     :vlc-transmission-disabled? (bit-test flags 4)
+     :target-enabled?            (bit-test flags 5)
+     :target-top                 target-top
+     :target-bottom              target-bottom
+     :esta-man                   esta-man
+     :oem                        oem}))
 
 (defn decode-artpollreply
   "Decode ArtPollReply packet from the buffer."
