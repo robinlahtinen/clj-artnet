@@ -131,6 +131,22 @@
    :diagnostics     {:broadcast-target {:host "10.0.0.255", :port 6454}}
    :random-delay-fn (constantly 0)})
 
+(defn with-diag-subscriber
+  "Creates initial state with the sender registered as a diagnostic subscriber.
+
+  Per Art-Net 4, diagnostics are only sent if the sender has subscribed via ArtPoll.
+  This helper creates a properly initialized state with the sender pre-registered."
+  [sender config]
+  (let [host (cond (string? (:host sender)) (:host sender)
+                   (some? (:host sender)) (str (:host sender))
+                   :else "unknown")
+        port (int (or (:port sender) 6454))
+        ;; Create a full initial state first
+        base-state (lifecycle/initial-state (or config base-config))
+        ;; Add sender as diagnostic subscriber
+        peer-entry {:host host, :port port, :diag-subscriber? true}]
+    (assoc-in base-state [:peers [host port]] peer-entry)))
+
 (def artpollreply-config
   (-> base-config
       (assoc :node fixtures/artpollreply-node-config)
@@ -395,13 +411,14 @@
   (let [state (lifecycle/initial-state {:callbacks {:rdm (constantly nil)}})
         node (:node state)
         expected-status2 (-> 0
+                             (bit-or state/status2-rdm-artaddress-bit)
                              (bit-or state/status2-extended-port-bit)
                              (bit-or state/status2-output-style-bit)
                              (bit-or state/status2-dhcp-capable-bit))
         expected-status3 state/status3-port-direction-bit]
     (is (= expected-status2 (:status2 node)))
     (is (= expected-status3 (:status3 node)))
-    (is (zero? (bit-and (:status2 node) state/status2-rdm-artaddress-bit)))
+    (is (pos? (bit-and (:status2 node) state/status2-rdm-artaddress-bit)))
     (is (pos? (bit-and (:status2 node) state/status2-dhcp-capable-bit)))
     (is (zero? (bit-and (:status3 node)
                         (bit-or state/status3-programmable-failsafe-bit
@@ -425,7 +442,8 @@
         status2 (:status2 node)
         status3 (:status3 node)
         caps (:capabilities state)]
-    (is (= (bit-or state/status2-output-style-bit
+    (is (= (bit-or state/status2-rdm-artaddress-bit
+                   state/status2-output-style-bit
                    state/status2-dhcp-capable-bit
                    state/status2-dhcp-active-bit)
            status2))
@@ -626,7 +644,7 @@
         status3 (get-in next [:node :status3])]
     (is (= initial-status2 status2))
     (is (= initial-status3 status3))
-    (is (zero? (bit-and status2 state/status2-rdm-artaddress-bit)))
+    (is (pos? (bit-and status2 state/status2-rdm-artaddress-bit)))
     (is (zero? (bit-and status3 state/status3-llrp-bit)))
     (is (zero? (bit-and status3 state/status3-background-queue-bit)))))
 
@@ -1364,8 +1382,9 @@
                                    :sub-key  0x05
                                    :data     (byte-array [0x42])})
         sender {:host (InetAddress/getByName "192.168.60.41"), :port 6454}
-        [state actions]
-        (logic-step nil config {:type :rx, :packet packet, :sender sender})
+        [state actions] (logic-step (with-diag-subscriber sender config)
+                                    config
+                                    {:type :rx, :packet packet, :sender sender})
         diag (some #(when (= :artdiagdata (get-in % [:packet :op])) %) actions)
         callback (some #(when (= :callback (:type %)) %) actions)]
     (is (= 2 (count actions)))
@@ -1390,7 +1409,7 @@
                  {:oem 0xFFFF, :key-type :key-macro, :sub-key 0x05})
         sender {:host (InetAddress/getByName "192.168.60.45"), :port 6454}
         msg {:type :rx, :packet packet, :sender sender}
-        [state actions] (logic-step nil config msg)
+        [state actions] (logic-step (with-diag-subscriber sender config) config msg)
         helper-action (some #(when (= :callback (:type %)) %) actions)
         diag (some #(when (= :artdiagdata (get-in % [:packet :op])) %) actions)]
     (is (= "Trigger KeyMacro 5 executed" (get-in diag [:packet :text])))
@@ -1423,7 +1442,9 @@
         clock (atom 0)
         msg (fn []
               {:type :rx, :packet packet, :sender sender, :timestamp @clock})
-        [state actions] (logic-step nil config (msg))
+        ;; Use with-diag-subscriber so debounce diagnostics can be sent
+        init-state (with-diag-subscriber sender config)
+        [state actions] (logic-step init-state config (msg))
         callback (some #(when (= :callback (:type %)) %) actions)]
     (is (= :callback (:type callback)))
     ((:fn callback) (:payload callback))
@@ -1458,8 +1479,9 @@
                    (assoc :callbacks {:command (fn [ctx] (deliver cb ctx))}))
         packet (artcommand-packet {:esta 0x4567, :text "SwoutText=Playback&"})
         sender {:host (InetAddress/getByName "192.168.60.43"), :port 6454}
-        [state actions]
-        (logic-step nil config {:type :rx, :packet packet, :sender sender})
+        [state actions] (logic-step (with-diag-subscriber sender config)
+                                    config
+                                    {:type :rx, :packet packet, :sender sender})
         diag (some #(when (= :artdiagdata (get-in % [:packet :op])) %) actions)
         callback (some #(when (= :callback (:type %)) %) actions)]
     (is (= 2 (count actions)))
@@ -1627,8 +1649,9 @@
                    (assoc :callbacks {:command (fn [ctx] (deliver cb ctx))}))
         packet (artcommand-packet {:esta 0xFFFF, :text "SwinText=Record&"})
         sender {:host (InetAddress/getByName "192.168.60.44"), :port 6454}
-        [state actions]
-        (logic-step nil config {:type :rx, :packet packet, :sender sender})
+        [state actions] (logic-step (with-diag-subscriber sender config)
+                                    config
+                                    {:type :rx, :packet packet, :sender sender})
         diag (some #(when (= :artdiagdata (get-in % [:packet :op])) %) actions)
         callback (some #(when (= :callback (:type %)) %) actions)]
     (is (= 2 (count actions)))
@@ -1644,8 +1667,9 @@
   (let [config (assoc-in base-config [:node :esta-man] 0x9999)
         packet (artcommand-packet {:esta 0x9999, :text "Foo=Bar&"})
         sender {:host (InetAddress/getByName "192.168.60.47"), :port 6454}
-        [state actions]
-        (logic-step nil config {:type :rx, :packet packet, :sender sender})
+        [state actions] (logic-step (with-diag-subscriber sender config)
+                                    config
+                                    {:type :rx, :packet packet, :sender sender})
         diag (first actions)]
     (is (= 1 (count actions)))
     (is (= :artdiagdata (get-in diag [:packet :op])))
@@ -1662,8 +1686,9 @@
         packet (artcommand-packet {:esta 0x1357
                                    :text "SwoutText=SceneA&SwinText=SceneB&"})
         sender {:host (InetAddress/getByName "192.168.60.46"), :port 6454}
-        [state actions]
-        (logic-step nil config {:type :rx, :packet packet, :sender sender})
+        [state actions] (logic-step (with-diag-subscriber sender config)
+                                    config
+                                    {:type :rx, :packet packet, :sender sender})
         diag-texts (map #(get-in % [:packet :text]) actions)
         evt (deref event 100 nil)]
     (is (= 2 (count actions)))
@@ -1695,8 +1720,9 @@
   (let [config (assoc base-config :command-labels {:swout "Playback"})
         packet (artcommand-packet {:esta 0xFFFF, :text "SwoutText=Playback&"})
         sender {:host (InetAddress/getByName "192.168.60.48"), :port 6454}
-        [state actions]
-        (logic-step nil config {:type :rx, :packet packet, :sender sender})
+        [state actions] (logic-step (with-diag-subscriber sender config)
+                                    config
+                                    {:type :rx, :packet packet, :sender sender})
         diag (first actions)]
     (is (= 1 (count actions)))
     (is (= :artdiagdata (get-in diag [:packet :op])))
@@ -2131,8 +2157,10 @@
                 :sw-out       [0x81 0 0 0]
                 :acn-priority 120
                 :command      0x02}
-        [state actions]
-        (logic-step nil config {:type :rx, :sender sender, :packet packet})]
+        [state actions] (logic-step
+                          (with-diag-subscriber sender config)
+                          config
+                          {:type :rx, :sender sender, :packet packet})]
     (is (= "Desk" (get-in state [:node :short-name])))
     (is (= 1 (get-in state [:stats :address-requests])))
     (let [diag (first actions)
@@ -2160,13 +2188,20 @@
                        :diag-request?    false
                        :diag-unicast?    false}}
         [state _] (logic-step nil artpollreply-config poll)
+        ;; Register controller as diagnostic subscriber
+        state-with-controller-sub
+        (update state
+                :peers
+                merge
+                (:peers (with-diag-subscriber controller artpollreply-config)))
         artaddress {:type   :rx
                     :sender controller
                     :packet {:op         :artaddress
                              :short-name "PGM"
                              :long-name  "Programmed Node"
                              :command    0x02}}
-        [state' actions] (logic-step state artpollreply-config artaddress)
+        [state' actions]
+        (logic-step state-with-controller-sub artpollreply-config artaddress)
         diag (some #(when (and (= controller (:target %))
                                (= :artdiagdata (get-in % [:packet :op])))
                       %)
@@ -2244,7 +2279,12 @@
                         {:ports {0x0001 {:last-output
                                          {:data snapshot, :length 4, :updated-at 100}}}})
         packet {:op :artaddress, :command 0x0C}
-        [next actions] (logic-step state
+        state-with-sub (update state
+                               :peers
+                               merge
+                               (:peers (with-diag-subscriber sender
+                                                             base-config)))
+        [next actions] (logic-step state-with-sub
                                    base-config
                                    {:type :rx, :sender sender, :packet packet})
         diag (first actions)
@@ -2376,8 +2416,9 @@
   (let [sender {:host (InetAddress/getByName "10.0.0.91"), :port 6454}
         packet {:op :artaddress, :command 0xE2}
         config (assoc base-config :rdm {:background {:supported? true}})
-        [state actions]
-        (logic-step nil config {:type :rx, :sender sender, :packet packet})
+        [state actions] (logic-step (with-diag-subscriber sender config)
+                                    config
+                                    {:type :rx, :sender sender, :packet packet})
         diag (first actions)
         reply (second actions)
         queue (get-in state [:rdm :background-queue])]

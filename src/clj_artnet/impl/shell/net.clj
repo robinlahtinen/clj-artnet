@@ -7,7 +7,7 @@
    Provides helpers for java.net.InetAddress and java.nio.channels.DatagramChannel
    setup, isolated from protocol logic."
   (:import
-    (java.net Inet4Address InetAddress InetSocketAddress NetworkInterface SocketAddress SocketException StandardSocketOptions)
+    (java.net Inet4Address InetAddress InetSocketAddress NetworkInterface SocketAddress SocketException StandardSocketOptions UnknownHostException)
     (java.nio.channels DatagramChannel)
     (java.nio.channels.spi SelectorProvider)))
 
@@ -114,6 +114,33 @@
            (when-let [any-addr (first addrs)]
              (mapv #(bit-and % 0xFF) (.getAddress ^InetAddress any-addr)))))
        (catch SocketException _ nil)))
+
+(defn- ip-octets->bytes
+  "Convert a sequence of 4 unsigned integers to a Java byte array."
+  ^bytes [ip-octets]
+  (byte-array (map unchecked-byte ip-octets)))
+
+(defn- mac-bytes->ints
+  "Convert a MAC address byte array to a vector of unsigned integers."
+  [^bytes mac]
+  (mapv #(bit-and % 0xFF) mac))
+
+(defn detect-mac-address
+  "Detects MAC address for a given IP address.
+
+   Returns [m1 m2 m3 m4 m5 m6] vector or nil if not found.
+   Looks up the network interface associated with the IP address.
+   Returns nil for nil input or invalid IP format."
+  [ip-octets]
+  (when (and (sequential? ip-octets) (= 4 (count ip-octets)))
+    (try (let [^bytes ip-bytes (ip-octets->bytes ip-octets)
+               ^InetAddress addr (InetAddress/getByAddress ip-bytes)
+               ^NetworkInterface iface (NetworkInterface/getByInetAddress addr)]
+           (when iface
+             (when-let [^bytes mac (.getHardwareAddress iface)]
+               (mac-bytes->ints mac))))
+         (catch SocketException _ nil)
+         (catch UnknownHostException _ nil))))
 
 (defn parse-host
   "Parses host to [a b c d] vector.

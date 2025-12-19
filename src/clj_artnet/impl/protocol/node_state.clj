@@ -161,8 +161,11 @@
        :style                   0
        :mac                     [0 0 0 0 0 0]
        :bind-index              1
-       :status2                 (bit-or status2-extended-port-bit status2-output-style-bit)
-       :status3                 status3-port-direction-bit
+       :status2                 (bit-or status2-rdm-artaddress-bit
+                                        status2-extended-port-bit
+                                        status2-output-style-bit)
+       :status3                 (bit-or status3-programmable-failsafe-bit
+                                        status3-port-direction-bit)
        :default-responder       [0 0 0 0 0 0]
        :user-hi                 0
        :user-lo                 0

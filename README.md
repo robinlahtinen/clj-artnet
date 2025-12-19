@@ -24,7 +24,7 @@ building lighting control applications on the JVM.
 - **Functional core, imperative shell.** Pure protocol logic, testable without I/O.
 - **core.async.flow graph.** Backpressure-aware streaming with Virtual Threads.
 - **Data-driven.** Packets are plain Clojure maps, not opaque objects.
-- **Comprehensive tests.** 335 tests and 1,341 assertions including property-based fuzzing.
+- **Comprehensive tests.** 349 tests and 1,367 assertions including property-based fuzzing.
 
 ## Protocol support
 

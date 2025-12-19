@@ -51,6 +51,7 @@
                             set-mask (int (or (:set caps) 0))
                             clear-mask (int (or (:clear caps) 0))
                             base (-> 0
+                                     (bit-or state/status2-rdm-artaddress-bit)
                                      (bit-or state/status2-extended-port-bit)
                                      (bit-or state/status2-output-style-bit)
                                      (bit-or state/status2-dhcp-capable-bit)

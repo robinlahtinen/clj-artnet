@@ -133,32 +133,54 @@
        [(assoc state :diagnostics diagnostics') subscribers])
      [state []])))
 
+(defn- sender-subscribed-to-diagnostics?
+  "Returns true if the sender has subscribed to receive diagnostics via ArtPoll.
+
+  Per Art-Net 4, ArtPoll Flags bit 2 controls diagnostic subscription:
+    0 = Do not send me diagnostics messages
+    1 = Send me diagnostics messages"
+  [state sender]
+  (let [host (cond (string? (:host sender)) (:host sender)
+                   (some? (:host sender)) (str (:host sender))
+                   :else nil)]
+    (when host
+      (let [peer-k [host (int (or (:port sender) 6454))]
+            peer (get-in state [:peers peer-k])]
+        (true? (:diag-subscriber? peer))))))
+
 (defn ack-actions
-  "Generates ArtDiagData actions for acknowledgements."
+  "Generates ArtDiagData actions for acknowledgements.
+
+  Per Art-Net 4, only sends diagnostics if the sender has subscribed
+  via ArtPoll Flags bit 2."
   [state sender acknowledgements]
-  (let [valid (->> acknowledgements
-                   (keep (fn [{:keys [text priority logical-port]}]
-                           (let [trimmed (some-> text
-                                                 str/trim)]
-                             (when (seq trimmed)
-                               {:text         trimmed
-                                :priority     (bit-and (int (or priority 0x10))
-                                                       0xFF)
-                                :logical-port (bit-and (int (or logical-port 0))
-                                                       0xFF)})))))]
-    (if (or (empty? valid) (nil? (:host sender)))
-      [state []]
-      (let [target {:host (:host sender), :port (:port sender 0x1936)}
-            actions (mapv (fn [{:keys [text priority logical-port]}]
-                            {:type   :send
-                             :target target
-                             :packet {:op           :artdiagdata
-                                      :priority     priority
-                                      :logical-port logical-port
-                                      :text         text}})
-                          valid)]
-        [(update-in state [:stats :diagnostics-sent] (fnil + 0) (count actions))
-         actions]))))
+  (if-not (sender-subscribed-to-diagnostics? state sender)
+    [state []]
+    (let [valid (->> acknowledgements
+                     (keep
+                       (fn [{:keys [text priority logical-port]}]
+                         (let [trimmed (some-> text
+                                               str/trim)]
+                           (when (seq trimmed)
+                             {:text         trimmed
+                              :priority     (bit-and (int (or priority 0x10)) 0xFF)
+                              :logical-port (bit-and (int (or logical-port 0))
+                                                     0xFF)})))))]
+      (if (or (empty? valid) (nil? (:host sender)))
+        [state []]
+        (let [target {:host (:host sender), :port (:port sender 0x1936)}
+              actions (mapv (fn [{:keys [text priority logical-port]}]
+                              {:type   :send
+                               :target target
+                               :packet {:op           :artdiagdata
+                                        :priority     priority
+                                        :logical-port logical-port
+                                        :text         text}})
+                            valid)]
+          [(update-in state
+                      [:stats :diagnostics-sent]
+                      (fnil + 0)
+                      (count actions)) actions])))))
 
 (defn resolve-diagnostic-targets
   "Resolves diagnostic message targets.

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Art-Net conformance test suite.** New `conformance_test.clj` with wire-level protocol verification tests for Art-Net
+  Conformance Tester (ACT) compliance. Tests verify OpCode encoding (little-endian), protocol version byte order
+  (big-endian), packet lengths, and Status2 capability flags.
+- **MAC address auto-detection.** The node now automatically detects its MAC address from the bound network interface
+  when `:node :mac` is not explicitly configured. This eliminates the `00:00:00:00:00:00` placeholder that triggered
+  ACT advisories.
+
 ### Changed
 
 - **ESTA manufacturer ID default.** Changed default `:esta-man` from `0x0000` to `0x7FF0` (ESTA prototype ID) to comply
@@ -33,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **UDP packet reception reliability.** Fixed a wiring issue in the `core.async.flow` graph where source processes
   (`receiver-proc` and `failsafe-timer-proc`) were using external ports for internal communication. These processes now
   use the idiomatic in-port/transform pattern to ensure reliable message delivery to the logic process.
+- **ArtPollReply Status2 RDM ArtAddress bit.** Status2 bit 7 now correctly indicates support for RDM parameter
+  configuration via ArtAddress.
+- **ArtPollReply Status3 failsafe bit.** Status3 bit 5 now correctly indicates support for programmable failsafe. Per
+  Art-Net 4, this bit must be set when the node supports hold/zero/full/scene failsafe modes via ArtAddress commands.
 
 ## [0.1.0] - 2025-12-15
 

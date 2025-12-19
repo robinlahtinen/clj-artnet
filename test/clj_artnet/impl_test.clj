@@ -706,9 +706,12 @@
       (is (empty? (:effects result1)) "Should ignore mismatched OEM")
       (is (seq (:effects result2)) "Should process matched OEM")))
   (testing "ArtTrigger debounces repeated triggers"
-    (let [state {:node     {:oem 0x1234}
+    (let [sender {:host "192.168.1.100", :port 6454}
+          state {:node     {:oem 0x1234}
                  :triggers {:min-interval-ns 1000000000}    ;; 1 second
-                 :peers    {}
+                 :peers    {["192.168.1.100" 6454] {:host             "192.168.1.100"
+                                                    :port             6454
+                                                    :diag-subscriber? true}}
                  :stats    {}}
           event {:type   :rx-packet
                  :packet {:op       :arttrigger
@@ -716,7 +719,7 @@
                           :key      0
                           :sub-key  0
                           :key-type :key-ascii}
-                 :sender {:host "192.168.1.100", :port 6454}}
+                 :sender sender}
           ;; First trigger
           res1 (step/step state (assoc event :timestamp 1000000))
           state1 (:state res1)
@@ -845,10 +848,12 @@
             "Should indicate not replied")))))
 
 (deftest step-artcommand-produces-diagdata-acknowledgement
-  (testing "ArtCommand with SwOutText produces ArtDiagData acknowledgement"
+  (testing "ArtCommand with SwOutText produces ArtDiagData acknowledgement (when subscribed)"
     (let [state {:node           {:esta-man 0xFFFF}
                  :command-labels {:swout "Old"}
-                 :peers          {}
+                 :peers          {["192.168.1.100" 6454] {:host             "192.168.1.100"
+                                                          :port             6454
+                                                          :diag-subscriber? true}}
                  :stats          {}}
           event {:type      :rx-packet
                  :packet

@@ -91,16 +91,25 @@
    the user-provided system configuration.
 
    Resolves bind configuration to concrete IP and port values,
-   merging them into node and network maps."
+   merging them into node and network maps. Auto-detects MAC address
+   from the bound network interface if not explicitly configured."
   [{:keys [node network callbacks diagnostics random-delay-fn programming rdm
            sync data capabilities failsafe]
     :as   config}]
   (let [{:keys [ip port ip-source _port-source non-standard-port?]}
         (resolve-bind config)
+        ;; Auto-detect MAC address if not explicitly configured
+        user-mac (:mac node)
+        detected-mac (when (or (nil? user-mac) (= user-mac [0 0 0 0 0 0]))
+                       (net/detect-mac-address ip))
+        mac (or (when (and user-mac (not= user-mac [0 0 0 0 0 0])) user-mac)
+                detected-mac
+                [0 0 0 0 0 0])
         ;; Merge resolved values into node
         node' (-> (or node {})
                   (assoc :ip ip)
-                  (assoc :port port))
+                  (assoc :port port)
+                  (assoc :mac mac))
         ;; Merge resolved values into network (if not explicit)
         network' (-> (or network {})
                      (cond-> (not (:ip network)) (assoc :ip ip))
@@ -119,6 +128,14 @@
                      ip
                      ". Set :node :ip explicitly.")})
       nil)
+    ;; Log MAC address detection
+    (when (and detected-mac (or (nil? user-mac) (= user-mac [0 0 0 0 0 0])))
+      (trove/log! {:level :debug
+                   :id    ::node-mac-detected
+                   :msg   (str "Auto-detected node MAC address: "
+                               (apply format
+                                      "%02X:%02X:%02X:%02X:%02X:%02X"
+                                      detected-mac))}))
     (when non-standard-port?
       (trove/log! {:level :warn
                    :id    ::udp-port-nonstandard

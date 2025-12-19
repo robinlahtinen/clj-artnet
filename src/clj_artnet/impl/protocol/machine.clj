@@ -810,7 +810,11 @@
   [state {:keys [packet sender], :as event}]
   (let [timestamp (nano-time event)
         state-with-peer (proto.state/remember-peer state sender timestamp)
-        accept? (triggers/target? state-with-peer packet)]
+        accept? (triggers/target? state-with-peer packet)
+        peer-key* [(some-> (:host sender)
+                           str) (int (or (:port sender) 6454))]
+        diag-subscriber? (true? (get-in state-with-peer
+                                        [:peers peer-key* :diag-subscriber?]))]
     (if-not accept?
       (result state-with-peer)
       (let [state' (proto.state/inc-stat state-with-peer :trigger-requests)
@@ -832,12 +836,13 @@
                 debounce-text (format "Trigger %s %d ignored (debounced %dms)"
                                       key-name
                                       (or (:sub-key info) 0)
-                                      min-interval-ms)]
-            (result state-throttled
-                    [{:effect :tx-packet
-                      :op     :artdiagdata
-                      :data   {:text debounce-text, :priority 0x10}
-                      :target sender}]))
+                                      min-interval-ms)
+                debounce-diag (when diag-subscriber?
+                                {:effect :tx-packet
+                                 :op     :artdiagdata
+                                 :data   {:text debounce-text, :priority 0x10}
+                                 :target sender})]
+            (result state-throttled (if debounce-diag [debounce-diag] [])))
           (let [helper-cb (triggers/helper-action state'' info packet sender)
                 [state''' reply-act]
                 (triggers/reply-action state'' packet sender)
@@ -847,7 +852,7 @@
                                 :data   (dissoc (:packet reply-act) :op)
                                 :target (:target reply-act)})
                 ack (:ack info)
-                diag-effect (when ack
+                diag-effect (when (and ack diag-subscriber?)
                               {:effect :tx-packet
                                :op     :artdiagdata
                                :data   {:priority (:priority ack)
@@ -872,11 +877,16 @@
       (let [state' (proto.state/inc-stat state-with-peer :command-requests)
             {:keys [state directives acks changes]}
             (triggers/apply-artcommand-directives state' packet)
-            state'' (if (seq acks)
+            peer-key* [(some-> (:host sender)
+                               str) (int (or (:port sender) 6454))]
+            diag-subscriber?
+            (true? (get-in state [:peers peer-key* :diag-subscriber?]))
+            acks-to-send (if diag-subscriber? (filter #(seq (:text %)) acks) [])
+            state'' (if (seq acks-to-send)
                       (update-in state
                                  [:stats :diagnostics-sent]
                                  (fnil + 0)
-                                 (count acks))
+                                 (count acks-to-send))
                       state)
             diag-effects (mapv #(tx-reply
                                   :artdiagdata
@@ -887,7 +897,7 @@
                                    (bit-and (int (or (:logical-port %) 0)) 0xFF)
                                    :text (or (:text %) "")}
                                   sender)
-                               (filter #(seq (:text %)) acks))
+                               acks-to-send)
             cb-effect (callback :command
                                 {:packet           packet
                                  :sender           sender
