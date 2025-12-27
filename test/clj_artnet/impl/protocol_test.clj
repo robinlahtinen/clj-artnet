@@ -43,10 +43,9 @@
     (is (true? (addressing/valid-port-address? 32767)))
     (is (false? (addressing/valid-port-address? 32768))
         "Port-Address exceeds 15-bit max"))
-  (testing "validate-port-address! throws on invalid"
-    (is (thrown-with-msg? ExceptionInfo
-                          #"deprecated"
-                          (addressing/validate-port-address! 0)))
+  (testing "validate-port-address! handles invalid and deprecated"
+    (is (= 0 (addressing/validate-port-address! 0))
+        "Port-Address 0 is allowed with warning (deprecated, not prohibited)")
     (is (thrown-with-msg? ExceptionInfo
                           #"exceeds maximum"
                           (addressing/validate-port-address! 32768)))

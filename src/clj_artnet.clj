@@ -192,8 +192,8 @@
                                                      "bytes from" source))}}))
   ;; unicast dmx (net 0, subnet 0, universe 0)
   (artnet/send-dmx! node {:data (byte-array 512), :universe 0})
-  ;; unicast dmx (composed port-address)
-  (artnet/send-dmx! node {:port-address 0, :data [255 0 0]})
+  ;; unicast dmx with explicit port-address
+  (artnet/send-dmx! node {:port-address 1, :data [255 0 0]})
   ;; broadcast sync
   (artnet/send-sync! node)
   ;; update config

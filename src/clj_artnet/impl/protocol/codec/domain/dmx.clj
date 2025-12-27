@@ -18,7 +18,7 @@
   "Encode ArtDmx packet into buffer."
   [^ByteBuffer buf
    {:keys [sequence physical net sub-net universe data]
-    :or   {sequence 0, physical 0, net 0, sub-net 0, universe 0}}]
+    :or   {sequence 0, physical 0, net 0, sub-net 0, universe 1}}]
   (let [payload (prim/as-buffer data)
         length (.remaining payload)]
     (when (or (neg? length) (> length const/max-dmx-channels))
@@ -74,7 +74,7 @@
   "Encode ArtNzs packet into buffer."
   [^ByteBuffer buf
    {:keys [sequence start-code net sub-net universe data]
-    :or   {sequence 0, net 0, sub-net 0, universe 0}}]
+    :or   {sequence 0, net 0, sub-net 0, universe 1}}]
   (let [payload (prim/as-buffer data)
         length (.remaining payload)
         start-code (or start-code
@@ -105,7 +105,7 @@
   "Encode ArtVlc packet (transmitted as ArtNzs with start code 0x91)."
   [^ByteBuffer buf
    {:keys [sequence net sub-net universe vlc]
-    :or   {sequence 0, net 0, sub-net 0, universe 0}
+    :or   {sequence 0, net 0, sub-net 0, universe 1}
     :as   packet}]
   (when-not vlc
     (throw (ex-info "ArtVlc packet requires :vlc details"

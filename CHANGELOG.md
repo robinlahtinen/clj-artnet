@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Concurrency primitives refactor.** Replaced `Thread/sleep` usage in shell processes with `ReentrantLock` +
   `Condition.await` for interruptible, condition-based waiting. This improves interrupt responsiveness and eliminates
   CPU spinning during timed waits.
+- **Port-Address 0 validation relaxed.** Port-Address 0 is now allowed with a warning instead of throwing an exception.
+  Art-Net 4 deprecates Port-Address 0 for sACN compatibility but does not prohibit it.
 
 ### Fixed
 
@@ -51,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   configuration via ArtAddress.
 - **ArtPollReply Status3 failsafe bit.** Status3 bit 5 now correctly indicates support for programmable failsafe. Per
   Art-Net 4, this bit must be set when the node supports hold/zero/full/scene failsafe modes via ArtAddress commands.
+- **Default Port-Address changed to 1.** Encoder defaults now use Port-Address 1 (universe 1) instead of deprecated
+  Port-Address 0, per Art-Net 4 Rev DP specification.
 
 ## [0.1.0] - 2025-12-15
 

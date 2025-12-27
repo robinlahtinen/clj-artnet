@@ -111,27 +111,26 @@
         node (core/start-node! {:default-target {:host "127.0.0.1"
                                                  :port port}})
         payload (byte-array [9 8 7 6])]
-    (try
-      (helpers/wait-for #(some? (:flow node)) 500)
-      (core/send-dmx! node
-                      {:net      0
-                       :sub-net  0
-                       :universe 0
-                       :target   {:host "127.0.0.1", :port port}
-                       :data     payload})
-      (let [buf (recv-datagram! listener 3000)
-            packet (dispatch/decode buf)]
-        (is (= :artdmx (:op packet)))
-        (is (= (alength payload) (:length packet)))
-        (let [view (types/payload-buffer packet)
-              data-view (:data packet)
-              bytes (byte-array (.remaining view))
-              data-bytes (byte-array (.remaining data-view))]
-          (.get view bytes)
-          (.get data-view data-bytes)
-          (is (Arrays/equals payload bytes))
-          (is (Arrays/equals payload data-bytes))))
-      (finally ((:stop! node)) (.close listener)))))
+    (try (helpers/wait-for #(some? (:flow node)) 500)
+         (core/send-dmx! node
+                         {:net      0
+                          :sub-net  0
+                          :universe 1
+                          :target   {:host "127.0.0.1", :port port}
+                          :data     payload})
+         (let [buf (recv-datagram! listener 3000)
+               packet (dispatch/decode buf)]
+           (is (= :artdmx (:op packet)))
+           (is (= (alength payload) (:length packet)))
+           (let [view (types/payload-buffer packet)
+                 data-view (:data packet)
+                 bytes (byte-array (.remaining view))
+                 data-bytes (byte-array (.remaining data-view))]
+             (.get view bytes)
+             (.get data-view data-bytes)
+             (is (Arrays/equals payload bytes))
+             (is (Arrays/equals payload data-bytes))))
+         (finally ((:stop! node)) (.close listener)))))
 
 (deftest send-rdm-emits-udp
   (let [listener (DatagramSocket. 0)
@@ -140,21 +139,20 @@
                                                  :port port}})
         payload (byte-array (map unchecked-byte (range 1 40)))]
     (aset payload 20 (byte 0x30))
-    (try
-      (helpers/wait-for #(some? (:flow node)) 500)
-      (core/send-rdm! node
-                      {:target       {:host "127.0.0.1", :port port}
-                       :port-address (common/compose-port-address 0 0 1)
-                       :rdm-packet   payload})
-      (let [buf (recv-datagram! listener 3000)
-            packet (dispatch/decode buf)
-            view (:rdm-packet packet)
-            bytes (byte-array (.remaining view))]
-        (.get ^ByteBuffer view bytes)
-        (is (= :artrdm (:op packet)))
-        (is (= (alength payload) (:payload-length packet)))
-        (is (Arrays/equals payload bytes)))
-      (finally ((:stop! node)) (.close listener)))))
+    (try (helpers/wait-for #(some? (:flow node)) 500)
+         (core/send-rdm! node
+                         {:target       {:host "127.0.0.1", :port port}
+                          :port-address (common/compose-port-address 0 0 1)
+                          :rdm-packet   payload})
+         (let [buf (recv-datagram! listener 3000)
+               packet (dispatch/decode buf)
+               view (:rdm-packet packet)
+               bytes (byte-array (.remaining view))]
+           (.get ^ByteBuffer view bytes)
+           (is (= :artrdm (:op packet)))
+           (is (= (alength payload) (:payload-length packet)))
+           (is (Arrays/equals payload bytes)))
+         (finally ((:stop! node)) (.close listener)))))
 
 (deftest send-diagnostic-broadcasts-to-configured-target
   (let [listener (DatagramSocket. 0)

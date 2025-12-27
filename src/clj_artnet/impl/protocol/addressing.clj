@@ -2,7 +2,9 @@
 ;;  Licensed under the MIT License. See LICENSE in the project root for license information.
 
 (ns clj-artnet.impl.protocol.addressing
-  "Port-Address logic (Art-Net 4).")
+  "Port-Address logic (Art-Net 4)."
+  (:require
+    [taoensso.trove :as trove]))
 
 (set! *warn-on-reflection* true)
 
@@ -56,6 +58,17 @@
   [port-address]
   (= port-address 0))
 
+(defn warn-deprecated-port-address
+  "Logs warning if Port-Address is deprecated (0). Returns port-address."
+  [port-address]
+  (when (deprecated-port-address? port-address)
+    (trove/log!
+      {:level :warn
+       :id    ::deprecated-port-address
+       :msg   "Port-Address 0 is deprecated per Art-Net 4. Consider using Port-Address 1 or higher."
+       :data  {:port-address port-address}}))
+  port-address)
+
 (defn validate-port-address!
   "Validates Port-Address. Returns port-address or throws ex-info."
   [port-address]
@@ -70,10 +83,7 @@
                     {:type         :invalid-port-address
                      :port-address port-address
                      :max          max-port-address})))
-  (when (zero? port-address)
-    (throw (ex-info "Port-Address 0 is deprecated"
-                    {:type         :deprecated-port-address
-                     :port-address port-address})))
+  (when (zero? port-address) (warn-deprecated-port-address port-address))
   port-address)
 
 (defn resolve-port-address

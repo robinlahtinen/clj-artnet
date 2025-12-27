@@ -70,11 +70,11 @@
      :physical  - Physical port index (default: 0)
      :net       - Art-Net net (default: 0)
      :sub-net   - Art-Net sub-net (default: 0)
-     :universe  - Art-Net universe (default: 0)
+     :universe  - Art-Net universe (default: 1)
      :data      - DMX data as byte-array (required)"
   [data &
    {:keys [sequence physical net sub-net universe]
-    :or   {sequence 1, physical 0, net 0, sub-net 0, universe 0}}]
+    :or   {sequence 1, physical 0, net 0, sub-net 0, universe 1}}]
   {:op       :artdmx
    :sequence sequence
    :physical physical
@@ -90,7 +90,7 @@
    a decoded packet ready for injection into the flow graph."
   [data &
    {:keys [sequence physical net sub-net universe]
-    :or   {sequence 1, physical 0, net 0, sub-net 0, universe 0}}]
+    :or   {sequence 1, physical 0, net 0, sub-net 0, universe 1}}]
   (-> (artdmx-packet data
                      :sequence sequence
                      :physical physical
