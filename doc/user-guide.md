@@ -94,9 +94,9 @@ something visually stunning:
 ;; Convert a hue value (0.0–1.0) to RGB bytes [red green blue].
 ;; This creates the rainbow: red → yellow → green → cyan → blue → magenta → red.
 (defn hue->rgb [hue]
-    (let [sector (int (* hue 6))              ; Which color sector (0–5)?
+    (let [sector (int (* hue 6))                ; Which color sector (0–5)?
           fraction (- (* hue 6) sector)         ; Position within the sector
-          rising (int (* 255 fraction))       ; Fades up from 0 to 255
+          rising (int (* 255 fraction))         ; Fades up from 0 to 255
           falling (int (* 255 (- 1 fraction)))] ; Fades down from 255 to 0
         (case (mod sector 6)
             0 [255 rising 0]      ; Red → Yellow
