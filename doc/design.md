@@ -599,7 +599,7 @@ The shell abstracts transport. Replace `DatagramChannel` with:
 src/clj_artnet/
 ├── impl/
 │   ├── protocol/                 # FUNCTIONAL CORE
-│   │   ├── machine.clj           # State machine (903 lines)
+│   │   ├── machine.clj           # State machine
 │   │   ├── codec/                # Packet codec
 │   │   │   ├── compiler.clj      # Spec → functions
 │   │   │   ├── spec.clj          # Packet specs

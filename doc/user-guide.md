@@ -260,7 +260,7 @@ Register a callback when starting the node:
 | Key       | Type | Description                    |
 |-----------|------|--------------------------------|
 | `:packet` | map  | Decoded packet data            |
-| `:source` | map  | Sender address `{:host :port}` |
+| `:sender` | map  | Sender address `{:host :port}` |
 | `:node`   | map  | Current node configuration     |
 
 ### Packet keys
@@ -352,7 +352,7 @@ If DMX data stops arriving (controller crash, network failure), fixtures should 
 ```clojure
 (artnet/start-node!
     {:failsafe {:enabled?         true
-                :idle-timeout-ms  1000   ; Trigger after 1 second of no data
+                :idle-timeout-ms  6000   ; Trigger after 6 seconds of no data
                 :tick-interval-ms 100}}) ; Check every 100ms
 ```
 

@@ -146,7 +146,7 @@ Buffer pool map:
           :physical      int         ; Physical port number
           :failsafe?     boolean     ; True if failsafe playback
           :failsafe-mode keyword}   ; :zero, :full, :scene, :hold
- :source {:host string              ; Sender IP address
+ :sender {:host string              ; Sender IP address
           :port int}                ; Sender port
  :node   {...}}                     ; Current node configuration
 ```
@@ -166,7 +166,7 @@ Buffer pool map:
           :port-address int          ; Port-Address
           :net          int          ; Network (0–127)
           :command      keyword}     ; RDM command class
- :source {:host string :port int}
+ :sender {:host string :port int}
  :node   {...}}
 ```
 
@@ -177,7 +177,7 @@ Buffer pool map:
           :sub-key int          ; Trigger sub-key
           :payload ByteBuffer   ; Trigger payload data
           :oem     int}         ; OEM code
- :source {:host string :port int}
+ :sender {:host string :port int}
  :node   {...}}
 ```
 
@@ -187,7 +187,7 @@ Buffer pool map:
 {:packet {:text     string   ; Command text (ASCII)
           :esta-man int      ; ESTA manufacturer code
           :length   int}     ; Command length
- :source {:host string :port int}
+ :sender {:host string :port int}
  :node   {...}}
 ```
 
@@ -200,7 +200,7 @@ Buffer pool map:
           :frames    int      ; Frames
           :type      keyword  ; :film, :ebu, :df, :smpte
           :stream-id int}     ; Stream ID (0–255)
- :source {:host string :port int}
+ :sender {:host string :port int}
  :node   {...}}
 ```
 
