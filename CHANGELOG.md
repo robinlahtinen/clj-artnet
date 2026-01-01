@@ -55,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Art-Net 4, this bit must be set when the node supports hold/zero/full/scene failsafe modes via ArtAddress commands.
 - **Default Port-Address changed to 1.** Encoder defaults now use Port-Address 1 (universe 1) instead of deprecated
   Port-Address 0, per Art-Net 4 Rev DP specification.
+- **Reference documentation accuracy.** Corrected default values for `:idle-timeout-ms` (`6000`) and
+  `:idle-timeout-ns` (`6000000000`). Added missing `:stream-id` field to timecode callback.
 
 ## [0.1.0] - 2025-12-15
 

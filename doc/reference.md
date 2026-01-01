@@ -27,16 +27,22 @@ The `:node` key in the configuration map corresponds to ArtPollReply fields:
 | `:short-name` | string                      | `"clj-artnet"`                | 17-character node name      |
 | `:long-name`  | string                      | `"clj-artnet Art-Net 4 Node"` | 63-character description    |
 | `:ip`         | `[int int int int]`         | Auto-detected                 | IPv4 address (ArtPollReply) |
+| `:port`       | int                         | `6454`                        | UDP port (ArtPollReply)     |
 | `:mac`        | `[int int int int int int]` | `[0 0 0 0 0 0]`               | MAC address                 |
 | `:ports`      | vector                      | `[]`                          | Port definitions            |
 | `:style`      | keyword                     | `:st-node`                    | Node type                   |
 | `:oem`        | int                         | `0xFFFF`                      | OEM code                    |
-| `:esta-man`   | int                         | `0x0000`                      | ESTA manufacturer code      |
+| `:esta-man`   | int                         | `0x7FF0`                      | ESTA manufacturer code      |
 | `:version-hi` | int                         | `0`                           | Firmware version high byte  |
 | `:version-lo` | int                         | `1`                           | Firmware version low byte   |
 | `:status1`    | int                         | Auto                          | Status register 1           |
 | `:status2`    | int                         | Auto                          | Status register 2           |
 | `:status3`    | int                         | Auto                          | Status register 3           |
+
+> [!IMPORTANT]
+> The default `:esta-man` value `0x7FF0` is the ESTA prototype range manufacturer ID,
+> reserved for testing. Production deployments require a
+> [registered ESTA manufacturer ID](https://tsp.esta.org/tsp/working_groups/CP/mfctrIDs.php).
 
 ### Port configuration
 
@@ -65,8 +71,8 @@ The `:failsafe` key:
 | Key                 | Type    | Default      | Description                     |
 |---------------------|---------|--------------|---------------------------------|
 | `:enabled?`         | boolean | `true`       | Enable failsafe detection       |
-| `:idle-timeout-ms`  | int     | `1000`       | Timeout before failsafe engages |
-| `:idle-timeout-ns`  | long    | `1000000000` | Timeout in nanoseconds          |
+| `:idle-timeout-ms`  | int     | `6000`       | Timeout before failsafe engages |
+| `:idle-timeout-ns`  | long    | `6000000000` | Timeout in nanoseconds          |
 | `:tick-interval-ms` | int     | `100`        | Failsafe check interval         |
 
 ### Network configuration
@@ -188,11 +194,12 @@ Buffer pool map:
 ### Timecode callback
 
 ```clojure
-{:packet {:hours   int      ; Hours (0–23)
-          :minutes int      ; Minutes (0–59)
-          :seconds int      ; Seconds (0–59)
-          :frames  int      ; Frames
-          :type    keyword} ; :film, :ebu, :df, :smpte
+{:packet {:hours     int      ; Hours (0–23)
+          :minutes   int      ; Minutes (0–59)
+          :seconds   int      ; Seconds (0–59)
+          :frames    int      ; Frames
+          :type      keyword  ; :film, :ebu, :df, :smpte
+          :stream-id int}     ; Stream ID (0–255)
  :source {:host string :port int}
  :node   {...}}
 ```
@@ -338,7 +345,7 @@ The `state` function accepts `:keys` to select which state sections to return:
 
 ### Port-address range
 
-- **Minimum**: 0 (deprecated in Art-Net 4)
+- **Minimum**: 0 (deprecated in Art-Net 4 Rev DP for sACN compatibility)
 - **Maximum**: 32,767
 - **Recommended start**: 1 (for sACN compatibility)
 
