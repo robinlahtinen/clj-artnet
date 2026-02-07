@@ -135,6 +135,8 @@ Initial release of clj-artnet — a pure-Clojure implementation of Art-Net 4.
 - org.clojure/core.async 1.9.829-alpha2
 - com.taoensso/trove 1.1.0
 
-[Unreleased]: https://github.com/robinlahtinen/clj-artnet/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/robinlahtinen/clj-artnet/compare/v0.2.0...HEAD
+
+[0.2.0]: https://github.com/robinlahtinen/clj-artnet/releases/tag/v0.2.0
 
 [0.1.0]: https://github.com/robinlahtinen/clj-artnet/releases/tag/v0.1.0
