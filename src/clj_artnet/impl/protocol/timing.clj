@@ -2,8 +2,7 @@
 ;;  Licensed under the MIT License. See LICENSE in the project root for license information.
 
 (ns clj-artnet.impl.protocol.timing
-  "Timing utilities for deterministic testing."
-  (:refer-clojure :exclude [time]))
+  "Timing utilities for deterministic testing.")
 
 (set! *warn-on-reflection* true)
 
