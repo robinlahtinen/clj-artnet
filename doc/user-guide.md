@@ -8,13 +8,13 @@ basic usage to advanced patterns.
 ### deps.edn (recommended)
 
 ```clojure
-{:deps {com.github.robinlahtinen/clj-artnet {:mvn/version "0.1.0"}}}
+{:deps {com.github.robinlahtinen/clj-artnet {:mvn/version "0.2.0"}}}
 ```
 
 ### Leiningen
 
 ```clojure
-[com.github.robinlahtinen/clj-artnet "0.1.0"]
+[com.github.robinlahtinen/clj-artnet "0.2.0"]
 ```
 
 ### Git dependency

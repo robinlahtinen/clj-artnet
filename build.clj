@@ -4,7 +4,7 @@
             [deps-deploy.deps-deploy :as dd]))
 
 (def lib 'com.github.robinlahtinen/clj-artnet)
-(def version "0.1.0")
+(def version "0.2.0")
 
 (defn- snapshot-version
   "Append -SNAPSHOT suffix for development builds."
