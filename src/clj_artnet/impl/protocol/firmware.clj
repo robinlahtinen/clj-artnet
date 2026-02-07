@@ -34,7 +34,7 @@
 
 (defn- header-total-bytes
   ^long [^bytes header]
-  (+ (* 2 firmware-header-words) (* 2 (long (header-data-words header)))))
+  (+ (* 2 firmware-header-words) (* 2 (header-data-words header))))
 
 (defn- wrap16
   [value]
