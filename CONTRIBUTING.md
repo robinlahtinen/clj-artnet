@@ -95,13 +95,14 @@ notifications are missed.
 Releases are automated via GitHub Actions on tag push.
 
 1. Update `CHANGELOG.md` with release notes.
-2. Commit: `git commit -am "chore(release): prepare v0.1.0"`.
-3. Tag: `git tag v0.1.0`.
-4. Push: `git push && git push --tags`.
+2. Change version in documentation files.
+3. Commit: `git commit -am "chore(release): prepare v0.1.0"`.
+4. Tag: `git tag v0.1.0`.
+5. Push: `git push && git push --tags`.
 
 The release workflow builds and deploys to Clojars automatically.
 
-After release, bump `version` in `build.clj` and commit:
+After release, bump `version` in `deps.edn` and commit:
 `git commit -am "chore(release): prepare next development cycle"`.
 
 ## Questions?
