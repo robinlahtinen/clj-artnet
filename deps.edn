@@ -39,5 +39,5 @@
                         :source-uri   "https://github.com/robinlahtinen/clj-artnet/blob/main/{filepath}#L{line}"
                         :metadata     {:doc/format :markdown}}}
   :nrepl  {:extra-paths ["test"]
-           :extra-deps  {nrepl/nrepl {:mvn/version "1.5.2"}}
+           :extra-deps  {nrepl/nrepl {:mvn/version "1.6.0"}}
            :main-opts   ["-m" "nrepl.cmdline" "--port" "7888"]}}}
